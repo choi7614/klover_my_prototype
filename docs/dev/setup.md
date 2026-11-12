@@ -16,6 +16,26 @@
 
 개발은 macOS·Windows 어디서나 가능하다. 단 **트레이·토스트 알림·시작 프로그램은 Windows PC에서 최종 확인**한다.
 
+## 지금 실행 가능한 F4 첫 단위
+
+Python 3.12 이상과 uv로 실행한다. DB·Gmail·AI 키 없이 **지정한 가짜 메일만**
+읽어서 보고 입력을 준비한다. HTTP API나 완성된 보고서를 제공하는 명령은 아니다.
+
+```bash
+cd apps/server
+uv sync --locked
+uv run python -m app.cli.weekly_report_input \
+  --fixture ../../fixtures/mails/F4-weekly-report.json \
+  --user-id demo-hong --start 2026-10-05 --end 2026-10-09
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
+
+출력은 업무 그룹별 `mail_ids`·메일 정보, 제외 목록, `scope`다. 예제의 범위는
+전체 12건 = 묶인 9건 + 제외 3건, 업무 6개다. 기간 밖 2건과 다른 사용자 1건은
+조회되지 않는다. 아래 전체 앱 실행 절차는 아직 구현되지 않은 설계 기준이다.
+
 ## 처음 한 번
 
 ```bash
