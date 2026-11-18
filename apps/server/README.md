@@ -25,8 +25,18 @@ curl http://127.0.0.1:8000/health
 개발 중 자동 재시작이 필요하면 `uv run uvicorn app.main:app --reload`를 사용할 수 있다.
 
 `/health`는 인증·DB·Redis·Google·AI 키 없이 실행한다. HTTP 프로세스의 응답만 확인하며,
-DB 연결이나 Gmail 동기화·기능 준비 완료를 뜻하지 않는다. 현재 업무 API와 WebSocket은 없다.
+DB 연결이나 Gmail 동기화·기능 준비 완료를 뜻하지 않는다. 메일 조회는 아래 전용 명령을 사용한다.
+WebSocket은 아직 없다.
 앱의 Google 연결·설정 진행 버튼은 여전히 비활성이다.
+
+## 앱 연결용 메일 조회
+
+기존 Google 연결·DB·메일을 보존하며 별도 로컬 API 토큰으로 계정·목록·본문을 읽는다.
+루트에서 `uv run --locked --directory apps/server python -m app.cli.prepare_mail_api`로
+한 번 준비하고 `uv run --locked --directory apps/server python -m app.cli.run_mail_api`로 실행한다.
+새 터미널의 `python -m app.cli.check_mail_api`로 내용·키를 출력하지 않고 검사할 수 있다.
+실제 전체 명령과 F0 연결 후 앱 실행은 [메일 API 안내](../../docs/dev/mail-read-api.md),
+F0 전달 문장은 [연결 요청](../../docs/dev/F0-mail-api-handoff.md)을 따른다.
 
 ## 오류와 검증
 

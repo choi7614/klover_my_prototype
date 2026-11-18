@@ -1,23 +1,26 @@
 # API 목록
 
-> 최종 수정: 2026-11-18 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
+> 최종 수정: 2026-11-19 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
 
 이 문서는 **요약 목록**이다. 엔드포인트를 추가·변경하면 여기에 한 줄 반영하고, `packages/api-types`의 타입을 다시 생성한다.
 
-> 구현 상태 (2026-11-18): 공통 HTTP 서버와 `GET /health`만 실행 가능하다.
-> 아래 업무 API·WebSocket은 아직 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
+> 구현 상태 (2026-11-19): `/health`와 로컬 운영자용 인증·받은 메일 조회 API를 구현했다.
+> 나머지 업무 API·WebSocket은 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
 > fixture CLI를 유지하며 보고서 HTTP API를 제공하지 않는다.
 > [서버 실행 안내](../../apps/server/README.md)와 [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
 
 ## 공통
 
 - 기본 주소: `http://localhost:8000` (데모)
-- 업무 API 인증 계획: 앱 로그인 후 받은 토큰을 `Authorization: Bearer` 헤더로 전달 (미구현)
+- 현재 인증: 별도 로컬 API 토큰을 Electron main에서 `Authorization: Bearer` 헤더로 전달한다.
+  일반 사용자 로그인·토큰 발급 서버·다중 사용자 인증은 후속 범위다.
 - `/health`와 개발용 `/docs`·`/openapi.json`은 인증 없이 확인한다. 사용자 데이터나 연결 정보를 반환하지 않는다.
-- 날짜: ISO 8601, 시간대 Asia/Seoul
+- 날짜: 시간대 오프셋을 포함한 ISO 8601. 저장된 UTC 값은 앱에서 한국 시간으로 표시한다.
 - 오류 응답: `{ "error": { "code": "...", "message": "..." } }`
-- 현재 오류 코드: `not_found`(404), `method_not_allowed`(405), `validation_error`(422),
-  `internal_error`(500), 기타 HTTP 오류의 `http_error`. 입력값·예외 상세는 응답에 포함하지 않는다.
+- 현재 오류 코드: `unauthenticated`(401), `forbidden`(403), `not_found`(404),
+  `method_not_allowed`(405), `validation_error`(422), `internal_error`(500),
+  `service_unavailable`(503), 기타 HTTP 오류의 `http_error`.
+  입력값·예외 상세는 응답에 포함하지 않는다.
 
 ## 실행 가능한 공통 API
 
@@ -27,6 +30,32 @@
 
 실제 앱의 OpenAPI에서 `pnpm gen:api-types`로 `packages/api-types`를 생성한다.
 서버 실행이나 외부 API 연결 없이 생성 가능하며 생성 파일을 직접 수정하지 않는다.
+
+## 실행 가능한 로컬 메일 조회 API
+
+전용 명령 `python -m app.cli.run_mail_api`로 실행한다. 일반 `app.main:app`에는
+경로·OpenAPI만 있고 계정 설정이 없어 데이터 조회를 허용하지 않는다.
+준비·검사·맥북 앱 실행 순서는 [메일 API 안내](../dev/mail-read-api.md)를 따른다.
+
+| 메서드 | 경로 | 응답 |
+| --- | --- | --- |
+| GET | `/auth/session` | `LocalSession`: 연결된 `user_id`, `account_id`, `email`, `sync_started_at` |
+| GET | `/mails?box=inbox&limit=20&cursor=...` | `MailPage`: `items`와 `next_cursor`(마지막은 null). limit 1~100, 기본 20 |
+| GET | `/mails/{mail_id}` | `MailDetail`: 해당 계정의 받은 메일 일반 텍스트 본문 |
+
+- `MailSummary`: `mail_id`, `subject`, `from_addr`, `from_name`, `preview`(본문 앞 160자),
+  `received_at`, `is_read`, `analysis_status`(`pending`/`done`/`failed`).
+- `MailDetail`: 위 필드와 `to`, `cc`(각 `{addr, name}` 배열), `body_text`.
+  HTML 원문·첨부파일·Google 토큰·API 토큰은 반환하지 않는다.
+- 수신 시각 내림차순, 같은 시각에는 ID 내림차순으로 페이지를 읽는다.
+  cursor는 서버가 준 값 그대로 전달한다. 검색·분류·정렬 변경·다른 편지함은 미지원이며
+  목록의 알 수 없거나 중복된 쿼리 인수는 422다.
+- 소유자는 요청에서 받지 않는다. 기존 로컬 운영자·설정된 Gmail 계정·연결 기록으로 한정하고,
+  사용 시작 이후 받은편지함 메일만 읽는다. 다른 계정 메일 ID도 없는 메일과 같이 404다.
+- 로컬 접속과 허용 Host만 받으며 모든 Origin 헤더를 거부한다. Renderer 직접 fetch 대신
+  Electron main의 Node fetch + 제한된 IPC를 사용한다. CORS를 추가해 우회하지 않는다.
+- 인증 실패 401, 외부 출처 403, DB·계정 준비 부족 503. 개인 응답은 `Cache-Control: no-store`다.
+- 조회는 저장된 DB를 읽으며 읽음 상태·메일·수신 커서를 바꾸거나 Gmail을 동기화하지 않는다.
 
 ## 맥북 전용 Google 연결 경로 (2026-11-19)
 
@@ -40,7 +69,8 @@
 | GET | `/auth/google/callback` | 일회용 요청 검증·코드 교환·Gmail 계정 확인·암호화 저장, HTML 결과 |
 
 이는 로컬 운영자 한 명의 연결 도구다. 아래 설계의 앱용 POST 코드 교환 계약·Bearer 인증은
-구현한 것이 아니다. 실제 Gmail 로그인은 사용자 맥북에서 미확인이며 메일 본문·목록은 읽지 않는다.
+구현한 것이 아니다. 사용자는 맥북에서 실제 Gmail 로그인 성공을 확인했다.
+이 연결 도구 자체는 메일 본문·목록을 읽지 않는다.
 자세한 범위와 검사는 [Google 연결 안내](../dev/google-connection.md)를 따른다.
 
 ## 업무 엔드포인트 (설계·미구현)
@@ -48,8 +78,6 @@
 | 기능 | 메서드 | 경로 | 설명 |
 | --- | --- | --- | --- |
 | F0 | POST | `/auth/google` | OAuth 코드 교환, 계정 연결 |
-| F0 | GET | `/mails` | 목록 (`box`, `category`, `smart`, `cursor`, `sort`) |
-| F0 | GET | `/mails/{mail_id}` | 상세 |
 | F0 | POST | `/mails/send` | 보내기 |
 | F0 | POST | `/mails/{mail_id}/archive` | 보관 |
 | F0 | POST | `/mails/{mail_id}/spam` | 스팸 처리 |

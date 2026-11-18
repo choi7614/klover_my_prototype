@@ -1,7 +1,8 @@
 # Klover API 타입
 
-서버 OpenAPI에서 자동 생성한 TypeScript 선언이다. 현재 구현된 업무 외 공통 API는
-`GET /health`뿐이며, 설계 문서에만 있는 메일·프로필·보고서 API는 타입으로 만들지 않는다.
+서버 OpenAPI에서 자동 생성한 TypeScript 선언이다. 현재 `/health`, `/auth/session`,
+`/mails`, `/mails/{mail_id}`의 GET 계약을 제공한다. 설계에만 있는 쓰기·AI API는 포함하지 않는다.
+인증·로컬 실행과 필드 의미는 [API 목록](../../docs/architecture/api.md)을 따른다.
 
 저장소 루트에서 생성·검사한다.
 

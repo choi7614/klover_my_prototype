@@ -44,6 +44,216 @@
         ],
         "title": "HealthResponse",
         "type": "object"
+      },
+      "LocalSession": {
+        "properties": {
+          "account_id": {
+            "title": "Account Id",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "sync_started_at": {
+            "format": "date-time",
+            "title": "Sync Started At",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "account_id",
+          "email",
+          "sync_started_at"
+        ],
+        "title": "LocalSession",
+        "type": "object"
+      },
+      "MailContact": {
+        "properties": {
+          "addr": {
+            "title": "Addr",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "addr"
+        ],
+        "title": "MailContact",
+        "type": "object"
+      },
+      "MailDetail": {
+        "properties": {
+          "analysis_status": {
+            "enum": [
+              "pending",
+              "done",
+              "failed"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
+          "body_text": {
+            "title": "Body Text",
+            "type": "string"
+          },
+          "cc": {
+            "items": {
+              "$ref": "#/components/schemas/MailContact"
+            },
+            "title": "Cc",
+            "type": "array"
+          },
+          "from_addr": {
+            "title": "From Addr",
+            "type": "string"
+          },
+          "from_name": {
+            "title": "From Name",
+            "type": "string"
+          },
+          "is_read": {
+            "title": "Is Read",
+            "type": "boolean"
+          },
+          "mail_id": {
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "preview": {
+            "title": "Preview",
+            "type": "string"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "to": {
+            "items": {
+              "$ref": "#/components/schemas/MailContact"
+            },
+            "title": "To",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mail_id",
+          "subject",
+          "from_addr",
+          "from_name",
+          "preview",
+          "received_at",
+          "is_read",
+          "analysis_status",
+          "to",
+          "cc",
+          "body_text"
+        ],
+        "title": "MailDetail",
+        "type": "object"
+      },
+      "MailPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MailSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "MailPage",
+        "type": "object"
+      },
+      "MailSummary": {
+        "properties": {
+          "analysis_status": {
+            "enum": [
+              "pending",
+              "done",
+              "failed"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
+          "from_addr": {
+            "title": "From Addr",
+            "type": "string"
+          },
+          "from_name": {
+            "title": "From Name",
+            "type": "string"
+          },
+          "is_read": {
+            "title": "Is Read",
+            "type": "boolean"
+          },
+          "mail_id": {
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "preview": {
+            "title": "Preview",
+            "type": "string"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mail_id",
+          "subject",
+          "from_addr",
+          "from_name",
+          "preview",
+          "received_at",
+          "is_read",
+          "analysis_status"
+        ],
+        "title": "MailSummary",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "LocalMailBearer": {
+        "scheme": "bearer",
+        "type": "http"
       }
     }
   },
@@ -53,6 +263,93 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/auth/session": {
+      "get": {
+        "description": "로컬 토큰의 소유 계정. Google 토큰·API 토큰은 응답에 포함하지 않는다.",
+        "operationId": "current_session_auth_session_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalSession"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Current Session",
+        "tags": [
+          "메일 조회"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "description": "HTTP 서버 응답만 확인한다. DB·Gmail·AI 연결 준비 상태는 확인하지 않는다.",
@@ -92,6 +389,236 @@
         "summary": "서버 실행 상태 확인",
         "tags": [
           "공통"
+        ]
+      }
+    },
+    "/mails": {
+      "get": {
+        "description": "받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.",
+        "operationId": "list_mails_mails_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "box",
+            "required": false,
+            "schema": {
+              "const": "inbox",
+              "default": "inbox",
+              "title": "Box",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "List Mails",
+        "tags": [
+          "메일 조회"
+        ]
+      }
+    },
+    "/mails/{mail_id}": {
+      "get": {
+        "description": "소유 계정의 일반 텍스트 본문. 다른 계정 ID도 같은 404로 처리한다.",
+        "operationId": "read_mail_mails__mail_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mail_id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "title": "Mail Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Read Mail",
+        "tags": [
+          "메일 조회"
         ]
       }
     }

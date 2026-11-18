@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.api.errors import register_error_handlers
 from app.api.health import router as health_router
+from app.api.mail_read import register_mail_api
 from app.schemas.common import ErrorResponse
 
 
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
     )
     register_error_handlers(application)
     application.include_router(health_router)
+    register_mail_api(application)
     return application
 
 

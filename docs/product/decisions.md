@@ -4,6 +4,7 @@
 
 | 날짜 | 항목 | 결정 | 이유·출처 | 반영 문서 |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | 로컬 앱의 실제 메일 열람 | 기존 Google·DB 키와 분리한 로컬 Bearer 인증으로 연결 계정·받은 메일·일반 텍스트 본문을 읽는다. 토큰은 Electron main만 보관하고 제한된 IPC로 화면에 전달. Windows 목표 유지, 맥북 개발 실행을 먼저 확인. Gmail 새 메일 저장·중복 방지는 사용자 확인, 새 조회 API·F0 화면은 실제 맥북 검증 대기 | 사용자의 서버 API 구현 및 F0 전달·맥북 실행 요청 | dev/mail-read-api, dev/F0-mail-api-handoff, architecture/api |
 | 2026-11-19 | 새 Gmail 수신 단위 | 기존 연결·시작 시점·키·메일을 보존하며 명령 기반 INBOX 수신·저장·조회·토큰 갱신 구현. 이력 만료는 같은 시작 시점으로 재조회, F0·메일 API·주기 수신은 후속. 실제 새 수신은 맥북에서 별도 확인 | 사용자 구현 요청, 이전 실제 로그인 성공 보고 | dev/gmail-mail-sync, architecture/data-model |
 | 2026-11-19 | Gmail 연결 첫 단위 | 맥북 전용 브라우저 로그인·Gmail 읽기 권한·계정 확인과 토큰 암호화 저장부터 구현. 고정 복귀 주소·state·PKCE 적용. 실제 계정 검증은 사용자 맥북에서 별도 진행. 메일 수신·앱용 인증은 후속 단위 | 사용자의 명시적 첫 단위 범위 요청 | dev/google-connection, architecture/api, architecture/data-model, features/F0 |
 | 2026-11-18 | 개인 개발 환경과 Gmail 우선 연결 | 맥북의 로컬 PostgreSQL에 최소 사용자·계정·메일 저장소부터 준비하고, 실제 테스트 Gmail의 새 메일 연결을 다음으로 진행. 자동 검사만 합성 데이터 사용. OAuth 복귀 주소는 `http://localhost:8000/auth/google/callback`으로 준비 예정이며 아직 미구현 | 사용자의 개인 Google 프로젝트 준비·실제 Gmail 우선 요청 | dev/local-database, architecture/data-model |
