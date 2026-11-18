@@ -10,7 +10,7 @@
 - `users`: `user_id`(text PK), `created_at`(timestamptz).
 - `mail_accounts`: `account_id`(text PK), `user_id`(FK), `source`(gmail/fixture),
   `email`, `sync_started_at`(timestamptz), `sync_cursor`(nullable text).
-  OAuth 토큰 열·암호화·로그인은 후속 Gmail 단위에서 구현하며 현재 토큰을 저장하지 않는다.
+  이 최소 단위에는 토큰 열이 없다. 이후 Google 연결 단위의 별도 암호문 테이블은 아래에 설명한다.
 - `mails`: 아래 목표 표 중 기본 ID·소유자·발신자·수신자·제목·본문·시간·읽음·메일함·분석 상태를 구현.
   AI 결과·첨부 메타데이터·보관 플래그 등 나머지 열은 후속 단위다.
 - `mails.account_id`를 추가하고 `(account_id, user_id)` 복합 FK로 계정 소유자를 확인한다.
@@ -24,6 +24,20 @@
 
 F4 `ReportMail`과 기존 조회 계약은 변경하지 않았다. 분석 열과 F4용 실제 DB 어댑터는 아직 없다.
 실행·데이터 유지 방법은 [로컬 DB 안내](../dev/local-database.md)를 따른다.
+
+## Google 연결 저장 단위 (2026-11-19)
+
+위 최소 저장 단위 이후 `0002` 마이그레이션으로 `google_credentials`를 추가했다.
+기존 사용자·계정·메일 테이블과 초기 마이그레이션은 보존한다.
+
+- `account_id`: text PK/FK → mail_accounts.account_id.
+- `token_ciphertext`: access/refresh 토큰·권한·만료 시각을 함께 암호화한 Fernet 문자열.
+- `updated_at`: timestamptz. 키는 DB에 넣지 않고 맥북의 비공개 파일에 보관한다.
+- 로컬 운영자 `local-development`의 테스트 Gmail 한 계정만 연결한다. 재연결은 기존
+  계정 ID·sync_started_at·메일을 유지하며 토큰만 갱신한다. 기존 다른 계정을 덮어쓰지 않는다.
+
+실제 계정 로그인·갱신 토큰 유효성은 아직 실제 Google에서 확인하지 않았다.
+[연결 안내](../dev/google-connection.md)를 따른다. 앱용 사용자 인증·메일 동기화는 후속 범위다.
 
 이 문서는 공유 영역이다. 바꿀 때는 팀 채널에 알리고 PR 리뷰를 받는다.
 

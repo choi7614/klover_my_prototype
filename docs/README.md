@@ -41,6 +41,7 @@
 | --- | --- |
 | [setup.md](dev/setup.md) | 개발 환경 준비·실행 |
 | [local-database.md](dev/local-database.md) | 맥북 DB 실행·마이그레이션·데이터 유지 확인 |
+| [google-connection.md](dev/google-connection.md) | 맥북 전용 Google 로그인·계정 확인·암호화 저장 |
 | [workflow.md](dev/workflow.md) | 역할 분담, Git 규칙, Claude Code 사용 요령 |
 | [F4-weekly-report-plan.md](dev/F4-weekly-report-plan.md) | F4 기반 점검, 작은 작업 단위, 수용 기준 진행 상태 |
 

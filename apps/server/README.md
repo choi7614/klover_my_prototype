@@ -60,11 +60,15 @@ corepack pnpm --filter @klover/api-types typecheck
 
 ## 후속 단위
 
+맥북의 Google 로그인·동의·계정 확인과 토큰 암호화 저장은
+[Google 연결 안내](../../docs/dev/google-connection.md)의 별도 로컬 실행 명령을 따른다.
+일반 서버의 앱용 인증·메일 API는 아직 없다. 실제 Gmail 로그인은 사용자 맥북에서 별도 확인한다.
+
 DB 연결·최소 저장 구조는 [로컬 DB 안내](../../docs/dev/local-database.md)를 따른다.
 DB는 명시적 명령으로 실행·마이그레이션·검사한다. `/health`와 F4 CLI는 DB 없이 계속 실행된다.
 F4의 기존 보고 조회 계약·fixture는 그대로이며 실제 DB 어댑터는 아직 연결하지 않았다.
 
-다음은 Google OAuth·실제 Gmail의 새 메일 수신·저장 → 인증된 메일 API → F0 화면 연결이다.
+다음은 실제 Gmail의 새 메일 수신·저장 → 인증된 메일 API → F0 화면 연결이다.
 사용자는 맥북과 개인 Google 프로젝트를 준비했으며, 실제 계정 연결 확인을 우선한다.
 자동 검사에는 합성 메일을 사용한다. AI 분류·검색·Calendar 쓰기·전체 Gmail 과거 메일 수집은
 이번 단위에 포함하지 않는다.

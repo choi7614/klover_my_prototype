@@ -28,6 +28,21 @@
 실제 앱의 OpenAPI에서 `pnpm gen:api-types`로 `packages/api-types`를 생성한다.
 서버 실행이나 외부 API 연결 없이 생성 가능하며 생성 파일을 직접 수정하지 않는다.
 
+## 맥북 전용 Google 연결 경로 (2026-11-19)
+
+`python -m app.cli.run_google_connection`으로 실행하는 별도 로컬 앱에서만 제공한다.
+일반 `app.main:app`의 JSON API·OpenAPI·생성 TS 계약은 그대로다.
+
+| 메서드 | 경로 | 설명 |
+| --- | --- | --- |
+| GET | `/auth/google` | 로컬 연결 안내·동의 시작 폼, HttpOnly 브라우저 쿠키 |
+| POST | `/auth/google` | 같은 출처·폼 토큰 확인 후 Google으로 303 이동, state·PKCE |
+| GET | `/auth/google/callback` | 일회용 요청 검증·코드 교환·Gmail 계정 확인·암호화 저장, HTML 결과 |
+
+이는 로컬 운영자 한 명의 연결 도구다. 아래 설계의 앱용 POST 코드 교환 계약·Bearer 인증은
+구현한 것이 아니다. 실제 Gmail 로그인은 사용자 맥북에서 미확인이며 메일 본문·목록은 읽지 않는다.
+자세한 범위와 검사는 [Google 연결 안내](../dev/google-connection.md)를 따른다.
+
 ## 업무 엔드포인트 (설계·미구현)
 
 | 기능 | 메서드 | 경로 | 설명 |

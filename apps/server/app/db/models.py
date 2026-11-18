@@ -1,4 +1,4 @@
-"""첫 저장 단위. OAuth 토큰·AI 결과의 쓰기는 후속 단위에서 추가한다."""
+"""최소 메일 저장 구조와 암호화된 Google 토큰. AI 결과는 후속 단위다."""
 
 from datetime import datetime
 
@@ -43,6 +43,16 @@ class MailAccount(Base):
     email: Mapped[str] = mapped_column(Text)
     sync_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     sync_cursor: Mapped[str | None] = mapped_column(Text)
+
+
+class GoogleCredential(Base):
+    __tablename__ = "google_credentials"
+
+    account_id: Mapped[str] = mapped_column(
+        ForeignKey("mail_accounts.account_id"), primary_key=True
+    )
+    token_ciphertext: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class Mail(Base):
