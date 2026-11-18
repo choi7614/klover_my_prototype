@@ -43,6 +43,8 @@
 | [local-database.md](dev/local-database.md) | 맥북 DB 실행·마이그레이션·데이터 유지 확인 |
 | [google-connection.md](dev/google-connection.md) | 맥북 전용 Google 로그인·계정 확인·암호화 저장 |
 | [gmail-mail-sync.md](dev/gmail-mail-sync.md) | 새 받은 메일 수신·중복 방지 저장·조회·토큰 갱신 |
+| [mail-read-api.md](dev/mail-read-api.md) | 인증된 메일 조회 API·맥북 확인·F0 연결 후 앱 실행 |
+| [F0-mail-api-handoff.md](dev/F0-mail-api-handoff.md) | F0 채팅에 그대로 보낼 서버 연결 요청 |
 | [workflow.md](dev/workflow.md) | 역할 분담, Git 규칙, Claude Code 사용 요령 |
 | [F4-weekly-report-plan.md](dev/F4-weekly-report-plan.md) | F4 기반 점검, 작은 작업 단위, 수용 기준 진행 상태 |
 

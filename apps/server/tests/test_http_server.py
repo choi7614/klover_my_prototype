@@ -17,7 +17,7 @@ def test_health_is_available_without_account_or_database():
 
 def test_unknown_path_uses_the_common_error_format():
     with TestClient(create_app()) as client:
-        response = client.get("/mails")
+        response = client.get("/_missing")
     assert response.status_code == 404
     assert response.json() == {
         "error": {"code": "not_found", "message": "요청한 경로를 찾을 수 없습니다."}
@@ -65,7 +65,7 @@ def test_openapi_describes_only_implemented_api_and_its_response():
         response = client.get("/openapi.json")
     assert response.status_code == 200
     schema = response.json()
-    assert set(schema["paths"]) == {"/health"}
+    assert set(schema["paths"]) == {"/health", "/auth/session", "/mails", "/mails/{mail_id}"}
     assert schema["paths"]["/health"]["get"]["responses"]["200"]["content"]["application/json"][
         "schema"
     ] == {"$ref": "#/components/schemas/HealthResponse"}

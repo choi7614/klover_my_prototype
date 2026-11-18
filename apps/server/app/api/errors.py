@@ -18,8 +18,12 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(HTTPException)
     async def handle_http_error(_request: Request, error: HTTPException) -> JSONResponse:
         code, message = {
+            401: ("unauthenticated", "인증 정보를 확인해 주세요."),
+            403: ("forbidden", "허용되지 않은 요청입니다."),
             404: ("not_found", "요청한 경로를 찾을 수 없습니다."),
             405: ("method_not_allowed", "허용되지 않은 요청 방식입니다."),
+            422: ("validation_error", "요청 형식을 확인해 주세요."),
+            503: ("service_unavailable", "메일 API 설정과 DB 연결 상태를 확인해 주세요."),
         }.get(error.status_code, ("http_error", "요청을 처리할 수 없습니다."))
         return error_response(error.status_code, code, message, error.headers)
 
