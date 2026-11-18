@@ -1,14 +1,41 @@
 # 개발 환경 준비
 
-> 최종 수정: 2026-10-16 | 코드 폴더(`apps/`)가 만들어지면 실제 명령으로 갱신한다.
+> 최종 수정: 2026-11-18 | F0 첫 단위: 데스크톱 실행 기반·첫 실행 시작 화면
+
+## 현재 실행 가능한 범위
+
+`apps/desktop/`에 Electron + React + TypeScript 앱이 있다.
+서버·DB·메일 API는 아직 없으므로 Google 연결과 다음 버튼은 비활성이다.
+서버 없이 첫 실행 화면을 실행하고 테스트할 수 있다.
+
+저장소 루트에서 실행한다. pnpm 버전은 루트 `package.json`에 고정한다.
+
+```bash
+corepack pnpm install
+corepack pnpm --filter desktop dev
+```
+
+화면만 브라우저로 확인하려면 `corepack pnpm --filter desktop dev:renderer`를 실행한 뒤
+`http://127.0.0.1:5173/#/onboarding/1`을 연다.
+
+```bash
+corepack pnpm --filter desktop lint
+corepack pnpm --filter desktop typecheck
+corepack pnpm --filter desktop test
+corepack pnpm --filter desktop build
+```
+
+브라우저·Electron 실행 검증 방법과 미구현 범위는
+[`apps/desktop/README.md`](../../apps/desktop/README.md)에 있다.
+아래 서버·DB·fixture 관련 명령은 해당 기반이 구현된 뒤 사용하는 계획이다.
 
 ## 필요한 도구
 
 | 도구 | 버전 | 용도 |
 | --- | --- | --- |
 | Git | 최신 | 저장소 |
-| Node.js | 22 LTS | 데스크톱 앱 |
-| pnpm | 9 이상 | JS 패키지 관리 (모노레포 workspace) |
+| Node.js | 22 LTS (22.22.2 이상) 또는 24.15 이상 | 데스크톱 앱·테스트 |
+| pnpm | 10.34.9 (루트 package.json에 고정) | JS 패키지 관리 (모노레포 workspace) |
 | Python | 3.12 | 서버 |
 | uv | 최신 | Python 패키지·가상환경 관리 |
 | Docker Desktop | 최신 | Postgres+pgvector, Redis |
