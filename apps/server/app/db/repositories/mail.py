@@ -52,6 +52,8 @@ class MailRepository:
         from_name: str = "",
         to: list[dict] | None = None,
         thread_id: str | None = None,
+        cc: list[dict] | None = None,
+        is_read: bool = False,
     ) -> str | None:
         """사용 시작 이후만 저장한다. 같은 소스 메일의 재시도는 기존 ID를 반환한다."""
         _aware(received_at)
@@ -80,6 +82,8 @@ class MailRepository:
                 to=to if to is not None else [],
                 thread_id=thread_id,
                 direction="received",
+                cc=cc if cc is not None else [],
+                is_read=is_read,
             )
             .on_conflict_do_nothing(constraint="uq_mail_source_message")
             .returning(Mail.mail_id)
@@ -95,19 +99,16 @@ class MailRepository:
             )
         )
 
-    def list_received(self, *, user_id: str, limit: int = 50) -> list[Mail]:
+    def list_received(
+        self, *, user_id: str, limit: int = 50, account_id: str | None = None
+    ) -> list[Mail]:
         if not 1 <= limit <= 100:
             raise ValueError("조회 개수는 1~100이어야 합니다")
+        query = select(Mail).where(Mail.user_id == user_id, Mail.direction == "received")
+        if account_id is not None:
+            query = query.where(Mail.account_id == account_id)
         return list(
-            self.session.scalars(
-                select(Mail)
-                .where(
-                    Mail.user_id == user_id,
-                    Mail.direction == "received",
-                )
-                .order_by(Mail.received_at.desc(), Mail.mail_id)
-                .limit(limit)
-            )
+            self.session.scalars(query.order_by(Mail.received_at.desc(), Mail.mail_id).limit(limit))
         )
 
 
