@@ -10,6 +10,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@klover/api-types':
+        specifier: workspace:*
+        version: link:../../packages/api-types
       '@radix-ui/react-slot':
         specifier: ^1.2.3
         version: 1.5.0(@types/react@19.3.0)(react@19.3.1)
