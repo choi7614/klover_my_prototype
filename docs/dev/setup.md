@@ -1,12 +1,17 @@
 # 개발 환경 준비
 
-> 최종 수정: 2026-11-18 | F0 첫 단위: 데스크톱 실행 기반·첫 실행 시작 화면
+> 최종 수정: 2026-11-18 | F0 데스크톱 첫 화면·F4 보고 입력 준비
 
 ## 현재 실행 가능한 범위
 
-`apps/desktop/`에 Electron + React + TypeScript 앱이 있다.
-서버·DB·메일 API는 아직 없으므로 Google 연결과 다음 버튼은 비활성이다.
-서버 없이 첫 실행 화면을 실행하고 테스트할 수 있다.
+- `apps/desktop/`: Electron + React + TypeScript 앱의 첫 실행 시작 화면.
+- `apps/server/`: 지정한 가짜 메일로 F4 보고 입력을 준비하는 Python 서비스·CLI.
+
+실행 가능한 HTTP 서버·DB·메일 API·실제 Gmail 연결은 아직 없다.
+앱의 Google 연결과 다음 버튼은 비활성이며, F4 CLI가 읽은 메일을 앱에 표시하지 않는다.
+두 첫 단위는 각각 실행·검증할 수 있고, 앱과 서버의 연결은 후속 작업이다.
+
+## 데스크톱 실행·검증 (F0 첫 단위)
 
 저장소 루트에서 실행한다. pnpm 버전은 루트 `package.json`에 고정한다.
 
@@ -27,7 +32,28 @@ corepack pnpm --filter desktop build
 
 브라우저·Electron 실행 검증 방법과 미구현 범위는
 [`apps/desktop/README.md`](../../apps/desktop/README.md)에 있다.
-아래 서버·DB·fixture 관련 명령은 해당 기반이 구현된 뒤 사용하는 계획이다.
+
+## 보고 입력 준비·검증 (F4 첫 단위)
+
+Python 3.12 이상과 uv로 실행한다. DB·Gmail·AI 키 없이 **지정한 가짜 메일만**
+읽어서 보고 입력을 준비한다. HTTP API나 완성된 보고서를 제공하는 명령은 아니다.
+
+저장소 루트에서 새 터미널을 열어 실행한다.
+
+```bash
+cd apps/server
+uv sync --locked
+uv run python -m app.cli.weekly_report_input \
+  --fixture ../../fixtures/mails/F4-weekly-report.json \
+  --user-id demo-hong --start 2026-10-05 --end 2026-10-09
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
+
+출력은 업무 그룹별 `mail_ids`·메일 정보, 제외 목록, `scope`다. 예제의 범위는
+전체 12건 = 묶인 9건 + 제외 3건, 업무 6개다. 기간 밖 2건과 다른 사용자 1건은
+조회되지 않는다. 작업 분할과 수용 기준은 [F4 구현 계획](F4-weekly-report-plan.md)에 있다.
 
 ## 필요한 도구
 
@@ -38,12 +64,19 @@ corepack pnpm --filter desktop build
 | pnpm | 10.34.9 (루트 package.json에 고정) | JS 패키지 관리 (모노레포 workspace) |
 | Python | 3.12 | 서버 |
 | uv | 최신 | Python 패키지·가상환경 관리 |
-| Docker Desktop | 최신 | Postgres+pgvector, Redis |
+| Docker Desktop | 최신 | Postgres+pgvector, Redis (후속 기반 구현 후 사용) |
 | Claude Code | 최신 | 바이브 코딩 |
 
 개발은 macOS·Windows 어디서나 가능하다. 단 **트레이·토스트 알림·시작 프로그램은 Windows PC에서 최종 확인**한다.
 
-## 처음 한 번
+## 전체 앱 실행 계획 (후속 기반 구현 후 사용)
+
+아래 명령과 환경 변수는 서버·DB·수신 파이프라인이 준비된 뒤 사용하는 계획이다.
+현재는 `infra/docker-compose.yml`, `.env.example`, FastAPI·작업자·마이그레이션 실행 기반이 없다.
+가짜 메일 자동 도착 모드와 실제 Gmail 연결도 아직 구현되지 않았다.
+현재 실행할 명령은 위의 F0·F4 첫 단위 절차를 따른다.
+
+### 처음 한 번
 
 ```bash
 git clone <저장소 주소> klover && cd klover
@@ -54,7 +87,7 @@ cd apps/server && uv sync         # 서버 의존성
 uv run alembic upgrade head       # DB 테이블 생성
 ```
 
-## 매일 실행
+### 매일 실행
 
 ```bash
 # 터미널 1 — 서버
@@ -67,14 +100,14 @@ cd apps/server && uv run arq workers.main.WorkerSettings
 pnpm --filter desktop dev
 ```
 
-## 메일 소스 선택
+### 메일 소스 선택
 
 `.env`의 `MAIL_SOURCE`로 바꾼다.
 
 - `fixture` (기본): `fixtures/mails/`의 가짜 메일을 시간차로 '도착'시킨다. Gmail 계정 없이 전체 흐름 개발 가능.
 - `gmail`: 테스트 Gmail 계정 연결. Google Cloud 프로젝트의 OAuth 클라이언트가 필요하고, 계정을 **테스트 사용자**로 등록해야 한다(검수 전 앱 제한).
 
-## 환경 변수 (.env.example)
+### 환경 변수 (.env.example)
 
 | 이름 | 설명 |
 | --- | --- |

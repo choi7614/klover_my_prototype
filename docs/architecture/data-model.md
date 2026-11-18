@@ -99,3 +99,20 @@
 ## 나머지 테이블
 
 `drafts`, `todos`, `weekly_reports`, `category_feedback`, `style_learnings`, `notification_settings`는 담당자가 해당 기능 구현 시 이 문서에 먼저 추가한 뒤 구현한다.
+
+## F4 보고 입력 조회 계약 (2026-11-12)
+
+첫 단위의 `ReportMail`은 위 `mails`에서 보고에 필요한 열만 읽는 내부 모델이다.
+새 DB 테이블이나 마이그레이션을 정의하지 않는다. 실제 DB 어댑터는 아직 없다.
+
+- 필수: `mail_id`, `user_id`, `direction`, 시간대가 있는 `received_at`,
+  `analysis_status`, `subject`, `body_text`, `from_addr`, `to`.
+- 선택/분석 열: `thread_id`, `from_name`, `category`, `user_label`, `summary`,
+  `entities`(`projects`, `orgs`, `people`). 분류 키는 기존 영문 키를 그대로 쓴다.
+- 조회 인자: `user_id`, `start_at`(포함), `end_before`(미포함). `direction`은
+  `received`/`sent`이며 다른 사용자나 기간 밖의 메일을 반환하지 않는다.
+- 결과: 업무 그룹별 원문·`mail_ids`, 제외 메일과 분류 사유, 포함 범위.
+  메일 ID는 중복 없이 유지하고 범위 수치는 결과에서 계산한다.
+
+날짜 경계, 사용자 분류 우선순위, 분석 미완료 처리와 그룹 연결 규칙은
+[F4 구현 계획](../dev/F4-weekly-report-plan.md)의 내부 계약을 따른다.

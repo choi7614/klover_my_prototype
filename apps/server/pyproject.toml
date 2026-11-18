@@ -1,0 +1,23 @@
+[project]
+name = "klover-server"
+version = "0.1.0"
+description = "Klover 서버 기능 — F4 보고 입력 준비부터 구현"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.10,<3", "tzdata>=2025.2"]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.11,<1"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

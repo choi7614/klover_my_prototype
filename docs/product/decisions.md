@@ -4,6 +4,7 @@
 
 | 날짜 | 항목 | 결정 | 이유·출처 | 반영 문서 |
 | --- | --- | --- | --- | --- |
+| 2026-11-12 | F4 첫 구현 단위 | 한국 날짜 범위의 메일 조회·분류 제외·스레드/프로젝트 그룹을 먼저 검증. 분석이 미완료인 업무 메일은 조용히 제외하지 않고 준비 실패로 알림 | 앱·DB·F1·F2·AI 구현 부재, F4 단계별 개발 요청 | dev/F4-weekly-report-plan, architecture/data-model, architecture/api |
 | 2026-10-20 | 로고 | 네 잎 클로버(하트 모양 잎 4개) + 가운데 보라 ◆(AI) + 소문자 워드마크 `klover` | 디자인 작업 | design/brand |
 | 2026-10-20 | 색 체계 | 초록 = 브랜드·실행 버튼(primary #158446), 보라 = AI 전용(#5B4FE0). 모든 글자 대비 4.5:1 이상 | 디자인 작업 | design-system |
 | 2026-10-20 | UI 구현 방식 | Tailwind v4 + shadcn/ui + `klover-theme.css` 토큰, Pretendard, lucide 아이콘 | 디자인 작업 | design-system |

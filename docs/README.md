@@ -41,6 +41,7 @@
 | --- | --- |
 | [setup.md](dev/setup.md) | 개발 환경 준비·실행 |
 | [workflow.md](dev/workflow.md) | 역할 분담, Git 규칙, Claude Code 사용 요령 |
+| [F4-weekly-report-plan.md](dev/F4-weekly-report-plan.md) | F4 기반 점검, 작은 작업 단위, 수용 기준 진행 상태 |
 
 ## 기능 정의서 템플릿
 
