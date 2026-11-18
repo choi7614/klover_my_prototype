@@ -1,0 +1,15 @@
+{
+  "name": "klover",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "engines": { "node": "^22.22.2 || >=24.15.0" },
+  "scripts": {
+    "dev": "pnpm --filter desktop dev",
+    "build": "pnpm --filter desktop build",
+    "lint": "pnpm --filter desktop lint",
+    "typecheck": "pnpm --filter desktop typecheck",
+    "test": "pnpm --filter desktop test",
+    "test:e2e": "pnpm --filter desktop test:e2e",
+    "test:electron": "pnpm --filter desktop test:electron"
+  }
+}
