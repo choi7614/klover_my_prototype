@@ -1,4 +1,4 @@
-# Klover 공통 서버 — 첫 단위
+# Klover 공통 서버
 
 FastAPI HTTP 서버를 실행하고 `GET /health`로 프로세스 응답을 확인한다.
 기존 F4 보고 입력 준비 서비스·CLI는 같은 프로젝트에서 그대로 사용한다.
@@ -60,5 +60,11 @@ corepack pnpm --filter @klover/api-types typecheck
 
 ## 후속 단위
 
-DB·마이그레이션·실제 저장소 → 인증·메일 API·가짜 메일 수신 → F0·F1 연결 → 실제 Gmail
-순서로 진행한다. F4의 메일 조회 계약은 실제 DB 어댑터를 추가할 때 재사용한다.
+DB 연결·최소 저장 구조는 [로컬 DB 안내](../../docs/dev/local-database.md)를 따른다.
+DB는 명시적 명령으로 실행·마이그레이션·검사한다. `/health`와 F4 CLI는 DB 없이 계속 실행된다.
+F4의 기존 보고 조회 계약·fixture는 그대로이며 실제 DB 어댑터는 아직 연결하지 않았다.
+
+다음은 Google OAuth·실제 Gmail의 새 메일 수신·저장 → 인증된 메일 API → F0 화면 연결이다.
+사용자는 맥북과 개인 Google 프로젝트를 준비했으며, 실제 계정 연결 확인을 우선한다.
+자동 검사에는 합성 메일을 사용한다. AI 분류·검색·Calendar 쓰기·전체 Gmail 과거 메일 수집은
+이번 단위에 포함하지 않는다.
