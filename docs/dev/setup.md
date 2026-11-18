@@ -7,8 +7,10 @@
 - `apps/desktop/`: Electron + React + TypeScript 앱의 첫 실행 시작 화면.
 - `apps/server/`: 공통 HTTP 서버의 상태 확인 API와 기존 F4 보고 입력 준비 서비스·CLI.
 - `packages/api-types/`: 실제 서버 OpenAPI에서 자동 생성하는 TypeScript 타입.
+- `infra/docker-compose.yml`: 개발용 PostgreSQL 16+pgvector 이미지, 로컬 전용 접속·영구 볼륨.
 
-공통 서버는 `GET /health`만 제공한다. DB·메일 API·실제 Gmail 연결은 아직 없다.
+공통 서버는 `GET /health`만 제공한다. DB 연결·최소 저장 구조는
+[맥북 DB 실행 안내](local-database.md)에서 별도 실행·검사한다. 메일 API·실제 Gmail 연결은 아직 없다.
 앱의 Google 연결과 다음 버튼은 비활성이며, F4 CLI가 읽은 메일을 앱에 표시하지 않는다.
 각 첫 단위는 실행·검증할 수 있고, 앱과 서버의 연결은 후속 작업이다.
 
@@ -83,7 +85,7 @@ uv run ruff format --check .
 | pnpm | 10.34.9 (루트 package.json에 고정) | JS 패키지 관리 (모노레포 workspace) |
 | Python | 3.12 | 서버 |
 | uv | 최신 | Python 패키지·가상환경 관리 |
-| Docker Desktop | 최신 | Postgres+pgvector, Redis (후속 기반 구현 후 사용) |
+| Docker Desktop | 최신 | 개발용 PostgreSQL 실행. Redis는 후속 구현 |
 | Claude Code | 최신 | 바이브 코딩 |
 
 개발은 macOS·Windows 어디서나 가능하다. 단 **트레이·토스트 알림·시작 프로그램은 Windows PC에서 최종 확인**한다.
@@ -91,7 +93,8 @@ uv run ruff format --check .
 ## 전체 앱 실행 계획 (후속 기반 구현 후 사용)
 
 아래 명령과 환경 변수는 서버·DB·수신 파이프라인이 준비된 뒤 사용하는 계획이다.
-현재는 `infra/docker-compose.yml`, `.env.example`, 작업자·마이그레이션 실행 기반이 없다.
+현재 `infra/docker-compose.yml`·`.env.example`·DB 마이그레이션은 최소 DB 단위로 준비했다.
+아래 전체 앱 실행 예시의 Redis·작업자는 아직 없으므로 현재 실행에는 로컬 DB 안내를 따른다.
 가짜 메일 자동 도착 모드와 실제 Gmail 연결도 아직 구현되지 않았다.
 현재 실행할 명령은 위의 F0·공통 서버·F4 첫 단위 절차를 따른다.
 

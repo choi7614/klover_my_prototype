@@ -4,8 +4,12 @@ version = "0.1.0"
 description = "Klover 공통 HTTP 서버와 F4 보고 입력 준비"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.15,<2",
     "fastapi>=0.115,<1",
     "pydantic>=2.10,<3",
+    "psycopg[binary]>=3.2,<4",
+    "python-dotenv>=1,<2",
+    "sqlalchemy>=2.0,<3",
     "tzdata>=2025.2",
     "uvicorn>=0.34,<1",
 ]

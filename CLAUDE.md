@@ -48,7 +48,7 @@ scripts/         시드, 타입 생성 등
 ## 명령
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d     # DB, Redis
+docker compose --env-file .env -f infra/docker-compose.yml up -d --wait  # 개발용 DB
 cd apps/server && uv run uvicorn app.main:app --reload  # 서버
 cd apps/server && uv run pytest                      # 서버 테스트
 pnpm --filter desktop dev                            # 앱
