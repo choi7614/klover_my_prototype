@@ -1,0 +1,220 @@
+/* =====================================================================
+   Klover Design Tokens v1.0  (2026-10-20)
+   - Tailwind CSS v4 + shadcn/ui 형식
+   - 사용법: apps/desktop/src/renderer/styles/globals.css 에 이 파일 내용을 그대로 넣는다.
+     (shadcn init 이 만든 :root / @theme inline 블록을 이 파일로 교체)
+   - 화면 코드에서는 아래 토큰 이름(bg-primary, text-ai, bg-cat-work-bg …)만 쓴다.
+     임의 색상값(#xxxxxx, bg-[#...])은 쓰지 않는다.
+   - 기준 문서: docs/design/design-system.md
+   ===================================================================== */
+
+@import "tailwindcss";
+
+/* 1) 원색 팔레트 (Primitive) ------------------------------------------- */
+@theme {
+  /* Clover Green — 브랜드 */
+  --color-clover-50:  #ECF8F1;
+  --color-clover-100: #D2EFDE;
+  --color-clover-200: #A6DEBD;
+  --color-clover-300: #6FC795;
+  --color-clover-400: #3DAE6F;
+  --color-clover-500: #1F9D55;  /* 로고 */
+  --color-clover-600: #158446;  /* 주요 버튼 (흰 글자 대비 4.75:1) */
+  --color-clover-700: #116B39;
+  --color-clover-800: #0E552E;
+  --color-clover-900: #0B4426;
+
+  /* Violet — AI 전용 */
+  --color-violet-50:  #F1F0FD;
+  --color-violet-100: #E3E1FB;
+  --color-violet-200: #C8C3F7;
+  --color-violet-300: #A39BF0;
+  --color-violet-400: #7E74E8;
+  --color-violet-500: #5B4FE0;  /* AI 기본 */
+  --color-violet-600: #4B3FCC;
+  --color-violet-700: #3D33A8;
+
+  /* Neutral — 글자·배경·선 */
+  --color-gray-0:   #FFFFFF;
+  --color-gray-25:  #FAFBFC;
+  --color-gray-50:  #F5F6F8;
+  --color-gray-100: #ECEEF1;
+  --color-gray-200: #E1E4E8;
+  --color-gray-300: #C9CED5;
+  --color-gray-400: #9AA1AC;
+  --color-gray-500: #646B77;
+  --color-gray-600: #4B5361;
+  --color-gray-700: #353B46;
+  --color-gray-800: #22262E;
+  --color-gray-900: #14171C;
+
+  /* 글꼴 */
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Segoe UI",
+               "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, monospace;
+
+  /* 글자 크기 (4단계 + 표시용 1단계) */
+  --text-caption: 12px;  --text-caption--line-height: 16px;
+  --text-body:    14px;  --text-body--line-height: 20px;
+  --text-title:   16px;  --text-title--line-height: 24px;
+  --text-heading: 20px;  --text-heading--line-height: 28px;
+  --text-display: 28px;  --text-display--line-height: 36px;
+
+  /* 그림자 (팝오버·알림에만) */
+  --shadow-pop: 0 8px 24px rgb(20 23 28 / 0.12), 0 2px 6px rgb(20 23 28 / 0.08);
+  --shadow-toast: 0 12px 32px rgb(20 23 28 / 0.28);
+
+  /* 움직임 */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 2) 의미 토큰 (Semantic) — shadcn/ui 변수 이름 그대로 ------------------- */
+:root {
+  --radius: 8px;
+
+  --background: var(--color-gray-0);
+  --foreground: var(--color-gray-900);
+
+  --card: var(--color-gray-0);
+  --card-foreground: var(--color-gray-900);
+  --popover: var(--color-gray-0);
+  --popover-foreground: var(--color-gray-900);
+
+  --primary: var(--color-clover-600);           /* 새 메일, 보내기, 캘린더에 추가, 저장 */
+  --primary-foreground: var(--color-gray-0);
+  --primary-hover: var(--color-clover-700);
+
+  --secondary: var(--color-gray-0);             /* 테두리 버튼 */
+  --secondary-foreground: var(--color-gray-800);
+
+  --muted: var(--color-gray-50);                /* 사이드바·패널 배경 */
+  --muted-foreground: var(--color-gray-500);    /* 날짜·보조 글자 */
+
+  --accent: var(--color-gray-100);              /* hover 배경 */
+  --accent-foreground: var(--color-gray-900);
+
+  --selected: var(--color-clover-50);           /* 선택된 메일·메뉴 배경 */
+  --selected-foreground: var(--color-clover-700);
+  --selected-bar: var(--color-clover-500);      /* 선택 행 왼쪽 막대 */
+
+  --destructive: #DC2626;
+  --destructive-foreground: var(--color-gray-0);
+
+  --border: var(--color-gray-200);
+  --input: var(--color-gray-300);
+  --ring: var(--color-clover-400);
+
+  /* AI — AI가 만든 모든 것 (요약, ◆, 초안, 칩, 제안) */
+  --ai: var(--color-violet-500);
+  --ai-foreground: var(--color-gray-0);
+  --ai-subtle: var(--color-violet-50);
+  --ai-border: var(--color-violet-200);
+  --ai-text: var(--color-violet-600);
+  --ai-highlight: #E9E6FD;                       /* 본문 근거 문장 강조 */
+
+  /* 상태 */
+  --warning: #B45309;  --warning-subtle: #FFF7EB;  --warning-border: #F5C98A;
+  --danger:  #B91C1C;  --danger-subtle:  #FEF2F2;  --danger-border:  #F9C6C6;
+  --success: var(--color-clover-700); --success-subtle: var(--color-clover-50);
+
+  /* 카테고리 7종 (글자 / 배경 / 점) */
+  --cat-work-fg: #1D4ED8;       --cat-work-bg: #E8F0FE;       --cat-work-dot: #3B82F6;
+  --cat-meeting-fg: #15803D;    --cat-meeting-bg: #E7F7EC;    --cat-meeting-dot: #22C55E;
+  --cat-approval-fg: #C2410C;   --cat-approval-bg: #FFF0E5;   --cat-approval-dot: #F97316;
+  --cat-report-fg: #8A5A12;     --cat-report-bg: #FBF3DE;     --cat-report-dot: #D4A017;
+  --cat-notice-fg: #4B5563;     --cat-notice-bg: #F1F2F4;     --cat-notice-dot: #9CA3AF;
+  --cat-external-fg: #BE123C;   --cat-external-bg: #FFE9EE;   --cat-external-dot: #F43F5E;
+  --cat-newsletter-fg: #5F6672; --cat-newsletter-bg: #F5F6F8; --cat-newsletter-dot: #C9CED5;
+
+  /* 사이드바 (shadcn sidebar 컴포넌트용) */
+  --sidebar: var(--color-gray-50);
+  --sidebar-foreground: var(--color-gray-700);
+  --sidebar-primary: var(--color-clover-600);
+  --sidebar-primary-foreground: var(--color-gray-0);
+  --sidebar-accent: var(--color-gray-100);
+  --sidebar-accent-foreground: var(--color-gray-900);
+  --sidebar-border: var(--color-gray-200);
+  --sidebar-ring: var(--color-clover-400);
+}
+
+/* 3) Tailwind 클래스로 노출 — bg-primary, text-ai, bg-cat-work-bg … -------- */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 2px);   /* 6px  태그·칩 */
+  --radius-md: var(--radius);               /* 8px  버튼·입력·카드 */
+  --radius-lg: calc(var(--radius) + 4px);   /* 12px 다이얼로그·알림 */
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-selected: var(--selected);
+  --color-selected-foreground: var(--selected-foreground);
+  --color-selected-bar: var(--selected-bar);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
+  --color-ai-subtle: var(--ai-subtle);
+  --color-ai-border: var(--ai-border);
+  --color-ai-text: var(--ai-text);
+  --color-ai-highlight: var(--ai-highlight);
+
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-border: var(--warning-border);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-border: var(--danger-border);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+
+  --color-cat-work-fg: var(--cat-work-fg);             --color-cat-work-bg: var(--cat-work-bg);             --color-cat-work-dot: var(--cat-work-dot);
+  --color-cat-meeting-fg: var(--cat-meeting-fg);       --color-cat-meeting-bg: var(--cat-meeting-bg);       --color-cat-meeting-dot: var(--cat-meeting-dot);
+  --color-cat-approval-fg: var(--cat-approval-fg);     --color-cat-approval-bg: var(--cat-approval-bg);     --color-cat-approval-dot: var(--cat-approval-dot);
+  --color-cat-report-fg: var(--cat-report-fg);         --color-cat-report-bg: var(--cat-report-bg);         --color-cat-report-dot: var(--cat-report-dot);
+  --color-cat-notice-fg: var(--cat-notice-fg);         --color-cat-notice-bg: var(--cat-notice-bg);         --color-cat-notice-dot: var(--cat-notice-dot);
+  --color-cat-external-fg: var(--cat-external-fg);     --color-cat-external-bg: var(--cat-external-bg);     --color-cat-external-dot: var(--cat-external-dot);
+  --color-cat-newsletter-fg: var(--cat-newsletter-fg); --color-cat-newsletter-bg: var(--cat-newsletter-bg); --color-cat-newsletter-dot: var(--cat-newsletter-dot);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* 4) 기본 스타일 ---------------------------------------------------------- */
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html, body { @apply bg-background text-foreground font-sans text-body antialiased; }
+  ::selection { background: var(--color-clover-100); }
+}
+
+/* 기준 토큰의 hover 값을 Tailwind 클래스에 연결한다. */
+@theme inline {
+  --color-primary-hover: var(--primary-hover);
+}
+
+@layer base {
+  #root { min-height: 100vh; }
+  body { word-break: keep-all; overflow-wrap: break-word; }
+  button:not(:disabled) { cursor: pointer; }
+}
