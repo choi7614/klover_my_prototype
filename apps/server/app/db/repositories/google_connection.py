@@ -34,7 +34,17 @@ class GoogleConnectionRepository:
                 raise GoogleConnectionError(
                     "기존 연결 계정을 보존했습니다. 계정 변경은 별도 작업입니다"
                 )
-            credential = session.get(GoogleCredential, account.account_id) if account else None
+            credential = (
+                session.scalar(
+                    select(GoogleCredential)
+                    .where(
+                        GoogleCredential.account_id == account.account_id,
+                    )
+                    .with_for_update()
+                )
+                if account
+                else None
+            )
             payload = dict(tokens)
             if not payload.get("refresh_token") and credential:
                 try:

@@ -10,7 +10,8 @@
 - `infra/docker-compose.yml`: 개발용 PostgreSQL 16+pgvector 이미지, 로컬 전용 접속·영구 볼륨.
 
 공통 서버는 `GET /health`만 제공한다. DB 연결·최소 저장 구조는
-[맥북 DB 실행 안내](local-database.md)에서 별도 실행·검사한다. 메일 API·Gmail 메일 수신은 아직 없다.
+[맥북 DB 실행 안내](local-database.md)에서 별도 실행·검사한다. 메일 API는 아직 없다.
+명령 기반 새 메일 수신·조회·토큰 갱신은 [수신 안내](gmail-mail-sync.md)를 따른다.
 
 맥북 전용 Google 로그인·계정 확인 코드는 [Google 연결 안내](google-connection.md)의
 별도 로컬 서버로 실행한다. 토큰을 암호화해 저장하며 실제 Google 접속 결과는 사용자 확인 전이다.
