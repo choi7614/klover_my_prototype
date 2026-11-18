@@ -45,7 +45,8 @@ Playwright의 Electron 자동 검사는 기본적으로 Chromium OS sandbox를 �
 
 ## 아직 연결하지 않은 부분
 
-- 실제 서버, Google OAuth 연결, 프로필·설정 저장, 메일 API는 현재 브랜치에 없다.
+- 공통 HTTP 서버는 `apps/server`의 `/health`만 제공한다. 데스크톱은 아직 서버를 호출하지 않으며,
+  Google OAuth 연결, 프로필·설정 저장, 메일 API는 없다.
 - Google 연결과 다음 버튼은 비활성이다. 연결된 계정이나 완료 상태를 만들지 않는다.
 - 2~5단계와 메일함 주소를 직접 입력해도 첫 화면으로 돌아온다.
 - 서버의 요청·응답 형식을 임의로 정하거나 `packages/api-types`를 수동 작성하지 않았다.

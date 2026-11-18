@@ -1,22 +1,34 @@
 # API 목록
 
-> 최종 수정: 2026-10-16 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
+> 최종 수정: 2026-11-18 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
 
 이 문서는 **요약 목록**이다. 엔드포인트를 추가·변경하면 여기에 한 줄 반영하고, `packages/api-types`의 타입을 다시 생성한다.
 
-> 구현 상태 (2026-11-12): 아래는 설계 목록이다. 현재 실행 가능한 HTTP 서버와
-> 보고서 API는 없다. F4 첫 단위는 내부 메일 조회 서비스·저장소 계약·fixture CLI만
-> 제공하며 엔드포인트를 추가하지 않는다. 진행 상태는
-> [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
+> 구현 상태 (2026-11-18): 공통 HTTP 서버와 `GET /health`만 실행 가능하다.
+> 아래 업무 API·WebSocket은 아직 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
+> fixture CLI를 유지하며 보고서 HTTP API를 제공하지 않는다.
+> [서버 실행 안내](../../apps/server/README.md)와 [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
 
 ## 공통
 
 - 기본 주소: `http://localhost:8000` (데모)
-- 인증: 앱 로그인 후 받은 토큰을 `Authorization: Bearer` 헤더로 전달
+- 업무 API 인증 계획: 앱 로그인 후 받은 토큰을 `Authorization: Bearer` 헤더로 전달 (미구현)
+- `/health`와 개발용 `/docs`·`/openapi.json`은 인증 없이 확인한다. 사용자 데이터나 연결 정보를 반환하지 않는다.
 - 날짜: ISO 8601, 시간대 Asia/Seoul
 - 오류 응답: `{ "error": { "code": "...", "message": "..." } }`
+- 현재 오류 코드: `not_found`(404), `method_not_allowed`(405), `validation_error`(422),
+  `internal_error`(500), 기타 HTTP 오류의 `http_error`. 입력값·예외 상세는 응답에 포함하지 않는다.
 
-## 엔드포인트
+## 실행 가능한 공통 API
+
+| 기능 | 메서드 | 경로 | 설명 |
+| --- | --- | --- | --- |
+| 공통 | GET | `/health` | HTTP 프로세스 응답 확인. 200 `{"status":"ok"}`. DB·Gmail·AI 준비 상태는 확인하지 않음 |
+
+실제 앱의 OpenAPI에서 `pnpm gen:api-types`로 `packages/api-types`를 생성한다.
+서버 실행이나 외부 API 연결 없이 생성 가능하며 생성 파일을 직접 수정하지 않는다.
+
+## 업무 엔드포인트 (설계·미구현)
 
 | 기능 | 메서드 | 경로 | 설명 |
 | --- | --- | --- | --- |
@@ -45,7 +57,7 @@
 | F5 | POST | `/suggestions/{id}/dismiss` | 무시 |
 | F5 | GET·POST·PATCH | `/todos` | 할 일 |
 
-## WebSocket `/ws`
+## WebSocket `/ws` (설계·미구현)
 
 | 이벤트 | 내용 | 앱 동작 |
 | --- | --- | --- |
