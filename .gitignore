@@ -15,5 +15,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+.local-secrets/
+client_secret*.json
 *.log
 apps/desktop/*.config.*.mjs
