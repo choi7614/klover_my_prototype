@@ -65,6 +65,14 @@ def create_google_app(settings, connector, repository) -> FastAPI:
             "테스트 Gmail 계정의 읽기 권한을 요청합니다. 메일 수신·발송은 아직 실행하지 않습니다.",
             form=form,
         )
+        # no-referrer는 폼 POST의 Origin도 null로 만들어 정상 출처 검증을 막는다.
+        # 비밀 값이 없는 시작 화면은 같은 출처를 유지하고 콜백의 no-referrer는 보존한다.
+        response.headers["Referrer-Policy"] = "same-origin"
+        # 브라우저가 폼의 303 이동도 검사하므로 고정 Google 인증 출처만 허용한다.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; form-action 'self' https://accounts.google.com; "
+            "frame-ancestors 'none'"
+        )
         response.set_cookie(COOKIE, browser, max_age=600, httponly=True, samesite="lax", path=PATH)
         return response
 

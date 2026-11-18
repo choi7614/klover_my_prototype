@@ -74,6 +74,10 @@ def begin(client):
     browser = client.cookies[COOKIE]
     assert "HttpOnly" in page.headers["set-cookie"]
     assert "SameSite=lax" in page.headers["set-cookie"]
+    assert page.headers["referrer-policy"] == "same-origin"
+    assert (
+        "form-action 'self' https://accounts.google.com;" in page.headers["content-security-policy"]
+    )
     response = client.post(
         "/auth/google",
         data={"csrf": browser},
@@ -100,6 +104,7 @@ def test_browser_flow_exchanges_code_confirms_email_and_never_returns_tokens(set
         assert ACCESS not in result.text and REFRESH not in result.text
         assert "no-store" in result.headers["cache-control"]
         assert result.headers["referrer-policy"] == "no-referrer"
+        assert "form-action 'self';" in result.headers["content-security-policy"]
         assert COOKIE not in client.cookies
         assert len(repository.saved) == 1
         replay = client.get(
@@ -140,6 +145,8 @@ def test_csrf_origin_and_nonlocal_requests_are_rejected(settings):
     with client_for(settings, repository) as client:
         client.get("/auth/google")
         for headers, data in [
+            ({}, {"csrf": client.cookies[COOKIE]}),
+            ({"origin": "null"}, {"csrf": client.cookies[COOKIE]}),
             ({"origin": "https://outside.invalid"}, {"csrf": client.cookies[COOKIE]}),
             ({"origin": "http://localhost:8000"}, {"csrf": "bad"}),
             ({"origin": "http://localhost:8000"}, {"csrf": "한글"}),

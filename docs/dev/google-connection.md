@@ -100,7 +100,11 @@ Google의 외부·테스트 앱 정책에 따라 갱신 토큰이 약 7일 뒤 �
   `localhost:8000` 호스트와 루프백 접속만 허용하고 프록시 헤더를 신뢰하지 않는다.
 - 연결 시작은 같은 출처의 폼·브라우저 쿠키를 확인한다. state는 브라우저에 묶인 10분·일회용이며
   PKCE S256을 함께 사용한다. 서버 재시작 시 진행 중 로그인은 처음부터 다시 해야 한다.
-- 브라우저 쿠키는 HttpOnly·SameSite=Lax, 응답은 no-store·no-referrer·프레임 금지다.
+- 브라우저 쿠키는 HttpOnly·SameSite=Lax, 응답은 no-store·프레임 금지다.
+  비밀 값이 없는 연결 시작 폼은 `Referrer-Policy: same-origin`으로 정상 POST의 Origin을
+  유지하고, 폼 이동에는 자신의 출처와 고정 `https://accounts.google.com`만 허용한다.
+  콜백 결과와 Google으로의 303 응답은 `no-referrer`를 유지한다. Origin 누락·null·외부 출처는
+  허용하지 않으며 기존 폼 토큰·state·PKCE 검증도 그대로다.
 - 전용 실행 명령은 접근 로그를 끄고 외부 응답·비밀 값을 오류 문구에 포함하지 않는다.
 - access/refresh 토큰·권한·만료 시각은 하나의 Fernet 인증 암호문으로 저장한다. 키는 DB에 저장하지 않는다.
 - 고정 로컬 운영자 `local-development`의 Gmail 한 계정만 연결한다. 연결이 기존 다른 계정을
