@@ -1,0 +1,24 @@
+"""DB·메일 계정·AI 키 없이 실행 가능한 공통 HTTP 서버."""
+
+from fastapi import FastAPI
+
+from app.api.errors import register_error_handlers
+from app.api.health import router as health_router
+from app.schemas.common import ErrorResponse
+
+
+def create_app() -> FastAPI:
+    application = FastAPI(
+        title="Klover API",
+        version="0.1.0",
+        responses={
+            422: {"model": ErrorResponse, "description": "요청 형식 오류"},
+            500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+        },
+    )
+    register_error_handlers(application)
+    application.include_router(health_router)
+    return application
+
+
+app = create_app()

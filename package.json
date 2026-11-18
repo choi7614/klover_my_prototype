@@ -10,6 +10,7 @@
     "typecheck": "pnpm --filter desktop typecheck",
     "test": "pnpm --filter desktop test",
     "test:e2e": "pnpm --filter desktop test:e2e",
-    "test:electron": "pnpm --filter desktop test:electron"
+    "test:electron": "pnpm --filter desktop test:electron",
+    "gen:api-types": "uv run --directory apps/server python -m app.cli.export_openapi --output ../../packages/api-types/openapi.json && pnpm --filter @klover/api-types generate"
   }
 }

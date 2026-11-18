@@ -27,6 +27,9 @@ scripts/         시드, 타입 생성 등
 
 ## 작업 규칙
 
+브랜치·승인 절차는 루트 [AGENTS.md](AGENTS.md)의 공통 규칙을 따른다.
+변경·검사 결과를 한 번 보고한 뒤 로컬 통합·커밋·Push·PR 생성은 묶어서 승인받고, `develop` 병합과 `main` 병합은 각각 별도 승인받는다.
+
 1. **문서가 기준이다.** 정의서와 다르게 구현해야 하면 먼저 사용자에게 묻고, 정해지면 정의서와 `docs/product/decisions.md`를 고친다.
 2. 기능을 끝내면 정의서의 **수용 기준** 체크리스트를 하나씩 확인하고 결과를 보고한다.
 3. 정의서에 없는 기능을 임의로 추가하지 않는다. '이번 범위 아님'에 적힌 것은 만들지 않는다.
@@ -46,7 +49,7 @@ scripts/         시드, 타입 생성 등
 
 ```bash
 docker compose -f infra/docker-compose.yml up -d     # DB, Redis
-cd apps/server && uv run fastapi dev app/main.py     # 서버
+cd apps/server && uv run uvicorn app.main:app --reload  # 서버
 cd apps/server && uv run pytest                      # 서버 테스트
 pnpm --filter desktop dev                            # 앱
 pnpm --filter desktop lint && pnpm --filter desktop typecheck

@@ -1,15 +1,16 @@
 # 개발 환경 준비
 
-> 최종 수정: 2026-11-18 | F0 데스크톱 첫 화면·F4 보고 입력 준비
+> 최종 수정: 2026-11-18 | F0 첫 화면·공통 HTTP 서버·F4 보고 입력 준비
 
 ## 현재 실행 가능한 범위
 
 - `apps/desktop/`: Electron + React + TypeScript 앱의 첫 실행 시작 화면.
-- `apps/server/`: 지정한 가짜 메일로 F4 보고 입력을 준비하는 Python 서비스·CLI.
+- `apps/server/`: 공통 HTTP 서버의 상태 확인 API와 기존 F4 보고 입력 준비 서비스·CLI.
+- `packages/api-types/`: 실제 서버 OpenAPI에서 자동 생성하는 TypeScript 타입.
 
-실행 가능한 HTTP 서버·DB·메일 API·실제 Gmail 연결은 아직 없다.
+공통 서버는 `GET /health`만 제공한다. DB·메일 API·실제 Gmail 연결은 아직 없다.
 앱의 Google 연결과 다음 버튼은 비활성이며, F4 CLI가 읽은 메일을 앱에 표시하지 않는다.
-두 첫 단위는 각각 실행·검증할 수 있고, 앱과 서버의 연결은 후속 작업이다.
+각 첫 단위는 실행·검증할 수 있고, 앱과 서버의 연결은 후속 작업이다.
 
 ## 데스크톱 실행·검증 (F0 첫 단위)
 
@@ -32,6 +33,24 @@ corepack pnpm --filter desktop build
 
 브라우저·Electron 실행 검증 방법과 미구현 범위는
 [`apps/desktop/README.md`](../../apps/desktop/README.md)에 있다.
+
+## 공통 HTTP 서버 실행·상태 확인
+
+저장소 루트에서 새 터미널을 열어 실행한다. DB·Redis·계정 연결이나 API 키는 필요하지 않다.
+
+```bash
+cd apps/server
+uv sync --locked
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+서버를 켠 상태로 새 터미널에서 `curl http://127.0.0.1:8000/health`를 실행하거나
+브라우저로 같은 주소를 열면 `{"status":"ok"}`가 나온다. 이는 HTTP 프로세스가
+응답한다는 뜻이며 DB·Gmail 연결 완료를 뜻하지 않는다. `/docs`에서 현재 API를 확인한다.
+포트가 사용 중이면 실행 옵션과 확인 주소에 같은 다른 포트 번호를 사용한다.
+
+서버 검사와 공유 타입 생성 방법은 [서버 실행 안내](../../apps/server/README.md)를 따른다.
+API 변경 후 저장소 루트에서 `corepack pnpm gen:api-types`로 타입을 다시 생성한다.
 
 ## 보고 입력 준비·검증 (F4 첫 단위)
 
@@ -72,9 +91,9 @@ uv run ruff format --check .
 ## 전체 앱 실행 계획 (후속 기반 구현 후 사용)
 
 아래 명령과 환경 변수는 서버·DB·수신 파이프라인이 준비된 뒤 사용하는 계획이다.
-현재는 `infra/docker-compose.yml`, `.env.example`, FastAPI·작업자·마이그레이션 실행 기반이 없다.
+현재는 `infra/docker-compose.yml`, `.env.example`, 작업자·마이그레이션 실행 기반이 없다.
 가짜 메일 자동 도착 모드와 실제 Gmail 연결도 아직 구현되지 않았다.
-현재 실행할 명령은 위의 F0·F4 첫 단위 절차를 따른다.
+현재 실행할 명령은 위의 F0·공통 서버·F4 첫 단위 절차를 따른다.
 
 ### 처음 한 번
 
@@ -91,7 +110,7 @@ uv run alembic upgrade head       # DB 테이블 생성
 
 ```bash
 # 터미널 1 — 서버
-cd apps/server && uv run fastapi dev app/main.py
+cd apps/server && uv run uvicorn app.main:app --reload
 
 # 터미널 2 — 작업자 (수신·분석 파이프라인)
 cd apps/server && uv run arq workers.main.WorkerSettings

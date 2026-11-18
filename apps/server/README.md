@@ -1,0 +1,64 @@
+# Klover 공통 서버 — 첫 단위
+
+FastAPI HTTP 서버를 실행하고 `GET /health`로 프로세스 응답을 확인한다.
+기존 F4 보고 입력 준비 서비스·CLI는 같은 프로젝트에서 그대로 사용한다.
+
+## 실행과 확인
+
+Python 3.12 이상과 uv를 사용한다. 저장소 루트에서:
+
+```bash
+cd apps/server
+uv sync --locked
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+서버를 켠 상태로 새 터미널에서 확인한다.
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+정상 응답은 HTTP 200과 `{"status":"ok"}`다. 브라우저에서도 같은 주소를 열 수 있다.
+`/docs`는 API 문서, `/openapi.json`은 현재 앱에서 생성한 API 명세다.
+포트가 사용 중이면 `--port 8010`처럼 바꾸고 확인 주소에도 같은 포트를 쓴다.
+개발 중 자동 재시작이 필요하면 `uv run uvicorn app.main:app --reload`를 사용할 수 있다.
+
+`/health`는 인증·DB·Redis·Google·AI 키 없이 실행한다. HTTP 프로세스의 응답만 확인하며,
+DB 연결이나 Gmail 동기화·기능 준비 완료를 뜻하지 않는다. 현재 업무 API와 WebSocket은 없다.
+앱의 Google 연결·설정 진행 버튼은 여전히 비활성이다.
+
+## 오류와 검증
+
+오류는 `{"error":{"code":"...","message":"..."}}` 형식으로 반환한다.
+없는 경로는 404, 허용되지 않은 요청 방식은 405, 입력 형식 오류는 422,
+내부 오류는 500이다. 응답에 입력값·예외 상세를 포함하지 않는다.
+
+`apps/server`에서 실행한다.
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
+
+검사는 기존 F4 시나리오와 HTTP 응답·오류·OpenAPI 내보내기, 실제 Uvicorn 프로세스
+시작과 로컬 HTTP 요청을 포함한다. 프로세스 검사는 빈 포트를 골라 실행한 뒤 종료한다.
+
+## 공유 타입 생성
+
+서버 API를 추가·변경한 뒤 저장소 루트에서 실행한다.
+
+```bash
+corepack pnpm install --frozen-lockfile
+corepack pnpm gen:api-types
+corepack pnpm --filter @klover/api-types typecheck
+```
+
+서버를 켜거나 외부 서비스에 연결할 필요 없이 실제 앱의 OpenAPI에서 생성한다.
+`packages/api-types/openapi.json`과 `src/schema.d.ts`는 자동 생성 결과로 직접 수정하지 않는다.
+
+## 후속 단위
+
+DB·마이그레이션·실제 저장소 → 인증·메일 API·가짜 메일 수신 → F0·F1 연결 → 실제 Gmail
+순서로 진행한다. F4의 메일 조회 계약은 실제 DB 어댑터를 추가할 때 재사용한다.
