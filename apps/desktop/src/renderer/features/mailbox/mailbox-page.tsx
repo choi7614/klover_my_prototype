@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Archive, File, Inbox, PenLine, RefreshCw, Send, Settings, Trash2 } from 'lucide-react';
 import logo from '@brand/klover-logo.svg';
 import mark from '@brand/klover-mark.svg';
@@ -13,20 +13,32 @@ const timestamp = (value: string) => dateFormatter.format(new Date(value));
 const subject = (value: string) => value || '(제목 없음)';
 const isAuthenticationError = (error: MailError) => ['unauthorized', 'forbidden', 'configuration'].includes(error.code);
 
-export function MailboxPage({ api, session, onDisconnected }: {
+// 다른 화면(F2·F3)으로의 이동은 해시 경로만 바꾼다. 실제 화면 등록은 공통 App이 맡는다.
+const go = (path: string) => { window.location.hash = path; };
+
+export function MailboxPage({ api, session, onDisconnected, initialMailId = null }: {
   api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void;
+  /** 검색 결과 등에서 특정 메일을 열고 들어올 때 처음 선택할 메일 */
+  initialMailId?: string | null;
 }) {
   const [mails, setMails] = useState<MailSummary[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<MailError | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialMailId);
   const [detail, setDetail] = useState<MailDetail | null>(null);
   const [detailError, setDetailError] = useState<MailError | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailRetry, setDetailRetry] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<MailError | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const searchInput = useRef<HTMLInputElement>(null);
   const listRequest = useRef(0);
   const busy = useRef(false);
+  const mounted = useRef(true);
+  const canSync = typeof api.sync === 'function';
 
   const loadList = useCallback(async (nextCursor: string | null = null) => {
     if (busy.current) return;
@@ -34,7 +46,7 @@ export function MailboxPage({ api, session, onDisconnected }: {
     const request = ++listRequest.current;
     setLoading(true);
     setListError(null);
-    if (!nextCursor) { setMails([]); setCursor(null); setSelected(null); setDetail(null); }
+    if (!nextCursor) { setMails([]); setCursor(null); }
     const result = await api.inbox({ limit: 20, cursor: nextCursor }).catch(() => mailFailure('connection'));
     if (request !== listRequest.current) return;
     busy.current = false;
@@ -53,6 +65,51 @@ export function MailboxPage({ api, session, onDisconnected }: {
     void loadList();
     return () => { ++listRequest.current; busy.current = false; };
   }, [loadList]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  // 새로고침: Gmail에서 새 받은 메일을 가져온 뒤(서버) 저장된 목록을 처음부터 다시 읽는다.
+  // 가져오기에 실패하면 기존 목록을 그대로 두고 오류와 다시 시도를 보여 준다.
+  const refresh = useCallback(async () => {
+    if (syncing || busy.current) return;
+    setSyncNotice(null);
+    setSyncError(null);
+    if (api.sync) {
+      setSyncing(true);
+      const result = await api.sync().catch(() => mailFailure('connection'));
+      if (!mounted.current) return;
+      setSyncing(false);
+      if (!result.ok) {
+        if (isAuthenticationError(result.error)) onDisconnected(result.error);
+        else setSyncError(result.error);
+        return;
+      }
+      setSyncNotice(result.data.saved > 0 ? `새 메일 ${result.data.saved}건을 가져왔습니다.` : '새로 도착한 메일이 없습니다.');
+    }
+    setSelected(null);
+    setDetail(null);
+    await loadList();
+  }, [api, loadList, onDisconnected, syncing]);
+
+  // S03: 상단 검색창은 누르거나 Ctrl K로 입력하고 Enter로 검색 화면(S07)에 간다.
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        searchInput.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', focusSearch);
+    return () => window.removeEventListener('keydown', focusSearch);
+  }, []);
+  const submitSearch = (event: FormEvent) => {
+    event.preventDefault();
+    const query = searchText.trim();
+    if (query) go(`/search?q=${encodeURIComponent(query)}`);
+  };
 
   useEffect(() => {
     let active = true;
@@ -75,7 +132,15 @@ export function MailboxPage({ api, session, onDisconnected }: {
     <main className="flex h-screen min-h-[640px] min-w-[1000px] flex-col bg-background">
       <header className="flex h-14 shrink-0 items-center gap-6 border-b px-5">
         <img src={logo} alt="Klover" className="h-[26px] w-[176px] object-contain object-left" />
-        <span className="text-caption text-muted-foreground">읽기 전용</span>
+        <form role="search" onSubmit={submitSearch} className="flex h-10 min-w-0 max-w-[720px] flex-1 items-center gap-2 rounded-full border bg-background px-4 focus-within:border-ai focus-within:ring-2 focus-within:ring-ai-border">
+          <span className="text-ai" aria-hidden="true">◆</span>
+          <label htmlFor="mailbox-search" className="sr-only">자연어 검색</label>
+          <input id="mailbox-search" ref={searchInput} type="search" value={searchText} onChange={event => setSearchText(event.target.value)}
+            maxLength={500} placeholder="무엇이든 물어보세요. 예: 지난주 영업기획팀이 보낸 예산 관련 메일"
+            className="min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-muted-foreground" />
+          <kbd className="shrink-0 rounded border px-1.5 text-caption text-muted-foreground">Ctrl K</kbd>
+          <button type="submit" className="sr-only">검색</button>
+        </form>
         <span className="ml-auto truncate text-body" title={session.email}>{session.email}</span>
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-selected text-selected-foreground" aria-hidden="true">{session.email.slice(0, 1).toUpperCase()}</span>
       </header>
@@ -91,15 +156,21 @@ export function MailboxPage({ api, session, onDisconnected }: {
             return <button key={String(label)} disabled className="flex h-[34px] items-center gap-2 px-3 text-body text-muted-foreground opacity-40"><Component className="size-4" aria-hidden="true" />{String(label)}</button>;
           })}
           <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능 · 준비 중</p>
-          <button disabled className="mt-auto flex items-center gap-2 px-3 py-2 text-body text-muted-foreground opacity-40"><Settings className="size-4" aria-hidden="true" />설정</button>
+          <a href="#/settings/profile" className="mt-auto flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
         </aside>
         <section className="flex w-[360px] shrink-0 flex-col border-r max-[1280px]:w-[320px]" aria-label="받은 메일 목록">
           <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
             <h1 className="text-body font-semibold">받은편지함</h1>
             <span className="text-caption text-muted-foreground">{mails.length ? `${mails.length}건 불러옴` : ''}</span>
-            <Button variant="secondary" className="ml-auto px-2" disabled={loading} onClick={() => void loadList()} aria-label="목록 새로고침" title="저장된 메일 목록 다시 불러오기"><RefreshCw aria-hidden="true" /></Button>
+            <Button variant="secondary" className="ml-auto px-2" disabled={loading || syncing} onClick={() => void refresh()} aria-label="목록 새로고침"
+              title={canSync ? 'Gmail에서 새 메일 가져오기' : '저장된 메일 목록 다시 불러오기'}><RefreshCw className={cn(syncing && 'animate-spin')} aria-hidden="true" /></Button>
           </div>
-          <p className="border-b px-4 py-2 text-caption text-muted-foreground">최신 수신순 · 새로고침은 저장된 메일만 조회합니다.</p>
+          <p className="border-b px-4 py-2 text-caption text-muted-foreground">
+            {canSync ? '최신 수신순 · 새로고침하면 Gmail에서 새 메일을 가져옵니다.' : '최신 수신순 · Gmail 가져오기 연결 준비 중이라 저장된 메일만 다시 읽습니다.'}
+          </p>
+          {syncing && <p role="status" className="border-b bg-muted px-4 py-2 text-caption text-muted-foreground">Gmail에서 새 메일 확인 중…</p>}
+          {syncNotice && !syncing && <p role="status" className="border-b px-4 py-2 text-caption text-muted-foreground">{syncNotice}</p>}
+          {syncError && <div role="alert" className="border-b px-4 py-3 text-caption text-danger"><p>{syncError.message}</p><Button variant="secondary" className="mt-2" onClick={() => void refresh()}>새 메일 다시 가져오기</Button></div>}
           <div className="min-h-0 flex-1 overflow-y-auto" aria-busy={loading}>
             {loading && !mails.length && <div role="status" className="space-y-3 p-4"><span className="sr-only">메일 목록 불러오는 중</span>{[1, 2, 3, 4].map(key => <div key={key} className="h-20 animate-pulse rounded-md bg-muted" />)}</div>}
             {!loading && !listError && !mails.length && <div className="p-6 text-center"><img src={mark} alt="" className="mx-auto mb-5 size-16" /><h2 className="text-title font-semibold">받은편지함이 비어 있습니다</h2><p className="mt-3 text-body text-muted-foreground">사용 시작 이후 수신해 저장한 메일이 여기에 표시됩니다. 이전 메일은 가져오지 않습니다.</p></div>}
@@ -117,6 +188,11 @@ export function MailboxPage({ api, session, onDisconnected }: {
           {!selected && <p className="flex h-full items-center justify-center text-body text-muted-foreground">메일을 선택하세요</p>}
           {detailLoading && <div role="status" className="space-y-4 p-7"><span className="sr-only">메일 본문 불러오는 중</span><div className="h-7 animate-pulse rounded-md bg-muted" /><div className="h-40 animate-pulse rounded-md bg-muted" /></div>}
           {detailError && <div role="alert" className="p-7 text-body text-danger"><p>{detailError.message}</p><Button variant="secondary" className="mt-3" onClick={() => setDetailRetry(value => value + 1)}>본문 다시 시도</Button></div>}
+          {selected && <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-background px-5">
+            <a href={`#/reply/${encodeURIComponent(selected)}`}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-ai px-3 text-body font-semibold text-ai-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <span aria-hidden="true">◆</span>답장 초안 만들기</a>
+          </div>}
           {detail && <article className="mx-auto max-w-[816px] px-7 py-5">
             <h2 className="break-words text-heading font-bold">{subject(detail.subject)}</h2>
             <div className="my-4 space-y-1 border-b pb-4 text-body">
