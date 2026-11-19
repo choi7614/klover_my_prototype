@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
-from app.api.mail_analysis import create_analysis_router
+from app.api.mail_analysis import register_mail_analysis
 from app.api.mail_read import MailAPIContext
 from app.main import create_app
 from tests.f1.test_storage import seed
@@ -14,9 +14,9 @@ from tests.f1.test_storage import seed
 @pytest.fixture
 def client(f1_database):
     seed(f1_database)
-    # 기존 공통 앱을 수정하지 않고 이번 테스트 인스턴스에만 F1 라우터를 연결한다.
+    # 운영 등록 전후 모두 같은 경로 하나만 쓰도록 등록 함수로 테스트 DB 엔진을 넣는다.
     application = create_app()
-    application.include_router(create_analysis_router(f1_database))
+    register_mail_analysis(application, f1_database)
     application.state.mail_api = MailAPIContext(
         token="synthetic-api-token",
         repository=SimpleNamespace(
@@ -94,3 +94,38 @@ def test_owner_injection_and_custom_categories_are_rejected(client):
 def test_operational_app_does_not_register_f1_routes():
     schema = create_app().openapi()
     assert "/mails/{mail_id}/category" not in schema["paths"]
+
+
+def registered_client(engine=None):
+    application = create_app()
+    register_mail_analysis(application, engine)
+    register_mail_analysis(application, engine)  # 두 번 불러도 경로는 한 번만 등록된다.
+    application.state.mail_api = MailAPIContext(
+        token="synthetic-api-token",
+        repository=SimpleNamespace(
+            session=lambda: SimpleNamespace(user_id="f1-user-a", account_id="f1-account-a")
+        ),
+    )
+    return TestClient(
+        application,
+        base_url="http://localhost",
+        client=("127.0.0.1", 43210),
+        headers={"Authorization": "Bearer synthetic-api-token"},
+    )
+
+
+def test_registration_without_engine_answers_503_and_writes_nothing():
+    with registered_client() as session:
+        response = session.patch("/mails/f1-001/category", json={"category": "notice"})
+        assert response.status_code == 503
+        assert response.headers["cache-control"] == "no-store"
+        paths = session.app.openapi()["paths"]
+        assert list(paths["/mails/{mail_id}/category"]) == ["patch"]
+
+
+def test_registration_with_engine_updates_category(f1_database):
+    seed(f1_database)
+    with registered_client(f1_database) as session:
+        response = session.patch("/mails/f1-001/category", json={"category": "notice"})
+        assert response.status_code == 200 and response.json()["user_label"] == "notice"
+        assert session.patch("/mails/f1-001/category", json={}).status_code == 422

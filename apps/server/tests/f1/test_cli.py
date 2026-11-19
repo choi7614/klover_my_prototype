@@ -14,11 +14,9 @@ def test_unconfigured_run_never_opens_database(monkeypatch, capsys):
 
     monkeypatch.setattr("app.cli.analyze_pending.database_engine", reject_database)
     assert main(["run", "--user-id", "synthetic-user", "--account-id", "synthetic-account"]) == 1
-    assert json.loads(capsys.readouterr().out) == {
-        "status": "not_configured",
-        "done": 0,
-        "failed": 0,
-    }
+    output = json.loads(capsys.readouterr().out)
+    assert output.pop("reason").startswith("실제 AI 제공자가 설정되지 않았습니다")
+    assert output == {"status": "not_configured", "done": 0, "failed": 0}
 
 
 def test_reanalysis_must_name_a_mail(capsys):
@@ -55,13 +53,15 @@ def test_cli_process_unconfigured_does_not_fall_back_to_a_fixture():
             "--account-id",
             "synthetic-account",
         ],
-        env={**os.environ, "DATABASE_URL": "invalid-on-purpose"},
+        env={**os.environ, "DATABASE_URL": "invalid-on-purpose", "AI_PROVIDER": ""},
         text=True,
         capture_output=True,
         timeout=10,
     )
     assert process.returncode == 1 and process.stderr == ""
-    assert json.loads(process.stdout) == {"status": "not_configured", "done": 0, "failed": 0}
+    output = json.loads(process.stdout)
+    assert output.pop("reason")
+    assert output == {"status": "not_configured", "done": 0, "failed": 0}
 
 
 def test_missing_storage_check_has_nonzero_exit(f1_database, monkeypatch, capsys):

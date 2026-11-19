@@ -6,6 +6,16 @@ from app.pipeline.analyze import AnalysisFailed, analyze
 from app.pipeline.embed import EmbeddingFailed, embed_mail
 from app.schemas.mail_analysis import AnalysisModel, AnalysisOutcome
 
+DEFAULT_TIMEOUT = 20.0
+
+
+def call_timeout(provider) -> float:
+    """제공자가 알려 준 시간 제한(재시도 포함)을 쓴다. 로컬 모델은 20초보다 느릴 수 있다."""
+    value = getattr(provider, "call_timeout", None)
+    if isinstance(value, int | float) and not isinstance(value, bool) and 0 < value <= 7200:
+        return float(value)
+    return DEFAULT_TIMEOUT
+
 
 class BatchResult(AnalysisModel):
     outcomes: tuple[AnalysisOutcome, ...]
@@ -46,8 +56,15 @@ async def process_pending(
                 break
             attempts = 0
             try:
-                result, attempts = await analyze(work.mail, llm, work.examples())
-                chunks = await embed_mail(work.mail.body_text, result.summary, embeddings)
+                result, attempts = await analyze(
+                    work.mail, llm, work.examples(), timeout=call_timeout(llm)
+                )
+                chunks = await embed_mail(
+                    work.mail.body_text,
+                    result.summary,
+                    embeddings,
+                    timeout=call_timeout(embeddings),
+                )
             except AnalysisFailed as error:
                 work.save_failure(error.code, error.attempts)
                 outcome = AnalysisOutcome(

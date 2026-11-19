@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import make_url
 
 
@@ -33,9 +33,11 @@ def f1_database(monkeypatch):
         command.upgrade(config, "head")
         patch = server.parents[1] / "integration/F1-mail-analysis/001_storage.sql"
         with engine.begin() as connection:
-            for statement in patch.read_text().split(";"):
-                if statement.strip():
-                    connection.exec_driver_sql(statement)
+            # 0007_f1 이력이 적용된 뒤에는 이력이 만든 구조를 그대로 검사한다.
+            if not inspect(connection).has_table("f1_mail_analysis"):
+                for statement in patch.read_text().split(";"):
+                    if statement.strip():
+                        connection.exec_driver_sql(statement)
         yield engine
     finally:
         engine.dispose()

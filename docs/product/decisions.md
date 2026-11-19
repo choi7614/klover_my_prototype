@@ -4,6 +4,7 @@
 
 | 날짜 | 항목 | 결정 | 이유·출처 | 반영 문서 |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | LLM·임베딩 제공자 | LLM은 `.env`의 `AI_PROVIDER`로 **Claude API**(공식 SDK, 기본 `claude-opus-5-5`, 기능별 모델 설정 가능)와 **로컬 Ollama**(Qwen 계열, 모델 태그는 `.env` 필수·미정) 중 선택. 미설정이면 미연결로 멈추고 가짜 결과로 대체하지 않음. 임베딩은 제공자와 관계없이 로컬 Ollama `bge-m3`(1024차원). Ollama는 이 컴퓨터 주소만 허용(외부 전송 없음). Claude는 보안 확인 전까지 테스트 데이터만: `AI_CLAUDE_TEST_DATA_ONLY=true` 확인 필수, F1 실행 명령은 Claude로 실제 Gmail 본문을 보내지 않음. 비용 예측을 위해 Claude 거절 시 다른 모델로 넘기는 기능은 끔, 기본 effort `low`. 2026-10-14 'LLM·임베딩 모델: 현재 외부 API' 결정을 대체 | 사용자 결정(F1 채팅) | features/F1, architecture/system, open-questions 14, dev/F1-analysis-status |
 | 2026-11-19 | 받은편지함 새로고침 | 새로고침은 `POST /mails/sync`로 Gmail에서 새 받은 메일을 가져온 뒤 목록을 다시 읽는다(기존 'DB 재조회만' 대체). CLI `gmail_mail sync`와 같은 수신 기능을 재사용해 시작 시점 이후만·중복 방지 규칙 유지. 한 번에 하나만 실행(409), 진행 중 표시·실패 문구·재시도. main/preload 연결 전에는 저장된 목록만 다시 읽고 그렇게 안내. 주기 자동 수신(WebSocket·큐)은 후속 | 사용자 요청(F0 채팅) | features/F0, architecture/api, dev/mail-read-api, dev/F0-mailbox-run |
 | 2026-11-19 | 로컬 앱의 실제 메일 열람 | 기존 Google·DB 키와 분리한 로컬 Bearer 인증으로 연결 계정·받은 메일·일반 텍스트 본문을 읽는다. 토큰은 Electron main만 보관하고 제한된 IPC로 화면에 전달. Windows 목표 유지, 맥북 개발 실행을 먼저 확인. Gmail 새 메일 저장·중복 방지는 사용자 확인, 새 조회 API·F0 화면은 실제 맥북 검증 대기 | 사용자의 서버 API 구현 및 F0 전달·맥북 실행 요청 | dev/mail-read-api, dev/F0-mail-api-handoff, architecture/api |
 | 2026-11-19 | 새 Gmail 수신 단위 | 기존 연결·시작 시점·키·메일을 보존하며 명령 기반 INBOX 수신·저장·조회·토큰 갱신 구현. 이력 만료는 같은 시작 시점으로 재조회, F0·메일 API·주기 수신은 후속. 실제 새 수신은 맥북에서 별도 확인 | 사용자 구현 요청, 이전 실제 로그인 성공 보고 | dev/gmail-mail-sync, architecture/data-model |

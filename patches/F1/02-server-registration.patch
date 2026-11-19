@@ -1,0 +1,86 @@
+diff --git a/apps/server/app/cli/run_mail_api.py b/apps/server/app/cli/run_mail_api.py
+index c612d4f..89bca36 100644
+--- a/apps/server/app/cli/run_mail_api.py
++++ b/apps/server/app/cli/run_mail_api.py
+@@ -48,6 +48,8 @@ def main():
+             SQLSearchRepository(engine),
+             SQLRecentSearchRepository(engine),
+         )
++        # F1 분류 수정(PATCH /mails/{mail_id}/category). 소유자는 기존 인증 세션에서만 정한다.
++        application.state.mail_analysis_engine = engine
+         application.state.profile_draft = F2Context(F2Repository(engine))
+         application.state.weekly_reports = WeeklyReportRuntime(engine)
+         # 실제 Calendar transport는 별도 승인·권한 확인 전까지 차단한다.
+diff --git a/apps/server/app/main.py b/apps/server/app/main.py
+index a3838bd..872f1a9 100644
+--- a/apps/server/app/main.py
++++ b/apps/server/app/main.py
+@@ -5,6 +5,7 @@ from fastapi import FastAPI
+ from app.api.errors import register_error_handlers
+ from app.api.f5 import register_f5_api
+ from app.api.health import router as health_router
++from app.api.mail_analysis import register_mail_analysis
+ from app.api.mail_read import register_mail_api
+ from app.api.mail_sync import register_mail_sync
+ from app.api.profile_draft import register_profile_draft
+@@ -26,6 +27,7 @@ def create_app() -> FastAPI:
+     application.include_router(health_router)
+     register_mail_api(application)
+     register_mail_sync(application)
++    register_mail_analysis(application)
+     register_profile_draft(application)
+     register_search_api(application)
+     register_weekly_report_api(application)
+diff --git a/apps/server/tests/f1/test_api.py b/apps/server/tests/f1/test_api.py
+index 4b66b29..db06865 100644
+--- a/apps/server/tests/f1/test_api.py
++++ b/apps/server/tests/f1/test_api.py
+@@ -91,9 +91,9 @@ def test_owner_injection_and_custom_categories_are_rejected(client):
+         assert client.patch("/mails/f1-001/category", json=payload).status_code == 422
+ 
+ 
+-def test_operational_app_does_not_register_f1_routes():
++def test_operational_app_registers_f1_category_route():
+     schema = create_app().openapi()
+-    assert "/mails/{mail_id}/category" not in schema["paths"]
++    assert list(schema["paths"]["/mails/{mail_id}/category"]) == ["patch"]
+ 
+ 
+ def registered_client(engine=None):
+diff --git a/apps/server/tests/test_http_server.py b/apps/server/tests/test_http_server.py
+index 2ce98de..4e0aec7 100644
+--- a/apps/server/tests/test_http_server.py
++++ b/apps/server/tests/test_http_server.py
+@@ -74,6 +74,7 @@ def test_openapi_describes_only_implemented_api_and_its_response():
+         "/mails",
+         "/mails/sync",
+         "/mails/{mail_id}",
++        "/mails/{mail_id}/category",
+         "/profile",
+         "/profile/preview",
+         "/profile/style",
+diff --git a/docs/architecture/api.md b/docs/architecture/api.md
+index f81c7fa..639d548 100644
+--- a/docs/architecture/api.md
++++ b/docs/architecture/api.md
+@@ -115,7 +115,6 @@
+ | F0 | POST | `/mails/{mail_id}/spam` | 스팸 처리 |
+ | F0 | DELETE | `/mails/{mail_id}` | 삭제 |
+ | F0 | GET·PUT | `/settings/notifications` | 알림·시작 프로그램 설정 |
+-| F1 | PATCH | `/mails/{mail_id}/category` | 사용자 분류 수정 |
+ | F1 | GET | `/mails/counts` | 스마트 보기·카테고리별 건수 |
+ | F2 | GET·PUT | `/profile` | 프로필 조회·저장 |
+ | F2 | GET·DELETE | `/profile/style` | 문체 학습 결과 조회·삭제 |
+@@ -183,3 +182,12 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
+ 503으로 종료하며 대역으로 대체하지 않는다. 운영 서비스는 run_mail_api에서 조립한다.
+ 사용자·계정은 요청 본문에서 받지 않고, 편집은 expected_revision과 근거를 검증한다.
+ 일정 예약·내보내기·발송 경로는 추가하지 않는다.
++
++## F1 분류 수정 (공통 패치 적용 후)
++
++`PATCH /mails/{mail_id}/category`를 등록한다. 기존 로컬 Bearer·Origin·연결 계정 검사를 그대로
++쓰고, 본문은 `{category: 영문 분류 키 7종}`만 받는다(user_id/account_id를 받지 않는다).
++응답은 `{mail_id, user_label, effective_category}`, 다른 사용자·없는 메일은 같은 404,
++저장소 미연결은 503이다. 수정은 `f1_mail_analysis.user_label`과 `f1_category_feedback`에
++기록되고 청크의 필터 분류도 갱신한다. 엔진은 run_mail_api가 `app.state.mail_analysis_engine`에
++넣는다. 목록·상세 GET의 AI 필드 확장, `/mails/counts`, 재분석 API는 후속이다.

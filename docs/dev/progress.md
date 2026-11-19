@@ -13,7 +13,7 @@
 | 기능 | 브랜치 | 작업 도구 | 상태 | 마지막 커밋 | 다음 할 일 | status 문서 | 갱신일 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | develop 병합 (#17), 공통 패치 01~05 적용 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18)) | `438b29d` 2026-11-19 | 맥북 실제 Gmail 새로고침·F2·F3 화면 흐름 확인, 작성·보관·삭제 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
-| F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | develop 병합 (#11) | `34ebcbc` 2026-11-18 | 실제 LLM·임베딩 어댑터 연결, 저장 SQL을 `0007`로·라우터 운영 반영(통합 채팅, F4 입력의 선행 조건) | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
+| F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | PR 대기 (AI 제공자 선택·임베딩·0007 패치·라우터 등록안) | 이번 PR 커밋 2026-11-19 | 통합 채팅: `patches/F1/01~04` 적용(0007·라우터·anthropic·api-types), 맥북 Ollama/Claude 실제 확인 | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치(#16)·IPC 연결([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `c7bfb65` 2026-11-19 | 맥북 실제 앱 확인, 실제 DB 0004 적용 확인, 실제 AI 어댑터 연결 | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 (#12), F0 진입(#17)·IPC 연결([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `deeda1c` 2026-11-19 | **질문 해석기 연결(없으면 검색 전부 503)**, 실제 모델 어댑터(의미 검색·답변), 보낸 메일 열기 계약, 맥북 실제 앱 확인 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
 | F4 주간 보고 | `feat/F4-weekly-report` | 없음 | develop 병합 ([#22](https://github.com/choi7614/klover_my_prototype/pull/22)), 공통 패치 01~05 적용 ([#23](https://github.com/choi7614/klover_my_prototype/pull/23)) | `565929f` 2026-11-19 | 맥북 0006 설치·진입 확인, F1 저장(0007)·실제 AI 연결 후 생성 확인 | [F4-weekly-report-status.md](F4-weekly-report-status.md) | 2026-11-19 |
@@ -43,7 +43,7 @@
 | 0004 | 프로필·초안 저장 | F2 | 적용(develop, #16) | `.../0004_profile_draft.py` (revision `0004_f2`) |
 | 0005 | AI 제안·할 일·알림 outbox | F5 | 적용(develop, #20), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0005_f5_suggestions.py` (부모 `0004_f2`) |
 | 0006 | 주간 보고 스냅샷 | F4 | 적용(develop, #23), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0006_weekly_reports.py` (revision `0006_f4`, 부모 `0005_f5`) |
-| 0007 | F1 분석·청크·분류 피드백 저장 | F1 | **예약** · 미작성 | `integration/F1-mail-analysis/001_storage.sql`을 Alembic으로 (부모 `0006_f4`) |
+| 0007 | F1 분석·청크·분류 피드백 저장 | F1 | **예약** · 제안 작성(미적용) | `patches/F1/files/0007_f1_analysis.py.pending` (revision `0007_f1`, 부모 `0006_f4`), 적용은 `patches/F1/01-database.patch` |
 
 ## 이 표를 갱신하는 때
 
