@@ -1,5 +1,48 @@
 # F1 구현·검사 결과
 
+## 양식 요약
+
+> 양식: [status-template.md](status-template.md) · 현황판: [progress.md](progress.md)
+
+| 항목 | 내용 |
+| --- | --- |
+| 브랜치 | `feat/F1-mail-analysis` |
+| 작업 도구 | 없음 |
+| 상태 | develop 병합 (#11) |
+| 마지막 커밋 | `34ebcbc` 2026-11-18 — [F1] 메일 분석·임베딩·저장 경계와 격리 검사 추가 |
+| 기준 develop | `0f68ad1` |
+| 미커밋 변경 | 없음 (원격 기준) |
+| 갱신일 | 2026-11-19 |
+
+## 현재 상태
+
+- 완료: 분석 결과 계약·검증·재시도, 임베딩 경계, 테스트 DB 저장소·분류 수정 라우터(미등록), 합성 평가 23건.
+- 부분 완료·미통합: 실제 제공자 로더 미연결(`not_configured`), 저장 SQL·라우터 운영 미반영.
+- 미구현: 실제 LLM/임베딩 연결, 자동 수신 분석 큐, F0 화면 표시, 정확도·성능 측정.
+
+## 검사 결과
+
+아래 '상세 기록'의 표 참조 (당시 서버 pytest 190 통과, DB 검사 포함). 2026-11-19 develop 기준 CI형 실행(DB 없음)에서는 DB 검사가 skip된다.
+
+## 공통 영역 요청
+
+- `integration/F1-mail-analysis/001_storage.sql` → Alembic 이력으로 옮겨 적용 (번호는 progress.md에서 예약, 0005 후보)
+- 분류 수정 라우터 `app.main` 등록, api-types 재생성 (통합 채팅)
+
+## 다음 할 일
+
+1. 실제 LLM·임베딩 어댑터 연결 (`app/ai/runtime.py`)
+2. 통합 채팅에서 저장 구조·라우터 운영 반영
+
+## 인수인계 메모
+
+- 멈춘 지점: 없음 (단위 완료 후 병합)
+- 주의할 점: 테스트 DB는 `KLOVER_F1_TEST_DATABASE_URL`·`KLOVER_TEST_DATABASE_URL`로만 지정. 실제 Gmail 본문을 외부 AI로 보내지 않는다.
+
+---
+
+## 상세 기록 (기존 내용 보존)
+
 > 확인: 2026-11-19 · 작업 브랜치 `feat/F1-mail-analysis` · 기반 `0f68ad1`
 
 ## 완료 — 기능 모듈과 격리 환경에서 확인
