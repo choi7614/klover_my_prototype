@@ -1,16 +1,18 @@
 diff --git a/apps/server/app/cli/run_mail_api.py b/apps/server/app/cli/run_mail_api.py
-index 46d918f..b47365a 100644
+index 683b6f9..c061c9d 100644
 --- a/apps/server/app/cli/run_mail_api.py
 +++ b/apps/server/app/cli/run_mail_api.py
-@@ -21,6 +21,7 @@ from app.db.repositories.search_recent import SQLRecentSearchRepository
+@@ -23,7 +23,8 @@ from app.db.repositories.search_recent import SQLRecentSearchRepository
  from app.google_config import GoogleConnectionError, load_settings
  from app.mail_api_config import MailAPIConfigurationError, read_api_token
  from app.main import create_app
+-from app.services.f5 import F5Service
 +from app.pipeline.auto_analysis import build_auto_analysis
- from app.services.f5 import F5Service
++from app.services.f5 import AnalysisScanHook, F5Service
  from app.services.search import SearchService
  from app.services.weekly_report_runtime import WeeklyReportRuntime
-@@ -49,14 +50,18 @@ def main():
+ 
+@@ -60,14 +61,27 @@ def main():
          application = create_app()
          # F1 분류 수정(PATCH /mails/{mail_id}/category). 소유자는 기존 인증 세션에서만 정한다.
          application.state.mail_analysis_engine = engine
@@ -21,10 +23,19 @@ index 46d918f..b47365a 100644
 +        mail_query = MailQueryRepository(engine, settings.expected_email)
 +        application.state.mail_api = MailAPIContext(token, mail_query)
 +        # F1 새 메일 자동 분석: 새로고침 저장 뒤 '분석 시작' 신호만 주고 응답은 기다리지 않는다.
-+        # AI 미설정·외부 AI면 분석하지 않고 메일은 pending으로 남는다. 다른 기능은
-+        # analysis_runner.hooks.register(콜백)으로 분석 완료 알림 지점에 이어 붙인다.
++        # AI 미설정·외부 AI면 분석하지 않고 메일은 pending으로 남는다.
 +        analysis_runner = build_auto_analysis(engine, mail_query.session)
 +        application.state.mail_analysis_runner = analysis_runner
++        if analysis_runner.state == "ready":
++            # 분석 완료 알림 지점에 F5 제안 만들기를 잇는다(저장 확정 뒤 hook(mail, result)).
++            # 자동 분석은 로컬 AI일 때만 돌므로 F5도 같은 제공자·같은 Gmail 허용 범위를 쓴다.
++            # F5 훅은 스스로 실패를 삼키고 AI 호출 시간 제한을 두므로 알림 시간 제한은 두지 않는다.
++            analysis_runner.hooks.register(
++                AnalysisScanHook(
++                    F5Service(F5Repository(engine)), analysis_runner.providers[0], allow_gmail=True
++                ),
++                timeout=None,
++            )
          # 앱 새로고침의 Gmail 새 메일 가져오기. CLI gmail_mail sync와 같은 저장소·수신 기능이다.
          application.state.mail_sync = MailSyncContext(
              GmailSyncRepository(engine, settings),
@@ -34,10 +45,10 @@ index 46d918f..b47365a 100644
          search_parser, search_answerer = search_ai()
          application.state.search_service = SearchService(
 diff --git a/docs/architecture/api.md b/docs/architecture/api.md
-index 639d548..6550b0e 100644
+index 639d548..0578e9e 100644
 --- a/docs/architecture/api.md
 +++ b/docs/architecture/api.md
-@@ -190,4 +190,23 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
+@@ -190,4 +190,25 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
  응답은 `{mail_id, user_label, effective_category}`, 다른 사용자·없는 메일은 같은 404,
  저장소 미연결은 503이다. 수정은 `f1_mail_analysis.user_label`과 `f1_category_feedback`에
  기록되고 청크의 필터 분류도 갱신한다. 엔진은 run_mail_api가 `app.state.mail_analysis_engine`에
@@ -49,6 +60,8 @@ index 639d548..6550b0e 100644
 +- `POST /mails/sync`가 저장을 마치면 F1 자동 분석 작업자에 '분석 시작' 신호만 주고 바로 응답한다
 +  (`MailSyncContext.after_sync`). 응답 형식은 그대로다. 작업자는 서버 안에 하나이며 pending 메일을 분석한다.
 +  AI 미설정이면 분석하지 않고, 외부 AI(Claude)면 실제 Gmail 본문을 보내지 않는다. 두 경우 모두 메일은 pending이다.
++- 분석이 DB에 확정되면 분석 완료 알림 지점(`analysis_runner.hooks`)이 F5 `AnalysisScanHook`을 불러 제안을 만든다
++  (로컬 AI일 때만, F5 실패는 F1 분석에 영향 없음). 계약은 `docs/dev/F1-handoff.md`·`docs/dev/F5-handoff.md`.
 +- 기존 `GET /mails`·`GET /mails/{mail_id}` 응답은 바꾸지 않았다. AI 결과는 F1 전용 경로로 따로 읽는다.
 +
 +| 메서드 | 경로 | 설명 |

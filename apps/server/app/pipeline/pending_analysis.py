@@ -2,7 +2,7 @@
 
 from app.ai.interfaces import ProvidersNotConfigured, TextEmbedding, TextGeneration
 from app.db.repositories.mail_analysis import AnalysisRepository
-from app.pipeline.analysis_hooks import AnalysisHooks, AnalysisOwner
+from app.pipeline.analysis_hooks import AnalysisHooks
 from app.pipeline.analyze import AnalysisFailed, analyze
 from app.pipeline.embed import EmbeddingFailed, embed_mail
 from app.schemas.mail_analysis import AnalysisModel, AnalysisOutcome
@@ -49,7 +49,6 @@ async def process_pending(
         repository.allow_test_providers
     ):
         raise ProvidersNotConfigured("기본 실행에서는 테스트 제공자를 사용하지 않습니다")
-    owner = AnalysisOwner(user_id=repository.user_id, account_id=repository.account_id)
     outcomes = []
     for _ in range(limit):
         analyzed = None
@@ -97,11 +96,11 @@ async def process_pending(
                 outcome = AnalysisOutcome(
                     mail_id=work.mail.mail_id, status="done", attempts=attempts
                 )
-                analyzed = result
+                analyzed = (work.mail, result)
         # 여기까지 트랜잭션이 확정된 뒤에만 완료를 반환하고 분석 완료 알림 지점을 부른다.
         outcomes.append(outcome)
         if analyzed is not None and hooks is not None:
-            await hooks.notify(owner, outcome.mail_id, analyzed)
+            await hooks.notify(*analyzed)
         if mail_id is not None:
             break
     return BatchResult(outcomes=tuple(outcomes))

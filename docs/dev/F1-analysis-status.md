@@ -9,8 +9,8 @@
 | 브랜치 | `feat/F1-mail-analysis` |
 | 작업 도구 | Claude |
 | 상태 | 진행 중 — 새 메일 자동 분석·분석 완료 알림 지점·받은편지함 분류·요약 표시 구현·검사 완료, 커밋·Push 완료, PR 생성 승인 대기. 공통 패치 05~07 미적용 |
-| 마지막 커밋 | `369d511` 2026-11-19 — develop(#30) 빨리감기 반영 (이번 단위 커밋은 git log 참조) |
-| 기준 develop | `369d511` |
+| 마지막 커밋 | 2026-11-19 — develop `d9257c0` 로컬 통합 후 F5 호출 모양 맞춤 (git log 참조) |
+| 기준 develop | `d9257c0` (#31·#32 로컬 통합) |
 | 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
 
@@ -24,8 +24,9 @@
   바로 응답한다. 서버 안 작업자 스레드 하나가 pending을 분석한다(요청 안에서 분석·앱 별도 요청 방식과 비교해 가장 단순).
   AI 미설정 → 분석 안 함·pending 유지(가짜 결과 없음). Claude(외부) → 실제 Gmail 본문 전송 안 함·pending 유지.
   실패 → failed+고정 코드, `POST /mails/{id}/analysis/retry`로 다시 분석. 작업자는 DB 오류에도 죽지 않는다.
-- **분석 완료 알림 지점**(`app/pipeline/analysis_hooks.py`): `hooks.register(on_analyzed)` →
-  `on_analyzed(owner, mail_id, AnalysisResult)`. DB 확정 뒤 done만, 콜백 오류는 격리. F5 코드는 부르지 않는다.
+- **분석 완료 알림 지점**(`app/pipeline/analysis_hooks.py`): `hooks.register(on_analyzed, timeout=…)` →
+  `await on_analyzed(mail: AnalysisMail, result: AnalysisResult)` — develop #32의 F5 `AnalysisScanHook`과 같은 모양.
+  DB 확정 뒤 done만, 콜백 오류는 격리. F1 브랜치 코드는 F5를 부르지 않고, 등록은 패치 05에 있다.
   계약: [F1-handoff.md](F1-handoff.md) '분석 완료 알림 지점'.
 - **표시용 조회**: 이미 등록된 F1 라우터에 `GET /mails/analysis/batch?ids=`, `GET /mails/{id}/analysis`,
   `POST /mails/{id}/analysis/retry` 추가. 기존 `/mails` 응답 형식은 그대로. 운영에서 테스트 대역 결과는 pending으로 보인다.
@@ -43,12 +44,12 @@
 | 검사 (이 환경, 일회용 PostgreSQL 16 + pgvector) | 결과 |
 | --- | --- |
 | 서버 `ruff check`·`ruff format --check` | 통과 |
-| 서버 `pytest` (분리 테스트 DB) | 481 통과 / 24 skip(F5 전용 DB 변수 미지정 등) |
-| 서버 `pytest` (DB 없음, CI와 같은 조건) | 360 통과 / 145 skip |
-| 새 검사 `tests/f1/test_auto_analysis.py` | 18개(알림 지점·작업자 상태·백그라운드 분석·실패/재시도·외부 차단·조회·HTTP·sync→분석 흐름) |
+| 서버 `pytest` (분리 테스트 DB, develop `d9257c0` 통합 후) | 513 통과 / 28 skip(F5 전용 DB 변수 미지정 등) |
+| 서버 `pytest` (DB 없음, CI와 같은 조건) | 392 통과 / 149 skip |
+| 새 검사 `tests/f1/test_auto_analysis.py` | 20개(F5 `AnalysisScanHook` 호출 모양 확인 포함, 알림 지점·작업자 상태·백그라운드 분석·실패/재시도·외부 차단·조회·HTTP·sync→분석 흐름) |
 | `tests/test_mail_sync_api.py` 추가 | 3개(`after_sync` 성공 뒤에만·오류 격리·Gmail 실패 시 미호출) |
 | 데스크톱 `lint`·`typecheck`·`test` (기능 브랜치) | 통과, 23개 파일 164개 (새 화면 검사 10개) |
-| 패치 05~07 적용 사본 | `git apply --check` 통과, 서버 ruff·pytest 480/24 skip, `gen:api-types` = 06, 데스크톱 lint·typecheck·test 25개 파일 169개 |
+| 패치 05~07 적용 사본 | `git apply --check` 통과(기능 브랜치·develop `d9257c0` 모두), 서버 ruff·pytest 513/28 skip, `gen:api-types` = 06, 데스크톱 lint·typecheck·test 25개 파일 169개 |
 | 실제 Gmail·실제 AI·Electron 실제 창·30초 수신→표시 | **미실행** (맥북 필요) |
 
 ### 공통 패치 적용 (2026-11-19, 통합 채팅, `integrate/F1-F3-patches`)
@@ -113,7 +114,7 @@
 
 ## 다음 할 일
 
-1. 통합 채팅: `patches/F1/05~07` 적용(05 다음에 F5 콜백 등록 한 줄 가능).
+1. 통합 채팅: 이 브랜치 PR을 develop에 병합한 뒤 `patches/F1/05~07` 적용(05에 F5 `AnalysisScanHook` 등록 포함).
 2. 맥북: `.env`에 `AI_PROVIDER=ollama` 등 설정 → 서버·앱 실행 → 새로고침 후 목록에 '분석 중' → 요약·태그가 채워지는지 확인.
 3. 후속 단위: 분류 변경 드롭다운, 근거 문장 강조, 스마트 보기·카테고리 건수, 중요도순 정렬, 실제 모델 정확도 측정.
 

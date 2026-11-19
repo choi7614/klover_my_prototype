@@ -56,30 +56,28 @@ AnalysisResult의 action_items/events/needs_reply/priority/entities/evidence_spa
 
 ### 분석 완료 알림 지점 (2026-11-19, `app/pipeline/analysis_hooks.py`)
 
-F1이 새 메일을 분석해 **DB에 확정(commit)한 직후** 등록된 콜백을 부른다. F5는 이 지점에 제안 만들기를 이어 붙인다.
-F1은 F5 코드를 부르지 않으며, 연결(등록 한 줄)은 통합 채팅이 실행 명령에서 한다.
+F1이 새 메일을 분석해 **DB에 확정(commit)한 직후** 등록된 콜백을 부른다. 호출 모양은 F5 `AnalysisScanHook`
+([F5-handoff.md](F5-handoff.md) 'F1 담당에게')과 같은 `await hook(mail: AnalysisMail, result: AnalysisResult)`이다.
+F1 브랜치 코드는 F5를 부르지 않는다. 실제 등록(한 줄)은 `patches/F1/05`의 실행 명령 조립에 있다.
 
 ```python
-from app.pipeline.analysis_hooks import AnalysisOwner
-from app.schemas.mail_analysis import AnalysisResult
-
-def on_analyzed(owner: AnalysisOwner, mail_id: str, result: AnalysisResult) -> None:
-    ...  # owner.user_id / owner.account_id 범위 안에서만 읽고 쓴다. result.mail_id == mail_id
-
-# run_mail_api.py (patches/F1/05 적용 뒤, 통합 채팅):
-unregister = analysis_runner.hooks.register(on_analyzed)   # async def 콜백도 된다
+# run_mail_api.py (patches/F1/05) — 자동 분석이 ready(로컬 AI)일 때만 등록
+analysis_runner.hooks.register(
+    AnalysisScanHook(F5Service(F5Repository(engine)), analysis_runner.providers[0], allow_gmail=True),
+    timeout=None,   # F5 훅이 스스로 실패를 삼키고 AI 시간 제한을 둔다
+)
+unregister = analysis_runner.hooks.register(other_callback)   # 일반 함수·async 모두 가능, 기본 10초 제한
 ```
 
 | 항목 | 약속 |
 | --- | --- |
 | 부르는 때 | 분석 성공(`analysis_status='done'`)이 확정된 뒤 한 번. 실패(failed)·AI 미설정·외부 차단(pending)은 부르지 않는다 |
-| 인수 | `owner`(user_id·account_id), `mail_id`, 검증된 `AnalysisResult`(근거 `evidence_spans`는 원문 인덱스, 모든 결과는 `mail_id`로 근거 메일과 연결) |
+| 인수 | `mail: AnalysisMail`(소유자 `user_id`·`account_id`는 F1이 DB에서 잠가 읽은 값, 본문 포함), `result: AnalysisResult`(`result.mail_id == mail.mail_id`, 근거는 `evidence_spans`) |
 | 스레드 | 서버 안의 F1 자동 분석 작업자 스레드 하나(asyncio 루프 안). 메일 순서대로 하나씩 부른다 |
-| 시간 | 일반 함수는 짧게 끝낸다(다음 메일 분석을 막는다). async 콜백은 `CALLBACK_TIMEOUT`(10초) 안에 끝나야 한다 |
-| 오류 | 콜백 예외·시간 초과는 기록(콜백 이름·오류 종류만)하고 삼킨다. 분석 상태(done)는 그대로, 다음 콜백·메일 처리도 계속 |
-| 전달 보장 | 없음(서버 메모리 안 즉시 알림, 재전송·outbox 없음). 서버가 알림 직전에 꺼지면 그 알림은 사라진다. 놓친 메일은 F1 저장소의 done 메일을 다시 읽어 보완한다 |
-| 재분석 | 실패 메일을 다시 시도해 성공하면 그때 한 번 더 부른다. 같은 mail_id로 여러 번 올 수 있으니 수신 측은 mail_id 기준으로 중복을 막는다 |
-| 테스트 결과 | 테스트 대역(mode=test) 결과는 분리 테스트 스키마에서만 생긴다. 운영 저장소에서는 저장 자체가 거부된다 |
+| 시간 | 등록 때 `timeout`(기본 10초, `None`이면 제한 없음). 오래 걸리는 콜백은 다음 메일 분석을 늦춘다 |
+| 오류 | 콜백 예외·시간 초과는 기록(콜백 이름·오류 종류만)하고 삼킨다. 분석 상태(done)는 그대로, 다음 콜백·메일 처리도 계속. 돌려준 값은 쓰지 않는다 |
+| 전달 보장 | 없음(서버 메모리 안 즉시 알림, 재전송·outbox 없음). 서버가 알림 직전에 꺼지면 그 알림은 사라진다. 놓친 메일은 F5 수동 명령(`app.cli.f5_scan`)으로 다시 만든다 |
+| 재분석 | 실패 메일을 다시 시도해 성공하면 그때 한 번 더 부른다. F5는 같은 메일 재입력에 중복을 만들지 않는다 |
 
 CLI(`analyze_pending run`)는 이 지점을 부르지 않는다(명시적 수동 실행). 필요하면 `process_pending(..., hooks=...)`로 넘긴다.
 

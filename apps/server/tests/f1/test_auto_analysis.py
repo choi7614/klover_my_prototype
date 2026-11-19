@@ -13,13 +13,13 @@ from app.api.mail_analysis import register_mail_analysis
 from app.api.mail_read import MailAPIContext
 from app.db.repositories.mail_analysis import AnalysisRepository
 from app.main import create_app
-from app.pipeline.analysis_hooks import AnalysisHooks, AnalysisOwner
+from app.pipeline.analysis_hooks import AnalysisHooks
 from app.pipeline.auto_analysis import AutoAnalysis, build_auto_analysis
 from app.schemas.mail_analysis import AnalysisResult
-from tests.f1.support import CASES, ScriptedEmbedding, ScriptedGeneration
+from tests.f1.support import CASES, ScriptedEmbedding, ScriptedGeneration, sample_mail
 from tests.f1.test_storage import run, seed
 
-OWNER = AnalysisOwner(user_id="f1-user-a", account_id="f1-account-a")
+MAIL = sample_mail(0)
 
 
 class LocalGeneration(ScriptedGeneration):
@@ -71,23 +71,23 @@ def test_hooks_call_sync_and_async_callbacks_in_order_and_unregister():
     hooks = AnalysisHooks()
     calls = []
 
-    def first(owner, mail_id, result):
-        calls.append(("first", owner, mail_id, result.category))
+    def first(mail, result):
+        calls.append(("first", mail.mail_id, mail.user_id, result.category))
 
-    async def second(owner, mail_id, result):
-        calls.append(("second", owner, mail_id, result.category))
+    async def second(mail, result):
+        calls.append(("second", mail.mail_id, mail.user_id, result.category))
 
     unregister = hooks.register(first)
     hooks.register(second)
     hooks.register(first)  # 같은 콜백은 한 번만
     assert len(hooks) == 2
     result = result_sample()
-    assert asyncio.run(hooks.notify(OWNER, "f1-001", result)) == 0
+    assert asyncio.run(hooks.notify(MAIL, result)) == 0
     assert [call[0] for call in calls] == ["first", "second"]
-    assert calls[0][1:] == (OWNER, "f1-001", result.category)
+    assert calls[0][1:] == (MAIL.mail_id, MAIL.user_id, result.category)
     unregister()
     calls.clear()
-    asyncio.run(hooks.notify(OWNER, "f1-001", result))
+    asyncio.run(hooks.notify(MAIL, result))
     assert [call[0] for call in calls] == ["second"]
 
 
@@ -107,11 +107,54 @@ def test_hook_errors_and_timeouts_are_isolated(monkeypatch, caplog):
     hooks.register(broken)
     hooks.register(slow)
     hooks.register(lambda *_: reached.append(True))
-    assert asyncio.run(hooks.notify(OWNER, "f1-001", result_sample())) == 2
+    assert asyncio.run(hooks.notify(MAIL, result_sample())) == 2
     assert reached == [True]
     assert "합성 메일 본문 비밀" not in caplog.text
     with pytest.raises(TypeError):
         hooks.register("not callable")
+    with pytest.raises(ValueError):
+        hooks.register(lambda *_: None, timeout=0)
+
+
+def test_hook_without_time_limit_waits_for_slow_callback(monkeypatch):
+    import app.pipeline.analysis_hooks as module
+
+    monkeypatch.setattr(module, "CALLBACK_TIMEOUT", 0.01)
+    hooks = AnalysisHooks()
+    reached = []
+
+    async def slow(mail, result):
+        await asyncio.sleep(0.05)
+        reached.append(mail.mail_id)
+
+    hooks.register(slow, timeout=None)
+    assert asyncio.run(hooks.notify(MAIL, result_sample())) == 0
+    assert reached == [MAIL.mail_id]
+
+
+def test_f5_analysis_scan_hook_matches_call_shape():
+    """F5 AnalysisScanHook을 그대로 등록해 F1 호출 모양과 맞는지 확인(실제 AI 없음)."""
+    from app.services.f5 import AnalysisScanHook
+
+    received = []
+
+    class Service:
+        async def scan_from_analysis(self, owner, mail_id, result, generator, **options):
+            received.append((owner.user_id, owner.account_id, mail_id, result.mail_id, options))
+            raise RuntimeError("합성 실패")  # F5 훅은 예외를 삼키고 failed를 돌려준다
+
+    hooks = AnalysisHooks()
+    hooks.register(AnalysisScanHook(Service(), LocalGeneration(), allow_gmail=True), timeout=None)
+    assert asyncio.run(hooks.notify(MAIL, result_sample())) == 0
+    assert received == [
+        (
+            MAIL.user_id,
+            MAIL.account_id,
+            MAIL.mail_id,
+            MAIL.mail_id,
+            {"allow_gmail": True, "allow_test_provider": False},
+        )
+    ]
 
 
 def test_runner_states_without_ai_or_with_external_ai_do_nothing():
@@ -154,9 +197,17 @@ def test_process_pending_notifies_only_after_commit_and_only_done(f1_database):
     repository = seed(f1_database, cases=CASES[:2])
     seen = []
 
-    def callback(owner, mail_id, result):
+    def callback(mail, result):
         # 알림 시점에는 이미 done으로 확정돼 있어야 한다.
-        seen.append((owner, mail_id, result.mail_id, statuses(f1_database)[mail_id]))
+        seen.append(
+            (
+                mail.user_id,
+                mail.account_id,
+                mail.mail_id,
+                result.mail_id,
+                statuses(f1_database)[mail.mail_id],
+            )
+        )
 
     hooks = AnalysisHooks()
     hooks.register(callback)
@@ -167,7 +218,7 @@ def test_process_pending_notifies_only_after_commit_and_only_done(f1_database):
     second = run(repository, hooks=hooks)
     assert second.done == 1
     mail_id = CASES[1]["mail"]["mail_id"]
-    assert seen == [(OWNER, mail_id, mail_id, "done")]
+    assert seen == [("f1-user-a", "f1-account-a", mail_id, mail_id, "done")]
 
 
 def test_hook_error_keeps_done_status(f1_database):
@@ -182,7 +233,7 @@ def test_kick_analyzes_new_gmail_mails_in_background_with_local_ai(f1_database):
     repository = seed(f1_database, cases=CASES[:3], source="gmail")
     hooks = AnalysisHooks()
     seen = []
-    hooks.register(lambda owner, mail_id, result: seen.append(mail_id))
+    hooks.register(lambda mail, result: seen.append(mail.mail_id))
     runner = runner_for(repository, hooks=hooks)
     try:
         assert runner.kick() is True
