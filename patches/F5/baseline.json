@@ -1,0 +1,17 @@
+{
+  "develop": "420078ed7fcdb3dc35a8c13a7630d2108ab5b157",
+  "sha256": {
+    "apps/desktop/src/shared/f5-bridge.ts": null,
+    "apps/desktop/src/main/f5-client.ts": null,
+    "apps/desktop/src/main/f5-client.test.ts": null,
+    "apps/desktop/src/main/f5-ipc.ts": null,
+    "apps/desktop/src/main/f5-ipc.test.ts": null,
+    "apps/desktop/src/renderer/features/mailbox/mailbox-suggestions.test.tsx": null,
+    "apps/desktop/src/main/index.ts": "9434dd1d7d96eb559297661c1e02a2dca3f64c390d7d0de63046b91ec5d9b9aa",
+    "apps/desktop/src/preload/index.ts": "8f345c2d165571faf1b2090ea0141c94583748a8370e350257498ef3eea024d8",
+    "apps/desktop/src/renderer/env.d.ts": "964233cb88a50b9afa310c742ff65396f218004fcd87bcea3c626d35baa66bc5",
+    "apps/desktop/src/renderer/app.tsx": "d900f4141d39ceb96986e0c2f1b08360b1bb4262e2a628f73efdc48d611799df",
+    "apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx": "aafab50f4109f8fec4effe25fc3da2e3ffcd556f4f679e7ec40b42adccb85091",
+    "apps/desktop/src/renderer/features/mailbox/routes.tsx": "20812363de8b13bf286c500fedde3f3069ceae472749899807fe4b998bae1928"
+  }
+}
