@@ -1,0 +1,376 @@
+diff --git a/apps/server/app/db/models.py b/apps/server/app/db/models.py
+--- a/apps/server/app/db/models.py
++++ b/apps/server/app/db/models.py
+@@ -64,6 +64,7 @@
+             name="fk_mail_account_owner",
+         ),
+         UniqueConstraint("account_id", "source_message_id", name="uq_mail_source_message"),
++        UniqueConstraint("mail_id", "user_id", "account_id", name="uq_mail_f5_owner"),
+         CheckConstraint("direction IN ('received', 'sent')", name="ck_mail_direction"),
+         CheckConstraint(
+             "mailbox IN ('inbox', 'sent', 'draft', 'archive', 'spam', 'trash')",
+diff --git a/apps/server/migrations/env.py b/apps/server/migrations/env.py
+--- a/apps/server/migrations/env.py
++++ b/apps/server/migrations/env.py
+@@ -3,17 +3,17 @@
+ from alembic import context
+ 
+ from app.db.config import database_engine, database_url
+-from app.db.models import Base
++from app.db.repositories.f5_schema import F5Base
+ 
+ if context.is_offline_mode():
+-    context.configure(url=database_url(), target_metadata=Base.metadata, literal_binds=True)
++    context.configure(url=database_url(), target_metadata=F5Base.metadata, literal_binds=True)
+     with context.begin_transaction():
+         context.run_migrations()
+ else:
+     engine = database_engine()
+     try:
+         with engine.connect() as connection:
+-            context.configure(connection=connection, target_metadata=Base.metadata)
++            context.configure(connection=connection, target_metadata=F5Base.metadata)
+             with context.begin_transaction():
+                 context.run_migrations()
+     finally:
+diff --git a/apps/server/migrations/versions/0003_f5_suggestions.py b/apps/server/migrations/versions/0003_f5_suggestions.py
+new file mode 100644
+--- /dev/null
++++ b/apps/server/migrations/versions/0003_f5_suggestions.py
+@@ -0,0 +1,152 @@
++"""F5 제안·할 일·알림 outbox를 추가한다. 기존 메일·계정은 보존한다."""
++
++import sqlalchemy as sa
++from alembic import op
++
++revision = "0003_f5"
++down_revision = "0002"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_unique_constraint("uq_mail_f5_owner", "mails", ["mail_id", "user_id", "account_id"])
++    op.create_table(
++        "f5_suggestions",
++        sa.Column("suggestion_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("mail_id", sa.Text(), nullable=False),
++        sa.Column("type", sa.Text(), nullable=False),
++        sa.Column("action_key", sa.Text(), nullable=False),
++        sa.Column("evidence_key", sa.Text(), nullable=False),
++        sa.Column("body_sha256", sa.Text(), nullable=False),
++        sa.Column("payload", sa.JSON(), nullable=False),
++        sa.Column("evidence_spans", sa.JSON(), nullable=False),
++        sa.Column("status", sa.Text(), nullable=False),
++        sa.Column("execution_status", sa.Text(), nullable=False),
++        sa.Column("execution_mode", sa.Text(), nullable=False),
++        sa.Column("execution_token", sa.Text(), nullable=True),
++        sa.Column("execution_payload", sa.JSON(none_as_null=True), nullable=True),
++        sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
++        sa.Column("result", sa.JSON(none_as_null=True), nullable=True),
++        sa.Column("last_error", sa.Text(), nullable=True),
++        sa.Column("version", sa.Integer(), nullable=False),
++        sa.Column("notified_at", sa.DateTime(timezone=True), nullable=True),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
++        sa.Column("resolved_at", sa.DateTime(timezone=True), nullable=True),
++        sa.CheckConstraint(
++            "execution_mode IN ('none','test','live','internal')", name="ck_f5_mode"
++        ),
++        sa.CheckConstraint(
++            "execution_status IN ('idle','executing','failed','uncertain',"
++            "'blocked','simulated','succeeded')",
++            name="ck_f5_execution_status",
++        ),
++        sa.CheckConstraint(
++            "status <> 'approved' OR (execution_status = 'succeeded' "
++            "AND execution_mode IN ('live','internal') AND result IS NOT NULL)",
++            name="ck_f5_real_approval",
++        ),
++        sa.CheckConstraint("status IN ('pending','approved','dismissed')", name="ck_f5_status"),
++        sa.CheckConstraint("type IN ('calendar','todo','reply')", name="ck_f5_type"),
++        sa.CheckConstraint("version > 0", name="ck_f5_version"),
++        sa.ForeignKeyConstraint(
++            ["mail_id", "user_id", "account_id"],
++            ["mails.mail_id", "mails.user_id", "mails.account_id"],
++            name="fk_f5_suggestion_mail_owner",
++        ),
++        sa.PrimaryKeyConstraint("suggestion_id"),
++        sa.UniqueConstraint("mail_id", "type", "action_key", name="uq_f5_action"),
++        sa.UniqueConstraint("mail_id", "type", "evidence_key", name="uq_f5_evidence"),
++        sa.UniqueConstraint(
++            "suggestion_id", "user_id", "account_id", name="uq_f5_suggestion_owner"
++        ),
++    )
++    op.create_index(
++        "ix_f5_pending",
++        "f5_suggestions",
++        ["user_id", "account_id", "status", "created_at", "suggestion_id"],
++        unique=False,
++    )
++    op.create_table(
++        "f5_dismissals",
++        sa.Column("suggestion_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("dismissed_at", sa.DateTime(timezone=True), nullable=False),
++        sa.ForeignKeyConstraint(
++            ["suggestion_id", "user_id", "account_id"],
++            ["f5_suggestions.suggestion_id", "f5_suggestions.user_id", "f5_suggestions.account_id"],
++            name="fk_f5_dismissal_owner",
++        ),
++        sa.PrimaryKeyConstraint("suggestion_id"),
++    )
++    op.create_table(
++        "f5_suggestion_outbox",
++        sa.Column("event_id", sa.Text(), nullable=False),
++        sa.Column("suggestion_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
++        sa.Column("delivered_at", sa.DateTime(timezone=True), nullable=True),
++        sa.ForeignKeyConstraint(
++            ["suggestion_id", "user_id", "account_id"],
++            ["f5_suggestions.suggestion_id", "f5_suggestions.user_id", "f5_suggestions.account_id"],
++            name="fk_f5_outbox_owner",
++        ),
++        sa.PrimaryKeyConstraint("event_id"),
++        sa.UniqueConstraint("suggestion_id", name="uq_f5_outbox_suggestion"),
++    )
++    op.create_table(
++        "f5_todos",
++        sa.Column("todo_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("mail_id", sa.Text(), nullable=True),
++        sa.Column("suggestion_id", sa.Text(), nullable=True),
++        sa.Column("request_id", sa.Text(), nullable=True),
++        sa.Column("request_payload", sa.JSON(none_as_null=True), nullable=True),
++        sa.Column("title", sa.Text(), nullable=False),
++        sa.Column("due", sa.Date(), nullable=True),
++        sa.Column("status", sa.Text(), nullable=False),
++        sa.Column("version", sa.Integer(), nullable=False),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
++        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
++        sa.CheckConstraint("status IN ('open','completed')", name="ck_f5_todo_status"),
++        sa.CheckConstraint("version > 0", name="ck_f5_todo_version"),
++        sa.ForeignKeyConstraint(
++            ["account_id", "user_id"],
++            ["mail_accounts.account_id", "mail_accounts.user_id"],
++            name="fk_f5_todo_account_owner",
++        ),
++        sa.ForeignKeyConstraint(
++            ["mail_id", "user_id", "account_id"],
++            ["mails.mail_id", "mails.user_id", "mails.account_id"],
++            name="fk_f5_todo_mail_owner",
++        ),
++        sa.ForeignKeyConstraint(
++            ["suggestion_id", "user_id", "account_id"],
++            ["f5_suggestions.suggestion_id", "f5_suggestions.user_id", "f5_suggestions.account_id"],
++            name="fk_f5_todo_suggestion_owner",
++        ),
++        sa.PrimaryKeyConstraint("todo_id"),
++        sa.UniqueConstraint("suggestion_id", name="uq_f5_todo_suggestion"),
++        sa.UniqueConstraint("user_id", "account_id", "request_id", name="uq_f5_todo_request"),
++    )
++    op.create_index(
++        "ix_f5_todo_owner",
++        "f5_todos",
++        ["user_id", "account_id", "created_at", "todo_id"],
++        unique=False,
++    )
++
++
++def downgrade():
++    op.drop_index("ix_f5_todo_owner", table_name="f5_todos")
++    op.drop_table("f5_todos")
++    op.drop_table("f5_suggestion_outbox")
++    op.drop_table("f5_dismissals")
++    op.drop_index("ix_f5_pending", table_name="f5_suggestions")
++    op.drop_table("f5_suggestions")
++    op.drop_constraint("uq_mail_f5_owner", "mails", type_="unique")
+diff --git a/apps/server/app/main.py b/apps/server/app/main.py
+--- a/apps/server/app/main.py
++++ b/apps/server/app/main.py
+@@ -3,6 +3,7 @@
+ from fastapi import FastAPI
+ 
+ from app.api.errors import register_error_handlers
++from app.api.f5 import register_f5_api
+ from app.api.health import router as health_router
+ from app.api.mail_read import register_mail_api
+ from app.schemas.common import ErrorResponse
+@@ -20,6 +21,7 @@
+     register_error_handlers(application)
+     application.include_router(health_router)
+     register_mail_api(application)
++    register_f5_api(application)
+     return application
+ 
+ 
+diff --git a/apps/server/app/cli/run_mail_api.py b/apps/server/app/cli/run_mail_api.py
+--- a/apps/server/app/cli/run_mail_api.py
++++ b/apps/server/app/cli/run_mail_api.py
+@@ -6,10 +6,12 @@
+ 
+ from app.api.mail_read import MailAPIContext
+ from app.db.config import DatabaseConfigurationError, database_engine
++from app.db.repositories.f5 import F5Repository
+ from app.db.repositories.mail_query import MailQueryRepository
+ from app.google_config import GoogleConnectionError, load_settings
+ from app.mail_api_config import MailAPIConfigurationError, read_api_token
+ from app.main import create_app
++from app.services.f5 import F5Service
+ 
+ 
+ def main():
+@@ -28,6 +30,7 @@
+             token,
+             MailQueryRepository(engine, settings.expected_email),
+         )
++        application.state.f5_service = F5Service(F5Repository(engine))
+         print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")
+         print("터미널을 켜두세요. 종료는 Control+C입니다.")
+         uvicorn.run(
+diff --git a/apps/server/tests/test_postgresql_storage.py b/apps/server/tests/test_postgresql_storage.py
+--- a/apps/server/tests/test_postgresql_storage.py
++++ b/apps/server/tests/test_postgresql_storage.py
+@@ -15,7 +15,8 @@
+ from sqlalchemy.exc import IntegrityError
+ from sqlalchemy.orm import Session
+ 
+-from app.db.models import Base, Mail
++from app.db.models import Mail
++from app.db.repositories.f5_schema import F5Base
+ from app.db.repositories.mail import MailRepository
+ 
+ START = datetime(2026, 11, 18, 0, 0, tzinfo=UTC)
+@@ -77,11 +78,11 @@
+     engine, config = database
+     command.upgrade(config, "head")
+     with engine.connect() as connection:
+-        assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
++        assert compare_metadata(MigrationContext.configure(connection), F5Base.metadata) == []
+     command.downgrade(config, "base")
+     command.upgrade(config, "head")
+     with engine.connect() as connection:
+-        assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
++        assert compare_metadata(MigrationContext.configure(connection), F5Base.metadata) == []
+ 
+ 
+ def test_mail_survives_session_and_connection_recreation(database):
+diff --git a/apps/server/tests/test_http_server.py b/apps/server/tests/test_http_server.py
+--- a/apps/server/tests/test_http_server.py
++++ b/apps/server/tests/test_http_server.py
+@@ -65,7 +65,21 @@
+         response = client.get("/openapi.json")
+     assert response.status_code == 200
+     schema = response.json()
+-    assert set(schema["paths"]) == {"/health", "/auth/session", "/mails", "/mails/{mail_id}"}
++    assert set(schema["paths"]) == {
++        "/health",
++        "/auth/session",
++        "/mails",
++        "/mails/{mail_id}",
++        "/suggestions",
++        "/suggestions/{suggestion_id}",
++        "/suggestions/{suggestion_id}/approve",
++        "/suggestions/{suggestion_id}/dismiss",
++        "/suggestions/{suggestion_id}/conflicts",
++        "/todos",
++        "/todos/{todo_id}",
++        "/suggestion-events",
++        "/suggestion-events/{event_id}/ack",
++    }
+     assert schema["paths"]["/health"]["get"]["responses"]["200"]["content"]["application/json"][
+         "schema"
+     ] == {"$ref": "#/components/schemas/HealthResponse"}
+diff --git a/docs/architecture/api.md b/docs/architecture/api.md
+--- a/docs/architecture/api.md
++++ b/docs/architecture/api.md
+@@ -5,7 +5,7 @@
+ 이 문서는 **요약 목록**이다. 엔드포인트를 추가·변경하면 여기에 한 줄 반영하고, `packages/api-types`의 타입을 다시 생성한다.
+ 
+ > 구현 상태 (2026-11-19): `/health`와 로컬 운영자용 인증·받은 메일 조회 API를 구현했다.
+-> 나머지 업무 API·WebSocket은 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
++> F5는 아래 분리 검사 후 등록 단위를 참고한다. 나머지 업무 API·WebSocket은 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
+ > fixture CLI를 유지하며 보고서 HTTP API를 제공하지 않는다.
+ > [서버 실행 안내](../../apps/server/README.md)와 [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
+ 
+@@ -95,10 +95,6 @@
+ | F4 | POST | `/reports/weekly` | 주간 보고 생성 |
+ | F4 | GET | `/reports/weekly/{report_id}/excluded` | 제외된 메일 |
+ | F4 | POST | `/reports/weekly/{report_id}/export` | Word 내보내기 |
+-| F5 | GET | `/suggestions` | 제안 목록 (`status=pending`: 놓친 제안 포함) |
+-| F5 | POST | `/suggestions/{id}/approve` | 승인 (수정값 포함 가능) |
+-| F5 | POST | `/suggestions/{id}/dismiss` | 무시 |
+-| F5 | GET·POST·PATCH | `/todos` | 할 일 |
+ 
+ ## WebSocket `/ws` (설계·미구현)
+ 
+@@ -107,3 +103,33 @@
+ | `mail.received` | 새 메일 도착 (분석 전) | 목록에 추가 |
+ | `mail.analyzed` | 분석 완료 (요약·태그) | 목록 갱신 |
+ | `suggestion.created` | 새 AI 제안 | Windows 토스트 알림 |
++
++
++## F5 제안·할 일 (분리 검사 후 공통 등록)
++
++F5 전용 라우터를 추가한다. 계정·저장소 설정 전에는 데이터 조회를 허용하지 않으며
++기본 Calendar 실행기는 차단된다. 실제 F1 수신·분석·F0 IPC·WebSocket·Calendar 쓰기는 미통합이다.
++
++| 메서드 | 경로 | 계약 |
++| --- | --- | --- |
++| GET | `/suggestions` | status, mail_id, notified, limit(1~100), cursor; items/next_cursor |
++| GET | `/suggestions/{suggestion_id}` | 소유 사용자·계정의 제안 1건 |
++| POST | `/suggestions/{suggestion_id}/approve` | 필수 version, 선택 payload(유형별 전체 수정값) |
++| POST | `/suggestions/{suggestion_id}/dismiss` | 필수 version; 무시 이력 저장 |
++| POST | `/suggestions/{suggestion_id}/conflicts` | 수정한 Calendar payload로 읽기 전용 겹침 확인 |
++| GET | `/todos` | status(open/completed), limit, cursor; items/next_cursor |
++| POST | `/todos` | request_id, title, due?, mail_id?; 재시도 중복 제거 |
++| PATCH | `/todos/{todo_id}` | version과 title/due/status 중 하나 이상 |
++| GET | `/suggestion-events` | limit(1~100); 미표시 pending 이벤트 조회 |
++| POST | `/suggestion-events/{event_id}/ack` | 실제 표시 후 확인, 204 |
++
++기존 loopback·Bearer·Origin 거부 정책을 재사용하며 소유자 ID를 클라이언트에서 받지 않는다.
++다른 사용자/계정 ID는 404다. 모든 개인 응답·오류는 no-store다. 고정 code와 일반 안내를
++ErrorResponse로 반환한다. 상태 충돌은 409, 잘못된 입력 422, Calendar 권한/연결 부족 503,
++외부 실행 실패 502다. 제안 생성은 F1의 내부 서비스 연결만 받으며 외부 POST 경로가 없다.
++
++업무 상태 pending/approved/dismissed와 execution_status를 따로 확인한다.
++테스트 Calendar 영수증은 pending+simulated+test다. 불명확한 실행은 uncertain으로 유지하고
++입력 변경과 무시를 차단한다. 앱 할 일은 내부 저장 트랜잭션 성공 후에만 approved가 된다.
++알림 이벤트 조회만으로 표시 완료를 기록하지 않는다.
++[F5 계약](../dev/F5-ai-scan-contract.md), [연결 요청](../dev/F5-handoff.md)을 따른다.
+diff --git a/docs/architecture/data-model.md b/docs/architecture/data-model.md
+--- a/docs/architecture/data-model.md
++++ b/docs/architecture/data-model.md
+@@ -164,3 +164,27 @@
+ 
+ 날짜 경계, 사용자 분류 우선순위, 분석 미완료 처리와 그룹 연결 규칙은
+ [F4 구현 계획](../dev/F4-weekly-report-plan.md)의 내부 계약을 따른다.
++
++
++## F5 분리 저장소 (공통 적용 단위)
++
++기존 0001/0002 이력을 보존하며 `uq_mail_f5_owner(mail_id,user_id,account_id)`와
++후속 0003_f5를 추가한다. 충돌 방지를 위해 물리 테이블에는 f5_ 접두사를 쓴다.
++F5 메타데이터는 공통 메타데이터의 복사본에 기능 테이블을 추가해 Alembic에 연결한다.
++
++- f5_suggestions: suggestion_id PK, user_id/account_id/mail_id 복합 FK, type(calendar/todo/reply),
++  action_key/evidence_key, body_sha256, payload/evidence_spans(JSON), status,
++  execution_status/execution_mode/execution_payload/execution_token/started_at/result/last_error,
++  version, notified_at/created_at/resolved_at. 같은 메일·유형·행동 키 또는 근거는 유일하다.
++- f5_todos: todo_id PK, 소유 사용자/계정, mail_id/suggestion_id(선택), request_id/request_payload,
++  title/due/status(open/completed)/version/created_at/updated_at.
++  제안당 하나이며, 직접 생성은 사용자·계정·request_id로 중복을 막는다. 소유권 복합 FK가 있다.
++- f5_suggestion_outbox: event_id PK, suggestion_id 유일, 소유자 복합 FK, created_at/delivered_at.
++  제안 생성과 함께 저장하며 전달 확인 전까지 재조회할 수 있다.
++- f5_dismissals: suggestion_id PK와 소유자 복합 FK, dismissed_at. 감지 기준 자동 조정은 하지 않는다.
++
++status는 pending/approved/dismissed, execution_status는
++idle/executing/failed/uncertain/blocked/simulated/succeeded다.
++테스트 영수증으로 approved를 저장하지 않는다. 외부 실행 결과가 불명확하면 내용을 고정하고
++다음 권한 오류가 발생해도 불명확 상태를 유지한다. 실행 중 프로세스 종료는 수동 조정 대상이다.
++기존 사용자·계정·암호문·메일·수신 커서는 마이그레이션으로 변경하지 않는다.
