@@ -1,6 +1,6 @@
 # 개발 현황판
 
-> 갱신: 2026-11-19 · 기준: `origin/develop@d9257c0` · 갱신 도구: Claude
+> 갱신: 2026-11-19 · 기준: `origin/develop@905398b` · 갱신 도구: Claude
 
 **도구를 바꾸기 전·이어받은 직후 이 표부터 갱신한다.** 규칙은 [AGENTS.md](../../AGENTS.md)의 '도구 전환과 인수인계'.
 도구 전환용 프롬프트 모음: **[handoff-prompts.md](handoff-prompts.md)** · status 문서 양식: [status-template.md](status-template.md)
@@ -13,11 +13,11 @@
 | 기능 | 브랜치 | 작업 도구 | 상태 | 마지막 커밋 | 다음 할 일 | status 문서 | 갱신일 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | develop 병합 (#17), 공통 패치 01~05 적용 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18)). F1 분류·요약 표시는 `feat/F1-mail-analysis`에서 F0 파일 변경([#33](https://github.com/choi7614/klover_my_prototype/pull/33)) | `438b29d` 2026-11-19 | 맥북 실제 Gmail 새로고침·F2·F3 화면 흐름 확인, 작성·보관·삭제 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
-| F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | PR 대기 ([#33](https://github.com/choi7614/klover_my_prototype/pull/33)) — 새 메일 자동 분석·분석 완료 알림 지점·받은편지함 분류·요약 표시, 공통 패치 05~07 미적용 | 2026-11-19 develop `d9257c0` 통합 | #33 병합 후 통합 채팅 05~07 적용(F5 훅 등록 포함), 맥북 Ollama로 새로고침→요약 표시 확인 | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
+| F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | develop 병합 ([#33](https://github.com/choi7614/klover_my_prototype/pull/33), `905398b`), 공통 패치 05~07 적용(`integrate/F1-auto-analysis`, F5 훅 등록 포함) | `f0d0034` 2026-11-19 | 맥북 `AI_PROVIDER=ollama`로 새로고침→분석→S03 분류·요약→S04 제안 확인, 분류 변경 드롭다운·근거 강조·WebSocket(후속) | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치(#16)·IPC(#19)·AI 연결([#31](https://github.com/choi7614/klover_my_prototype/pull/31)) | `c7bfb65` 2026-11-19 | 맥북 실제 AI로 초안 확인, 관련 메일 검색(related) 연결, 초안→보내기(F0) | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 ([#24](https://github.com/choi7614/klover_my_prototype/pull/24)), 공통 패치 01 적용 ([#30](https://github.com/choi7614/klover_my_prototype/pull/30)) | `1478e70` 2026-11-19 | 맥북 실제 제공자로 검색 확인, 의미 검색(bge-m3) 연결, 보낸 메일 열기 계약 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
 | F4 주간 보고 | `feat/F4-weekly-report` | 없음 | develop 병합 ([#22](https://github.com/choi7614/klover_my_prototype/pull/22)), 공통 패치 01~05 적용 ([#23](https://github.com/choi7614/klover_my_prototype/pull/23)) | `565929f` 2026-11-19 | 맥북 0006 설치·진입 확인, F1 저장(0007)·실제 AI 연결 후 생성 확인 | [F4-weekly-report-status.md](F4-weekly-report-status.md) | 2026-11-19 |
-| F5 AI 스캔 | `feat/F5-ai-scan` | 없음 | PR 대기 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32)) — F1 결과→제안 변환·생성 | `06e41f6` 2026-11-19 | 통합 채팅: F1 on_analyzed에 `AnalysisScanHook` 연결, 맥북 fixture 메일로 제안 생성·S04 확인, 알림·트레이(S10) | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-19 |
+| F5 AI 스캔 | `feat/F5-ai-scan` | 없음 | develop 병합 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32), `d9257c0`), F1 분석 완료 지점에 `AnalysisScanHook` 연결(F1 패치 05, `integrate/F1-auto-analysis`) | `b85e2eb` 2026-11-19 | 맥북 로컬 AI로 새 메일→제안 자동 생성·S04 확인, 알림·트레이(S10) | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-19 |
 
 ## 공통·통합 작업
 
@@ -31,6 +31,7 @@
 | F5 공통 패치 적용 | `integrate/F5-patches` | 없음 | develop 병합 ([#28](https://github.com/choi7614/klover_my_prototype/pull/28)) | `0af5876` 2026-11-19 | F1 결과→F5 입력 변환 | 2026-11-19 |
 | F1·F3 공통 패치 적용 | `integrate/F1-F3-patches` | 없음 | develop 병합 ([#30](https://github.com/choi7614/klover_my_prototype/pull/30)) | `8e4e267` 2026-11-19 | F2 초안 AI 연결, 자동 분석·표시 | 2026-11-19 |
 | F2 답장 초안 AI 연결 | `integrate/F2-ai` | 없음 | develop 병합 ([#31](https://github.com/choi7614/klover_my_prototype/pull/31)) | `3da516a` 2026-11-19 | 맥북 실제 AI 확인 | 2026-11-19 |
+| F1 자동 분석 공통 패치 05~07 적용 | `integrate/F1-auto-analysis` | 없음 | PR 대기 | (이 PR) 2026-11-19 | 병합 후 맥북 실기 확인 | 2026-11-19 |
 | 공통 서버·DB·Gmail 기반 | `feat/server-foundation` 외 4개 | 없음 | develop 병합 (#4~#9) | `b24f9d6` 2026-11-18 | 추가 작업 없음 | 2026-11-19 |
 
 ## 마이그레이션 번호 예약

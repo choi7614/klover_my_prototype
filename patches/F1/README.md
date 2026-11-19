@@ -1,6 +1,11 @@
 # F1 공통 연결 패치
 
-## 05~07 — 새 메일 자동 분석·받은편지함 분류·요약 표시 (미적용, 2026-11-19)
+## 05~07 — 새 메일 자동 분석·받은편지함 분류·요약 표시 (적용 완료, 2026-11-19)
+
+> 2026-11-19 통합 작업 `integrate/F1-auto-analysis`에서 develop `905398b`(#33 포함) 기준으로 05~07을 충돌 없이 적용했다.
+> 검사: 서버 ruff 통과, pytest 541 통과(분리 PostgreSQL 16 + pgvector 테스트 DB 3개, skip 0) · DB 없이 392 통과/149 skip,
+> `pnpm gen:api-types` 결과 = 06(경로 3개·스키마 6개 추가만), 데스크톱 lint·typecheck 통과·test 25개 파일 169개 통과.
+> 이미 반영된 소스에 다시 적용하지 않는다. 아래는 적용 전 기록이다.
 
 > F1 기능 브랜치 `feat/F1-mail-analysis` · 기준 develop `d9257c0`(#32 포함) · **아직 적용하지 않았다.** 통합 채팅에서 순서대로 적용한다.
 > 기능 브랜치에는 자동 분석 작업자(`app/pipeline/auto_analysis.py`), 분석 완료 알림 지점(`app/pipeline/analysis_hooks.py`),

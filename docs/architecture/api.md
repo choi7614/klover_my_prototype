@@ -190,4 +190,25 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 응답은 `{mail_id, user_label, effective_category}`, 다른 사용자·없는 메일은 같은 404,
 저장소 미연결은 503이다. 수정은 `f1_mail_analysis.user_label`과 `f1_category_feedback`에
 기록되고 청크의 필터 분류도 갱신한다. 엔진은 run_mail_api가 `app.state.mail_analysis_engine`에
-넣는다. 목록·상세 GET의 AI 필드 확장, `/mails/counts`, 재분석 API는 후속이다.
+넣는다. `/mails/counts`는 후속이다.
+
+## F1 새 메일 자동 분석과 표시용 조회 (patches/F1/05)
+
+- `POST /mails/sync`가 저장을 마치면 F1 자동 분석 작업자에 '분석 시작' 신호만 주고 바로 응답한다
+  (`MailSyncContext.after_sync`). 응답 형식은 그대로다. 작업자는 서버 안에 하나이며 pending 메일을 분석한다.
+  AI 미설정이면 분석하지 않고, 외부 AI(Claude)면 실제 Gmail 본문을 보내지 않는다. 두 경우 모두 메일은 pending이다.
+- 분석이 DB에 확정되면 분석 완료 알림 지점(`analysis_runner.hooks`)이 F5 `AnalysisScanHook`을 불러 제안을 만든다
+  (로컬 AI일 때만, F5 실패는 F1 분석에 영향 없음). 계약은 `docs/dev/F1-handoff.md`·`docs/dev/F5-handoff.md`.
+- 기존 `GET /mails`·`GET /mails/{mail_id}` 응답은 바꾸지 않았다. AI 결과는 F1 전용 경로로 따로 읽는다.
+
+| 메서드 | 경로 | 설명 |
+| --- | --- | --- |
+| GET | `/mails/analysis/batch?ids=…` (1~100개) | 목록 표시용 `{items: MailAnalysisView[], auto_analysis}`. 다른 소유자·없는 메일은 빠진다 |
+| GET | `/mails/{mail_id}/analysis` | 한 건 `MailAnalysisView + auto_analysis`, 없으면 404 |
+| POST | `/mails/{mail_id}/analysis/retry` | failed → pending 후 다시 분석(202). 분석 완료 409, AI 미연결 503 `analysis_unavailable` |
+
+`MailAnalysisView`: `mail_id`, `analysis_status`(pending/done/failed), `category`(user_label 우선),
+`ai_category`, `user_label`, `summary`, `needs_reply`, `action_items[{text,due}]`, `priority`,
+`priority_reason`, `has_events`, `evidence_spans[{kind,start,end}]`, `failure_code`(failed일 때).
+원문·벡터·모델 정보는 넣지 않는다. 운영에서 테스트 대역(mode=test) 결과는 pending으로 보인다.
+`auto_analysis`: `ready` / `not_configured` / `external_blocked` / `not_connected`(작업자 미조립).

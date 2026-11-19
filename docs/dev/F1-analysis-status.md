@@ -8,13 +8,21 @@
 | --- | --- |
 | 브랜치 | `feat/F1-mail-analysis` |
 | 작업 도구 | 없음 |
-| 상태 | 진행 중 — 새 메일 자동 분석·분석 완료 알림 지점·받은편지함 분류·요약 표시 구현·검사 완료, PR 대기 ([#33](https://github.com/choi7614/klover_my_prototype/pull/33)). 공통 패치 05~07 미적용 |
+| 상태 | develop 병합 ([#33](https://github.com/choi7614/klover_my_prototype/pull/33), `905398b`), 공통 패치 05~07 적용(`integrate/F1-auto-analysis`) — 맥북 실기 확인 남음 |
 | 마지막 커밋 | 2026-11-19 — develop `d9257c0` 로컬 통합 후 F5 호출 모양 맞춤 (git log 참조) |
-| 기준 develop | `d9257c0` (#31·#32 로컬 통합) |
+| 기준 develop | `905398b` |
 | 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
+
+### 공통 패치 05~07 적용 (2026-11-19, Claude, `integrate/F1-auto-analysis`)
+
+- develop `905398b` 위에 `patches/F1/05~07`을 충돌 없이 적용했다. 이제 운영 서버에서 새로고침 뒤 자동 분석 작업자가 돌고,
+  로컬 AI일 때 분석 완료 지점에 F5 `AnalysisScanHook`이 등록되며, 앱 받은편지함에 분류·요약이 보인다(`klover.analysis`).
+- 검사: 서버 ruff 통과, pytest 541 통과(분리 PostgreSQL 16 + pgvector 테스트 DB, skip 0), DB 없이 392 통과/149 skip,
+  `gen:api-types` = 06(추가만), 데스크톱 lint·typecheck 통과·test 25개 파일 169개 통과.
+- 미실행: 실제 Gmail·실제 AI(Ollama)·Electron 실제 창. 맥북 `.env`에 `AI_PROVIDER=ollama` 등을 넣고 확인한다.
 
 ### 새 메일 자동 분석·분류·요약 표시 (2026-11-19, Claude, F1+F0)
 

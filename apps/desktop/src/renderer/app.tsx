@@ -12,6 +12,7 @@ import { WeeklyReportPage } from './features/weekly-report/weekly-report-page';
 import { createWeeklyReportIPCClient, unavailableWeeklyReportClient } from './features/weekly-report/ipc-client';
 import { createSuggestionsIPCClient, unavailableSuggestionsClient } from './features/suggestions/ipc-client';
 import { TodoListPage } from './features/suggestions/todo-list';
+import { createAnalysisIPCClient } from './features/mail-analysis/client';
 
 export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchClient?: SearchClient } = {}) {
   const api = window.klover?.mail;
@@ -20,6 +21,9 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
   const searchBridge = window.klover?.search;
   const weeklyReportBridge = window.klover?.weeklyReport;
   const suggestionsBridge = window.klover?.suggestions;
+  const analysisBridge = window.klover?.analysis;
+  // F1 통로가 없으면 받은편지함은 AI 표시 없이 미리보기만 보여 준다.
+  const analysis = useMemo(() => analysisBridge ? createAnalysisIPCClient(analysisBridge) : undefined, [analysisBridge]);
   // F5 통로가 없으면 메일 읽기는 S03 모양 그대로, 할 일 화면은 '준비 중'을 보여 준다.
   const suggestions = useMemo(() => suggestionsBridge ? createSuggestionsIPCClient(suggestionsBridge) : undefined, [suggestionsBridge]);
   const weeklyReport = useMemo(() => weeklyReportBridge ? createWeeklyReportIPCClient(weeklyReportBridge) : unavailableWeeklyReportClient, [weeklyReportBridge]);
@@ -54,7 +58,7 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
     <HashRouter>
       <Routes>
         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
-        {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} />} />}
+        {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} analysis={analysis} />} />}
         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
         {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
         {session && <Route path="/report/weekly" element={<WeeklyReportPage key={session.account_id} client={weeklyReport} />} />}
