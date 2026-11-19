@@ -3,12 +3,15 @@
 from alembic import context
 
 from app.db.config import database_engine, database_url
+from app.db.f2_models import F2Base
 from app.db.models import Base
 from app.db.repositories.search_recent import search_metadata
 
 if context.is_offline_mode():
     context.configure(
-        url=database_url(), target_metadata=[Base.metadata, search_metadata], literal_binds=True
+        url=database_url(),
+        target_metadata=[Base.metadata, search_metadata, F2Base.metadata],
+        literal_binds=True,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -17,7 +20,8 @@ else:
     try:
         with engine.connect() as connection:
             context.configure(
-                connection=connection, target_metadata=[Base.metadata, search_metadata]
+                connection=connection,
+                target_metadata=[Base.metadata, search_metadata, F2Base.metadata],
             )
             with context.begin_transaction():
                 context.run_migrations()
