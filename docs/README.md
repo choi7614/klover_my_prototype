@@ -6,7 +6,7 @@
 
 | 문서 | 내용 |
 | --- | --- |
-| [overview.md](product/overview.md) | 서비스 개요, 기능 목록·담당, 기능 간 연결, 원칙 |
+| [overview.md](product/overview.md) | 서비스 개요, 기능 목록, 기능 간 연결, 원칙 |
 | [decisions.md](product/decisions.md) | 결정 사항 로그 |
 | [open-questions.md](product/open-questions.md) | 남은 확인 포인트와 데모 동안의 임시 가정 |
 | [features/F0-onboarding-mailbox.md](product/features/F0-onboarding-mailbox.md) | 첫 실행 설정과 기본 메일함 |

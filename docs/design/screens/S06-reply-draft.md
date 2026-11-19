@@ -1,6 +1,6 @@
 # S06. 답장 초안 (F2)
 
-> 기능 F2 · 담당 D · 라우트 `/reply/:mailId` · 목업 [S06-reply-draft.png](mockups/png/S06-reply-draft.png)
+> 기능 F2 · 라우트 `/reply/:mailId` · 목업 [S06-reply-draft.png](mockups/png/S06-reply-draft.png)
 
 ## 1. 목적
 
