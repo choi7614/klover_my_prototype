@@ -156,7 +156,8 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
             return <button key={String(label)} disabled className="flex h-[34px] items-center gap-2 px-3 text-body text-muted-foreground opacity-40"><Component className="size-4" aria-hidden="true" />{String(label)}</button>;
           })}
           <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능 · 준비 중</p>
-          <a href="#/settings/profile" className="mt-auto flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
+          <a href="#/report/weekly" className="mt-auto rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring">주간 보고</a>
+          <a href="#/settings/profile" className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
         </aside>
         <section className="flex w-[360px] shrink-0 flex-col border-r max-[1280px]:w-[320px]" aria-label="받은 메일 목록">
           <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">

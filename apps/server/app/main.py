@@ -9,6 +9,7 @@ from app.api.mail_read import register_mail_api
 from app.api.mail_sync import register_mail_sync
 from app.api.profile_draft import register_profile_draft
 from app.api.search import register_search_api
+from app.api.weekly_report import register_weekly_report_api
 from app.schemas.common import ErrorResponse
 
 
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
     register_mail_sync(application)
     register_profile_draft(application)
     register_search_api(application)
+    register_weekly_report_api(application)
     register_f5_api(application)
     return application
 

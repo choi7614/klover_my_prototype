@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { MailReadBridge } from '../shared/mail-read';
 import type { F2Bridge } from '../shared/f2-bridge';
+import type { F4Bridge } from '../shared/f4-bridge';
 import type { SearchBridge, SearchMessage } from '../shared/search-bridge';
 
 // 화면에는 필요한 정보와 정해진 통로만 공개한다. Node·파일·임의 IPC 접근은 공개하지 않는다.
@@ -40,4 +41,11 @@ const search = Object.freeze<SearchBridge>({
   },
 });
 
-contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search }));
+const weeklyReport = Object.freeze<F4Bridge>({
+  options: () => ipcRenderer.invoke('klover:weekly-report:options'),
+  generate: request => ipcRenderer.invoke('klover:weekly-report:generate', request),
+  get: id => ipcRenderer.invoke('klover:weekly-report:get', id),
+  excluded: id => ipcRenderer.invoke('klover:weekly-report:excluded', id),
+  save: (id, revision, sections) => ipcRenderer.invoke('klover:weekly-report:save', id, revision, sections),
+});
+contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport }));

@@ -1,15 +1,15 @@
-# F4 주간 보고 — 공통 계약 연결·재검사
+# F4 주간 보고 — 상태
 
-> 2026-11-19 · 기준 `origin/develop@9ac5421` · 현황판: [progress.md](progress.md)
+> 2026-11-19 · 기준 `origin/develop@cc759c3` + 공통 패치 적용(`integrate/F4-patches`) · 현황판: [progress.md](progress.md)
 
 | 항목 | 내용 |
 | --- | --- |
 | 브랜치 | 기존 `feat/F4-weekly-report` 재사용 |
 | 작업 도구 | 없음 |
-| 상태 | 기능 코드 구현·검사 완료 ([PR #22](https://github.com/choi7614/klover_my_prototype/pull/22)), 공통 영역 패치 미적용 |
+| 상태 | 기능 코드 develop 병합 ([PR #22](https://github.com/choi7614/klover_my_prototype/pull/22)), 공통 패치 01~05 적용 (통합 채팅 `integrate/F4-patches`) |
 | 보존한 커밋 | `c061a46` WIP → `4e12d04` 기반 통합·포트 연결 → `1576fc8` F5 포함 통합·재검사. 이후 인계 문서는 PR의 최신 커밋 참조 |
-| 기준 develop | `9ac5421` (F5 #20·#21 포함) |
-| 미커밋 변경 | 주 작업 폴더는 커밋·Push하여 없음. 기존 검토 사본 32개는 별도 보존 |
+| 기준 develop | `cc759c3` (#22 병합 후, 공통 패치는 이 위에 적용) |
+| 미커밋 변경 | 없음. Codex `/workspace/klover-f4-review` 사본 32개의 내용은 `c061a46`으로 보존·병합됨 (원본 폴더와 완전 동일한지는 Codex에서만 확인 가능) |
 | 상세 검사·파일 | [F4-shared-verification.md](F4-shared-verification.md) |
 
 ## 현재 상태
@@ -25,39 +25,57 @@
   기본 운영 런타임에서 거부한다.
 - 생성 결과의 섹션·항목·실제 대상 근거 ID, 생성·저장·재조회·제외 조회·편집·복사·
   재생성 확인·실패 보존을 구현했다. 사용자와 같은 사용자의 다른 계정도 분리한다.
-- S08은 기능 전용 화면이다. **공통 운영 등록·운영 DB 설치·앱 진입·main/preload는
-  미통합**이며 [patches/F4/](../../patches/F4/README.md)에만 준비했다.
+- 공통 연결(통합 채팅, `integrate/F4-patches`): `app.main`에 `/reports/weekly` 4개 경로 등록, 실행 명령에
+  `WeeklyReportRuntime` 조립, 마이그레이션 `0006_f4`(부모 `0005_f5`, `weekly_reports` 표), F4 main/preload
+  통로 5개, 앱 `/report/weekly` 경로·사이드바 진입, 공유 타입 재생성, api·data-model 문서.
+- 실제 앱에서는 아직 보고서를 만들 수 없다: F1 저장 표가 운영 DB에 없고(마이그레이션 미작성) 실제 AI도 없다.
+  이 경우 서버는 500이 아니라 503(`storage_unavailable`/`ai_unavailable`)으로 안내한다
+  (`tests/test_weekly_report_unready.py`).
 - 실제 Gmail 내용을 외부 AI에 보내지 않았다. 실제 모델 사실성·30초 생성 성능,
   설치된 Windows/Mac 앱 흐름은 미검증이다. Word·발송·예약·메일 외 입력은 범위 밖이다.
 
 ## 공통 영역 요청
 
-1. 패치 01: app.main 등록·run_mail_api의 실제 F1/F2/AI 조립과 경로 검사 갱신.
-2. 패치 02: 공통 ORM·신규 `0006_f4` (부모 `0005_f5`). 운영 적용 전 최신 head와
-   F1 저장 SQL 설치 여부 확인. 기존 DB·키·메일을 자동 변경하지 않는다.
-3. 패치 03: 제한된 F4 IPC 다섯 동작, 인증된 `/report/weekly` 진입·사이드바.
-4. 패치 04·05: 전체 API에서 생성한 공유 타입과 공통 문서. F0/F2/F3/F5 경로를 보존한다.
+- `patches/F4/` 01~05: 적용 완료(통합 채팅). 04는 `pnpm gen:api-types`로 재생성했고 패치와의 차이는
+  422 응답 설명 문구(Unprocessable Content)뿐이다.
+- 남은 요청: F1 저장 SQL을 `0007`로 옮겨 설치(F4 메일 입력의 선행 조건), 실제 AI 제공자 연결.
 
 ## 검사 결과와 다음 할 일
 
-실행한 검사와 미실행 이유는 [검사 보고](F4-shared-verification.md)를 기준으로 본다.
-기능 코드와 패치 적용 사본을 구분해 검사했다. 공통 패치는 실제 파일에 적용하지 않았다.
-[PR #22](https://github.com/choi7614/klover_my_prototype/pull/22)의 코드 CI(서버·화면) 두 작업이 통과했다. 최종 문서 커밋도
-같은 CI와 최신 원격 기준을 다시 확인한 뒤 사용자의 조건부 승인 범위에서 병합한다.
-다음 통합 작업은 위 패치 적용·운영 DB 확인·실제 AI 연결이며 이번 작업과 별도다.
+기능 단위 검사 기록은 [검사 보고](F4-shared-verification.md)를 본다.
+
+공통 패치 적용 후 (2026-11-19, 통합 채팅, `integrate/F4-patches`):
+
+| 검사 | 결과 |
+| --- | --- |
+| 패치 01·02·03·05 적용 | 충돌 없음. 새 파일(0006·F4 통로 5개)은 `patches/F4/files/*.pending`과 동일 |
+| 서버 `ruff check`·`ruff format --check` | 통과 |
+| 서버 `pytest` | 278 통과, 129 skip (실제 PostgreSQL 필요 — 이 환경에 DB 없음) |
+| F1 표·AI 없는 운영 조립 | 503 안내 확인 (새 검사 1개) |
+| `alembic heads` | `0006_f4` 하나 |
+| 데스크톱 `lint`·`typecheck`·`build` | 통과 (preload는 `electron`만 불러옴) |
+| 데스크톱 `test` | 16개 파일 133개 통과 |
+| `packages/api-types` typecheck | 통과 |
+
+미실행: 실제 DB에 0006 설치, Electron 실제 창, 실제 AI 보고서 생성(30초 성능).
+
+다음 할 일:
+1. 맥북에서 `alembic upgrade head`(0006까지) 후 사이드바 [주간 보고] 진입 확인 — 지금은 '저장소/AI 준비 안 됨' 안내가 정상
+2. 통합 채팅: F1 저장 SQL → `0007`, F1 등록
+3. 실제 AI 연결 후 보고서 생성·30초 성능 확인
 
 ## 인수인계 메모
 
-- 원래 `/workspace/klover-f4-review`의 미커밋 원본 32개는 삭제·덮어쓰기하지 않았다.
+- 원래 `/workspace/klover-f4-review`의 미커밋 원본 32개는 삭제·덮어쓰기하지 않았다(Codex 환경). 내용은 `c061a46`에 보존됨.
 - 오래된 `docs/dev/F4-proposals/` 패치는 보관 기록이다. 새 작업에는 사용하지 않는다.
 - 최초 b147cfd 기준의 공통 검사 실패 3건은 최신 F5 통합에 이미 수정되어 중복 패치를 제거했다.
 - main·계정·키·메일·수신 기능은 보존했다. 실제 제공자가 없을 때 가짜 성공을 반환하지 않는다.
 
 ---
 
-## WIP 보관 기록 (c061a46, 내용 보존)
+## WIP 보관 기록 (c061a46, 지난 기록 — 현재 상태 아님)
 
-# F4 주간 보고 — WIP 인수인계 상태
+### F4 주간 보고 — WIP 인수인계 상태
 
 > 사용자 승인에 따른 긴급 보관 · 2026-11-19 · 작업 도구: 없음
 
