@@ -1,0 +1,1086 @@
+{
+  "synthetic": true,
+  "evaluation_kind": "human-authored-golden-contract; not a model evaluation",
+  "cases": [
+    {
+      "case_id": "f1-001",
+      "mail": {
+        "mail_id": "f1-001",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-001",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "예산 자료 요청",
+        "body_text": "김가상님, 가상예산 프로젝트의 집행표를 이번 주 금요일까지 보내 주세요. 회신 바랍니다."
+      },
+      "expected": {
+        "mail_id": "f1-001",
+        "category": "work_request",
+        "summary": "가상예산 집행표를 금요일까지 요청",
+        "action_items": [
+          {
+            "text": "집행표 송부",
+            "due": "2026-11-20"
+          }
+        ],
+        "needs_reply": true,
+        "priority": "high",
+        "priority_reason": "마감이 있는 자료 요청",
+        "entities": {
+          "projects": [
+            "가상예산"
+          ],
+          "orgs": [],
+          "people": [
+            "김가상"
+          ]
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "마감이 있는 자료 요청",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-002",
+      "mail": {
+        "mail_id": "f1-002",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-002",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "검토 의견 요청",
+        "body_text": "가상연동 문서의 오류를 검토하고 2026-11-23까지 의견을 회신해 주세요."
+      },
+      "expected": {
+        "mail_id": "f1-002",
+        "category": "work_request",
+        "summary": "가상연동 오류 검토와 의견 회신 요청",
+        "action_items": [
+          {
+            "text": "문서 검토 후 회신",
+            "due": "2026-11-23"
+          }
+        ],
+        "needs_reply": true,
+        "priority": "normal",
+        "priority_reason": "검토 요청",
+        "entities": {
+          "projects": [
+            "가상연동"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "검토 요청",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-003",
+      "mail": {
+        "mail_id": "f1-003",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-003",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "계정 권한 변경 요청",
+        "body_text": "가상개발 계정의 권한을 변경해 주세요. 완료하면 알려 주세요. 날짜는 미정입니다."
+      },
+      "expected": {
+        "mail_id": "f1-003",
+        "category": "work_request",
+        "summary": "계정 권한 변경 후 회신 요청",
+        "action_items": [
+          {
+            "text": "권한 변경",
+            "due": null
+          }
+        ],
+        "needs_reply": true,
+        "priority": "normal",
+        "priority_reason": "완료 회신 요청",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "완료 회신 요청",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-004",
+      "mail": {
+        "mail_id": "f1-004",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-004",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "가상예산 검토 회의",
+        "body_text": "가상예산 회의를 2026-11-24 14:00부터 15:00까지 가상회의실에서 진행합니다. 참석 여부 회신 바랍니다."
+      },
+      "expected": {
+        "mail_id": "f1-004",
+        "category": "meeting",
+        "summary": "11/24 14시 가상예산 회의 안내",
+        "action_items": [
+          {
+            "text": "참석 여부 회신",
+            "due": null
+          }
+        ],
+        "needs_reply": true,
+        "priority": "normal",
+        "priority_reason": "회의 참석 확인",
+        "entities": {
+          "projects": [
+            "가상예산"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [
+          {
+            "title": "가상예산 검토 회의",
+            "start": "2026-11-24T14:00:00+09:00",
+            "end": "2026-11-24T15:00:00+09:00",
+            "location": "가상회의실"
+          }
+        ],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "회의 참석 확인",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-005",
+      "mail": {
+        "mail_id": "f1-005",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-005",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "일정 조율",
+        "body_text": "가상정산 회의 시간을 다음 주 중 조율하려고 합니다. 가능한 시간을 회신해 주세요."
+      },
+      "expected": {
+        "mail_id": "f1-005",
+        "category": "meeting",
+        "summary": "가상정산 회의 가능 시간 회신 요청",
+        "action_items": [
+          {
+            "text": "가능 시간 회신",
+            "due": null
+          }
+        ],
+        "needs_reply": true,
+        "priority": "normal",
+        "priority_reason": "구체적 일정 미정",
+        "entities": {
+          "projects": [
+            "가상정산"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "구체적 일정 미정",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-006",
+      "mail": {
+        "mail_id": "f1-006",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-006",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "교육 설명회 초대",
+        "body_text": "2026-12-01 10:00부터 11:00까지 가상강의실에서 설명회를 엽니다. 회신은 필요 없습니다."
+      },
+      "expected": {
+        "mail_id": "f1-006",
+        "category": "meeting",
+        "summary": "12/1 설명회 일정 안내",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "normal",
+        "priority_reason": "확정 일정 안내",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [
+          {
+            "title": "교육 설명회",
+            "start": "2026-12-01T10:00:00+09:00",
+            "end": "2026-12-01T11:00:00+09:00",
+            "location": "가상강의실"
+          }
+        ],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "확정 일정 안내",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-007",
+      "mail": {
+        "mail_id": "f1-007",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-007",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "전자결재 요청",
+        "body_text": "가상구매 품의 결재가 대기 중입니다. 2026-11-19까지 승인해 주세요. 메일 회신은 필요 없습니다."
+      },
+      "expected": {
+        "mail_id": "f1-007",
+        "category": "approval",
+        "summary": "가상구매 품의 승인 요청",
+        "action_items": [
+          {
+            "text": "품의 승인",
+            "due": "2026-11-19"
+          }
+        ],
+        "needs_reply": false,
+        "priority": "high",
+        "priority_reason": "승인 마감 임박",
+        "entities": {
+          "projects": [
+            "가상구매"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "승인 마감 임박",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-008",
+      "mail": {
+        "mail_id": "f1-008",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-008",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "지출 승인 안내",
+        "body_text": "가상출장 지출 결의에 대한 검토와 승인을 요청합니다. 날짜는 정해지지 않았습니다."
+      },
+      "expected": {
+        "mail_id": "f1-008",
+        "category": "approval",
+        "summary": "가상출장 지출 승인 요청",
+        "action_items": [
+          {
+            "text": "지출 결의 승인",
+            "due": null
+          }
+        ],
+        "needs_reply": false,
+        "priority": "normal",
+        "priority_reason": "결재 요청",
+        "entities": {
+          "projects": [
+            "가상출장"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "결재 요청",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-009",
+      "mail": {
+        "mail_id": "f1-009",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-009",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "구매 승인 재요청",
+        "body_text": "가상장비 구매 승인 버튼을 눌러 주세요. 2026-11-25가 기한입니다."
+      },
+      "expected": {
+        "mail_id": "f1-009",
+        "category": "approval",
+        "summary": "가상장비 구매 승인 재요청",
+        "action_items": [
+          {
+            "text": "구매 승인",
+            "due": "2026-11-25"
+          }
+        ],
+        "needs_reply": false,
+        "priority": "normal",
+        "priority_reason": "기한 있는 승인 요청",
+        "entities": {
+          "projects": [
+            "가상장비"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "기한 있는 승인 요청",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-010",
+      "mail": {
+        "mail_id": "f1-010",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-010",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "회의 결과 공유",
+        "body_text": "가상예산 회의 결과를 공유합니다. 추가 작업과 회신은 없습니다."
+      },
+      "expected": {
+        "mail_id": "f1-010",
+        "category": "report_share",
+        "summary": "가상예산 회의 결과 공유",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "normal",
+        "priority_reason": "참고 자료 공유",
+        "entities": {
+          "projects": [
+            "가상예산"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "참고 자료 공유",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-011",
+      "mail": {
+        "mail_id": "f1-011",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-011",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "집계 현황 공유",
+        "body_text": "가상통계 집계가 완료되었습니다. 수치는 본문을 참고해 주세요. 회신하지 않으셔도 됩니다."
+      },
+      "expected": {
+        "mail_id": "f1-011",
+        "category": "report_share",
+        "summary": "가상통계 집계 완료 공유",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "normal",
+        "priority_reason": "보고 자료 공유",
+        "entities": {
+          "projects": [
+            "가상통계"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "보고 자료 공유",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-012",
+      "mail": {
+        "mail_id": "f1-012",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-012",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "고객 보고서 내부 공유",
+        "body_text": "내부 가상영업팀에서 가상고객 보고서 확정본을 공유합니다. 회신은 필요 없습니다."
+      },
+      "expected": {
+        "mail_id": "f1-012",
+        "category": "report_share",
+        "summary": "가상고객 보고서 내부 공유",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "normal",
+        "priority_reason": "내부 공유 메일",
+        "entities": {
+          "projects": [
+            "가상고객"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "내부 공유 메일",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-013",
+      "mail": {
+        "mail_id": "f1-013",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-013",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "보안 교육 공지",
+        "body_text": "전 직원 대상 공지입니다. 2026-11-30까지 가상보안 교육을 이수해 주세요. 메일 회신은 불필요합니다."
+      },
+      "expected": {
+        "mail_id": "f1-013",
+        "category": "notice",
+        "summary": "전 직원 보안 교육 이수 안내",
+        "action_items": [
+          {
+            "text": "교육 이수",
+            "due": "2026-11-30"
+          }
+        ],
+        "needs_reply": false,
+        "priority": "normal",
+        "priority_reason": "전사 공지",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "전사 공지",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-014",
+      "mail": {
+        "mail_id": "f1-014",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-014",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "시스템 점검 안내",
+        "body_text": "전사 가상시스템 점검을 공지합니다. 별도 회신이나 작업은 없습니다."
+      },
+      "expected": {
+        "mail_id": "f1-014",
+        "category": "notice",
+        "summary": "전사 시스템 점검 공지",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "low",
+        "priority_reason": "참고 공지",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "참고 공지",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-015",
+      "mail": {
+        "mail_id": "f1-015",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-015",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "사내 식당 운영 공지",
+        "body_text": "사내 가상식당 운영 시간이 변경됩니다. 이번 공지는 회신이 필요 없습니다."
+      },
+      "expected": {
+        "mail_id": "f1-015",
+        "category": "notice",
+        "summary": "사내 식당 운영 시간 변경 공지",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "low",
+        "priority_reason": "전사 생활 공지",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "전사 생활 공지",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-016",
+      "mail": {
+        "mail_id": "f1-016",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-016",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "외부 견적 문의",
+        "body_text": "외부 가상거래처입니다. 가상납품 견적서를 2026-11-20까지 회신 부탁드립니다."
+      },
+      "expected": {
+        "mail_id": "f1-016",
+        "category": "external",
+        "summary": "외부 거래처의 견적 회신 요청",
+        "action_items": [
+          {
+            "text": "견적 회신",
+            "due": "2026-11-20"
+          }
+        ],
+        "needs_reply": true,
+        "priority": "high",
+        "priority_reason": "거래처 회신 기한",
+        "entities": {
+          "projects": [
+            "가상납품"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "거래처 회신 기한",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-017",
+      "mail": {
+        "mail_id": "f1-017",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-017",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "거래처 회의 일정 문의",
+        "body_text": "외부 가상회계법인입니다. 현장 회의 가능 날짜를 알려 주세요. 확정 일정은 없습니다."
+      },
+      "expected": {
+        "mail_id": "f1-017",
+        "category": "external",
+        "summary": "외부 회계법인의 가능 날짜 문의",
+        "action_items": [
+          {
+            "text": "가능 날짜 회신",
+            "due": null
+          }
+        ],
+        "needs_reply": true,
+        "priority": "normal",
+        "priority_reason": "외부 업무 문의",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "외부 업무 문의",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-018",
+      "mail": {
+        "mail_id": "f1-018",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-018",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "가상고객 오류 문의",
+        "body_text": "외부 가상고객입니다. 가상연동 오류 상황을 확인하고 답변해 주세요."
+      },
+      "expected": {
+        "mail_id": "f1-018",
+        "category": "external",
+        "summary": "외부 고객의 오류 확인 요청",
+        "action_items": [
+          {
+            "text": "오류 확인 후 회신",
+            "due": null
+          }
+        ],
+        "needs_reply": true,
+        "priority": "normal",
+        "priority_reason": "외부 고객 문의",
+        "entities": {
+          "projects": [
+            "가상연동"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "외부 고객 문의",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-019",
+      "mail": {
+        "mail_id": "f1-019",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-019",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "광고 세미나 초대",
+        "body_text": "구독 광고입니다. 가상상품 판매 세미나에 초대합니다. 수신 거부 링크가 있습니다."
+      },
+      "expected": {
+        "mail_id": "f1-019",
+        "category": "newsletter",
+        "summary": "가상상품 판매 세미나 광고",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "low",
+        "priority_reason": "구독 광고",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "구독 광고",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-020",
+      "mail": {
+        "mail_id": "f1-020",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-020",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "주간 금융 브리프",
+        "body_text": "구독하신 가상금융 브리프를 보내 드립니다. 회신은 받지 않으며 수신 거부할 수 있습니다."
+      },
+      "expected": {
+        "mail_id": "f1-020",
+        "category": "newsletter",
+        "summary": "가상금융 주간 구독 브리프",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "low",
+        "priority_reason": "구독 뉴스레터",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "구독 뉴스레터",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-021",
+      "mail": {
+        "mail_id": "f1-021",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-021",
+        "received_at": "2026-11-18T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "구독 할인 행사",
+        "body_text": "광고 전용 가상구독 할인 행사입니다. 회신 불가, 수신 거부 링크를 이용하세요."
+      },
+      "expected": {
+        "mail_id": "f1-021",
+        "category": "newsletter",
+        "summary": "가상구독 할인 광고",
+        "action_items": [],
+        "needs_reply": false,
+        "priority": "low",
+        "priority_reason": "광고성 프로모션",
+        "entities": {
+          "projects": [],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "광고성 프로모션",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-022",
+      "mail": {
+        "mail_id": "f1-022",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-022",
+        "received_at": "2026-12-31T09:00:00+09:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "연말 자료 요청",
+        "body_text": "가상연말 자료를 내일까지 보내 주세요. 회신 부탁드립니다."
+      },
+      "expected": {
+        "mail_id": "f1-022",
+        "category": "work_request",
+        "summary": "가상연말 자료를 내일까지 요청",
+        "action_items": [
+          {
+            "text": "자료 송부",
+            "due": "2027-01-01"
+          }
+        ],
+        "needs_reply": true,
+        "priority": "high",
+        "priority_reason": "연도 경계의 마감",
+        "entities": {
+          "projects": [
+            "가상연말"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "연도 경계의 마감",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    },
+    {
+      "case_id": "f1-023",
+      "mail": {
+        "mail_id": "f1-023",
+        "user_id": "f1-user-a",
+        "account_id": "f1-account-a",
+        "source": "fixture",
+        "thread_id": "f1-thread-023",
+        "received_at": "2026-11-18T16:30:00+00:00",
+        "from_addr": "synthetic-sender@example.invalid",
+        "from_name": "가상발신자",
+        "to": [
+          {
+            "addr": "synthetic-recipient@example.invalid"
+          }
+        ],
+        "cc": [],
+        "subject": "시간대 경계 요청",
+        "body_text": "가상야간 작업 확인서를 내일까지 보내 주세요."
+      },
+      "expected": {
+        "mail_id": "f1-023",
+        "category": "work_request",
+        "summary": "가상야간 확인서 송부 요청",
+        "action_items": [
+          {
+            "text": "확인서 송부",
+            "due": "2026-11-20"
+          }
+        ],
+        "needs_reply": true,
+        "priority": "normal",
+        "priority_reason": "한국 날짜 기준 다음 날 마감",
+        "entities": {
+          "projects": [
+            "가상야간"
+          ],
+          "orgs": [],
+          "people": []
+        },
+        "events": [],
+        "evidence_spans": []
+      },
+      "rubric": {
+        "category_reason": "한국 날짜 기준 다음 날 마감",
+        "date_basis": "메일 수신 시각의 Asia/Seoul 날짜, 명시된 날짜 또는 상대 날짜",
+        "synthetic_only": true
+      }
+    }
+  ]
+}

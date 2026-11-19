@@ -1,6 +1,6 @@
 # S08. 주간 보고 (F4)
 
-> 기능 F4 · 담당 D(서버) · A(화면) · 라우트 `/report/weekly` · 목업 [S08-weekly-report.png](mockups/png/S08-weekly-report.png)
+> 기능 F4 · 라우트 `/report/weekly` · 목업 [S08-weekly-report.png](mockups/png/S08-weekly-report.png)
 
 ## 1. 목적
 

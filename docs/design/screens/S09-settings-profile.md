@@ -1,6 +1,6 @@
 # S09. 설정 · 내 프로필·문체 (F2)
 
-> 기능 F2 · 담당 D · 라우트 `/settings/profile` · 목업 [S09-settings-profile.png](mockups/png/S09-settings-profile.png)
+> 기능 F2 · 라우트 `/settings/profile` · 목업 [S09-settings-profile.png](mockups/png/S09-settings-profile.png)
 
 ## 1. 목적
 

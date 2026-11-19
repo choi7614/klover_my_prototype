@@ -12,7 +12,7 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ['scripts/smoke-electron.mjs'],
+    files: ['scripts/smoke-electron.mjs', 'scripts/smoke-mail-read.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 );

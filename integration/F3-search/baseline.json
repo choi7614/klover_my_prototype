@@ -1,0 +1,19 @@
+{
+  "base_commit": "4fef3fef1c2abedcc8d56202b1642503993bff67",
+  "protected_files": {
+    "apps/server/app/main.py": "8d552bde904408e59a66ffb901b3df679390c203872b0e5f8fa3e2487057fc74",
+    "apps/server/app/cli/run_mail_api.py": "ac03dc32c50ae4a77b5a2be9b2e8b4ddd2e17d90e1467a9284ec219809d41828",
+    "apps/server/app/db/models.py": "f46eeaad1ef1058ee0b3c2d95324ec8e81d3cdec99bbeee92e5d5b9d68f97a4b",
+    "apps/server/migrations/env.py": "10d0b350cd91a6548621392c560f818607f5a7ae9af8480b84725eb8e7d4e2d6",
+    "apps/server/tests/test_postgresql_storage.py": "88f4e53c9d5492891874517b2ebb4d578e261aa8baf355260f72bddaeb3ed1f6",
+    "apps/server/tests/test_http_server.py": "8be110ea3706e4c7296cdfb6b8920275b4c57f678b1b896ae2d61c314f9b409d",
+    "apps/server/uv.lock": "d8a0d74ca35d3779a7c2dfbe69c6ced58e42d224908c330c3df617bd80289372",
+    "pnpm-lock.yaml": "26713b30dbc94e502171f9e62d853fafce6dd9fe5ddf17fe9d7971e0784f5a4d",
+    "packages/api-types/openapi.json": "a5eae92f585829dc0870e7c670ec11176ff39b21659aa5df5fd7820529c85d5d",
+    "packages/api-types/src/schema.d.ts": "ab279d41b0726afa61dd3112e918c16e2d2064df9a782b84e952be894abfdeaa",
+    "apps/desktop/src/renderer/app.tsx": "0cc78219ccca85a3bf2a19c47442fda528973844b48bd0af051eff69f5c309af",
+    "apps/desktop/src/renderer/main.tsx": "7e8ed62d72e64913c2c10179334315612ff3d2d28a5c3efe8468168c7b70914b",
+    "apps/desktop/src/main/index.ts": "b2420fa85c433f4a998224bedd4adb6d98c83a84d6561e2fade3cb1068176954",
+    "apps/desktop/src/preload/index.ts": "b10c4d8db38bd40c5bdcecc6fe5352d812583ec570d31b6141d619d97b74f3a0"
+  }
+}

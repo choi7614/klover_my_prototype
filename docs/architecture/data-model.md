@@ -1,6 +1,6 @@
 # 데이터 모델
 
-> 상태: 최소 저장 단위 구현 · 나머지 전체 설계는 공동 검토할 초안 | 최종 수정: 2026-11-18
+> 상태: 최소 저장·F3 최근 검색 단위 구현 · 나머지 전체 설계는 공동 검토할 초안 | 최종 수정: 2026-11-19
 
 ## 최소 저장 단위 (2026-11-18)
 
@@ -52,6 +52,22 @@ Gmail history ID다. 배치 시작에 확인한 ID를 저장해 실행 중 도�
 
 이 문서는 공유 영역이다. 바꿀 때는 팀 채널에 알리고 PR 리뷰를 받는다.
 
+## F3 최근 검색 저장 단위 (2026-11-19)
+
+`0003_search_runs`는 기존 메일·계정·Google 암호문을 바꾸지 않고 최근 검색 테이블만 추가한다.
+공통 `models.py`는 보존하고 F3 전용 메타데이터를 Alembic에 함께 등록한다.
+
+- `search_id`: 32자리 임의 ID, text PK.
+- `user_id`, `account_id`: text, `(account_id, user_id)` 복합 FK → `mail_accounts`.
+- `query`: 원래 검색 질문. 메일 원문·토큰은 저장하지 않는다.
+- `parsed`, `overrides`: jsonb, 검증된 기준 해석과 명시적 수정·삭제 값.
+- `reference_date`: text, 최초 해석의 한국 기준 날짜 `YYYY-MM-DD`.
+- `created_at`: timestamptz. 사용자·계정·시각의 인덱스로 최근 질문을 찾는다.
+
+다른 사용자·계정의 검색 ID는 재사용할 수 없다. 실제 DB 적용은 별도 실행해야 하며,
+이 작업에서는 격리된 합성 테스트 DB에서만 마이그레이션과 보존 여부를 검사했다.
+[F3 전달 문서](../dev/F3-search-handoff.md)를 따른다.
+
 ## 테이블 개요
 
 | 테이블 | 내용 | 주 사용 기능 |
@@ -60,6 +76,7 @@ Gmail history ID다. 배치 시작에 확인한 ID를 저장해 실행 중 도�
 | `mail_accounts` | 연결된 메일 계정, OAuth 토큰(암호화), 동기화 시작 시점·커서 | F0 |
 | `mails` | 메일 1건 = 1행. 기본 정보 + AI 메타데이터 | F0, F1 |
 | `mail_chunks` | 메일 본문 청크 + 임베딩 벡터 (메일 1건 = 여러 행) | F1, F2, F3 |
+| `search_runs` | F3 최근 질문·검증된 해석·조건 수정 기록 | F3 |
 | `category_feedback` | 사용자의 카테고리 수정 이력 | F1 |
 | `profiles` | 기본 정보, 문체 설정, 주간 보고 양식 | F2, F4 |
 | `style_learnings` | 보낸 메일에서 학습한 문체 결과 | F2 |
@@ -164,3 +181,14 @@ Gmail history ID다. 배치 시작에 확인한 ID를 저장해 실행 중 도�
 
 날짜 경계, 사용자 분류 우선순위, 분석 미완료 처리와 그룹 연결 규칙은
 [F4 구현 계획](../dev/F4-weekly-report-plan.md)의 내부 계약을 따른다.
+
+## F2 저장 구조 (0004_f2)
+
+0004_f2는 profiles/style_learnings/drafts만 추가한다. 기존 테이블·행·키는 바꾸지 않는다.
+모델은 app.db.f2_models의 별도 F2Base.metadata이며 공통 Base.metadata와 함께 검사한다.
+profiles는 위 설계의 필드와 excluded_phrases(jsonb), version(int>=1)을 저장한다.
+style_learnings는 user_id(PK/FK), payload(jsonb: status/analyzed_count/phrases/traits)를 저장한다.
+실제 학습 수집·쓰기 작업자는 아직 없다. drafts는 draft_id(PK), user_id(FK·인덱스),
+payload(jsonb: DraftState 전체), version(int>=1)을 저장한다. 사용자·버전 조건으로 갱신한다.
+학습 기록 삭제는 해당 사용자 기록을 지우고 학습 동의를 끄며 프로필 버전을 올린다.
+세부 계약과 F4 읽기 포트는 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.

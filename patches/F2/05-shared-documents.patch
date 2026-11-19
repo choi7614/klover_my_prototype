@@ -1,0 +1,32 @@
+--- a/docs/architecture/api.md
++++ b/docs/architecture/api.md
+@@ -131,3 +131,12 @@
+ | `mail.received` | 새 메일 도착 (분석 전) | 목록에 추가 |
+ | `mail.analyzed` | 분석 완료 (요약·태그) | 목록 갱신 |
+ | `suggestion.created` | 새 AI 제안 | Windows 토스트 알림 |
++
++## F2 등록 후의 API (승인 전 패치)
++
++F2 router와 F2Context를 등록하고 0004_f2 마이그레이션을 적용한 경우에만 사용한다.
++GET/PUT /profile, GET/DELETE /profile/style, POST /profile/preview, POST /drafts,
++GET/PATCH /drafts/{draft_id}, POST /drafts/{draft_id}/revise.
++인증·Origin 제한은 기존 로컬 메일 조회 API를 그대로 따른다. 발송 API는 추가하지 않는다.
++AI 미연결은 503 ai_unavailable이며 합성 결과로 대체하지 않는다.
++입력·출력·버전·동의·오류 계약은 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.
+--- a/docs/architecture/data-model.md
++++ b/docs/architecture/data-model.md
+@@ -181,3 +181,14 @@
+ 
+ 날짜 경계, 사용자 분류 우선순위, 분석 미완료 처리와 그룹 연결 규칙은
+ [F4 구현 계획](../dev/F4-weekly-report-plan.md)의 내부 계약을 따른다.
++
++## F2 저장 구조 (승인 전 패치)
++
++0004_f2는 profiles/style_learnings/drafts만 추가한다. 기존 테이블·행·키는 바꾸지 않는다.
++모델은 app.db.f2_models의 별도 F2Base.metadata이며 공통 Base.metadata와 함께 검사한다.
++profiles는 위 설계의 필드와 excluded_phrases(jsonb), version(int>=1)을 저장한다.
++style_learnings는 user_id(PK/FK), payload(jsonb: status/analyzed_count/phrases/traits)를 저장한다.
++실제 학습 수집·쓰기 작업자는 아직 없다. drafts는 draft_id(PK), user_id(FK·인덱스),
++payload(jsonb: DraftState 전체), version(int>=1)을 저장한다. 사용자·버전 조건으로 갱신한다.
++학습 기록 삭제는 해당 사용자 기록을 지우고 학습 동의를 끄며 프로필 버전을 올린다.
++세부 계약과 F4 읽기 포트는 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.

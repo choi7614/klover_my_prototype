@@ -1,6 +1,6 @@
 # S01. 첫 실행 설정 (5단계)
 
-> 기능 F0 · 담당 A · 라우트 `/onboarding/:step` (1~5) · 목업 [S01-onboarding.png](mockups/png/S01-onboarding.png) (4단계 모습)
+> 기능 F0 · 라우트 `/onboarding/:step` (1~5) · 목업 [S01-onboarding.png](mockups/png/S01-onboarding.png) (4단계 모습)
 
 ## 1. 목적
 
