@@ -61,6 +61,7 @@ AI 기능(F1~F5)은 이 기본 메일함 위에서 동작하므로, F0는 모든
 - `POST /auth/google` — OAuth 코드 교환, 서버가 토큰 저장
 - `GET /mails?box=inbox&cursor=` — 메일 목록
 - `GET /mails/{mail_id}` — 메일 상세
+- `POST /mails/sync` — Gmail 새 받은 메일 가져오기 (앱 새로고침, 사용 시작 이후·중복 제외)
 - `POST /mails/send` — 메일 보내기 (보낸 메일은 F2 문체 학습 대상)
 - `POST /mails/{mail_id}/archive` / `DELETE /mails/{mail_id}` / `POST /mails/{mail_id}/spam`
 - `PUT /settings/notifications` — 알림·시작 프로그램 설정
@@ -85,7 +86,12 @@ F0 데스크톱의 Google 버튼은 아직 이 흐름에 연결하지 않았다.
 구현했으나 F0 화면 연결과 실제 메일 본문 표시 검증은 후속이다.
 아래 앱의 Gmail 로그인·받은편지함 수용 기준은 아직 완료로 바꾸지 않는다.
 2026-11-19 F0 연결 검토: main 전용 API 토큰과 제한된 IPC로 계정·목록·페이지·본문 조회를 연결한다.
-기존 첫 화면을 보존하고 연결된 계정의 받은편지함을 열며, 새로고침은 DB 재조회만 수행한다.
+기존 첫 화면을 보존하고 연결된 계정의 받은편지함을 연다.
+(2026-11-19 변경) 새로고침은 서버가 Gmail에서 새 받은 메일을 가져온 뒤(`POST /mails/sync`) 목록을 다시 읽는다.
+사용 시작 시점 이후만 받는 규칙과 중복 방지는 기존 수신 기능(CLI `gmail_mail sync`와 같음)을 따른다.
+진행 중 표시·실패 문구·재시도를 제공하고, 실패해도 기존 목록은 유지한다. 주기적 자동 수신은 후속이다.
+메일함에서 F2(사이드바 [설정] → `/settings/profile`, 메일 읽기 [◆ 답장 초안 만들기] → `/reply/:mailId`)와
+F3(상단 검색창·`Ctrl K` → Enter → `/search?q=`) 화면으로 들어간다. F2·F3 서버 통로(IPC)는 후속이다.
 자동 검사는 합성 데이터를 쓰고 실제 맥북 Gmail 화면 확인은 사용자 확인으로 남긴다.
 설정 전체·AI·쓰기·Windows 트레이 등의 수용 기준은 이번에 완료 처리하지 않는다.
 [맥북 앱 실행 안내](../../dev/F0-mailbox-run.md)를 따른다.

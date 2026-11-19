@@ -12,7 +12,7 @@
 
 | 기능 | 브랜치 | 작업 도구 | 상태 | 마지막 커밋 | 다음 할 일 | status 문서 | 갱신일 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | develop 병합 ([#10](https://github.com/choi7614/klover_my_prototype/pull/10), `7a9d4dd`) | `abda40d` 2026-11-19 | F2 화면 진입(프로필·답장 초안)·F3 검색 진입 연결, F2용 IPC 연결 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
+| F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | PR → develop 병합 승인 (새로고침 Gmail 가져오기·F2/F3 진입) | 이번 커밋 2026-11-19 | 통합 채팅에서 `patches/F0` 01~05 적용, 맥북 실제 수신 확인, F2·F3 IPC 연결 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
 | F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | develop 병합 (#11) | `34ebcbc` 2026-11-18 | 실제 LLM·임베딩 어댑터 연결, 저장 SQL·라우터 운영 반영(통합 채팅) | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치 적용 ([#16](https://github.com/choi7614/klover_my_prototype/pull/16), `integrate/F2-patches`) | `c7bfb65` 2026-11-19 | F2용 main/preload IPC 클라이언트 연결(현재 '준비 부족' 기본값), 실제 DB에서 0004 적용 확인 | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 (#12) | `deeda1c` 2026-11-19 | 실제 모델 어댑터, F0 화면 진입·메일 열기, F2 초안 열기 연결 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |

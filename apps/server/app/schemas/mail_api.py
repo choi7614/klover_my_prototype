@@ -37,3 +37,12 @@ class LocalSession(BaseModel):
     account_id: str
     email: str
     sync_started_at: AwareDatetime
+
+
+class MailSyncResult(BaseModel):
+    """Gmail 새 받은 메일 가져오기 결과. 메일 내용·토큰은 포함하지 않는다."""
+
+    saved: int
+    skipped: int
+    mode: Literal["initial", "history", "rescan"]
+    token_refreshed: bool
