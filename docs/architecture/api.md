@@ -173,3 +173,13 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 입력 변경·무시를 차단한다. 앱 할 일은 내부 저장 성공 후에만 approved가 된다.
 알림 이벤트 조회만으로 표시 완료를 기록하지 않는다. 운영 DB 적용·Google/OS 실행은 별도다.
 [F5 계약](../dev/F5-ai-scan-contract.md), [현황](../dev/F5-ai-scan-status.md)을 따른다.
+
+## F4 주간 보고 (공통 패치 적용 후)
+
+기존 로컬 Bearer·Origin·연결 계정 검사를 그대로 사용한다.
+`GET /reports/weekly/options`, `POST /reports/weekly`, `GET /reports/weekly/{id}`,
+`GET /reports/weekly/{id}/excluded`, `PATCH /reports/weekly/{id}`를 등록한다.
+프로필은 F2, 메일 입력은 F1, AI는 공통 TextGeneration을 사용한다. 실제 제공자가 없으면
+503으로 종료하며 대역으로 대체하지 않는다. 운영 서비스는 run_mail_api에서 조립한다.
+사용자·계정은 요청 본문에서 받지 않고, 편집은 expected_revision과 근거를 검증한다.
+일정 예약·내보내기·발송 경로는 추가하지 않는다.

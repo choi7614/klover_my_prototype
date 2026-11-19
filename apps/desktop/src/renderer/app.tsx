@@ -8,12 +8,16 @@ import { F2ProfileRoute, F2ReplyRoute, unavailableF2Client, type F2Client } from
 import type { SearchClient } from './features/search/contracts';
 import { createF2IPCClient } from './bridges/f2-ipc-client';
 import { createSearchIPCClient } from './bridges/search-ipc-client';
+import { WeeklyReportPage } from './features/weekly-report/weekly-report-page';
+import { createWeeklyReportIPCClient, unavailableWeeklyReportClient } from './features/weekly-report/ipc-client';
 
 export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchClient?: SearchClient } = {}) {
   const api = window.klover?.mail;
   // main/preload 통로가 있으면 실제 서버에 연결하고, 없으면(테스트·브라우저 미리보기) '준비 부족'을 보여 준다.
   const f2Bridge = window.klover?.f2;
   const searchBridge = window.klover?.search;
+  const weeklyReportBridge = window.klover?.weeklyReport;
+  const weeklyReport = useMemo(() => weeklyReportBridge ? createWeeklyReportIPCClient(weeklyReportBridge) : unavailableWeeklyReportClient, [weeklyReportBridge]);
   const f2 = useMemo(() => f2Client ?? (f2Bridge ? createF2IPCClient(f2Bridge) : unavailableF2Client), [f2Client, f2Bridge]);
   const search = useMemo(() => searchClient ?? (searchBridge ? createSearchIPCClient(searchBridge) : unavailableSearchClient), [searchClient, searchBridge]);
   const [session, setSession] = useState<MailSession | null>(null);
@@ -47,6 +51,7 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
         {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} />} />}
         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
+        {session && <Route path="/report/weekly" element={<WeeklyReportPage key={session.account_id} client={weeklyReport} />} />}
         <Route path="/settings/profile" element={<F2ProfileRoute client={f2} mailboxPath={mailboxPath} />} />
         <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2} mailboxPath={mailboxPath} />} />
         <Route path="*" element={<Navigate to={session ? '/mail/inbox' : '/onboarding/1'} replace />} />

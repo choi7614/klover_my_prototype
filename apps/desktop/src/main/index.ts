@@ -4,6 +4,8 @@ import { app, BrowserWindow, Menu, session, ipcMain, screen } from 'electron';
 import { MailAPIClient } from './mail-client';
 import { developmentRendererURL, registerMailReadIPC } from './mail-ipc';
 import { F2APIClient } from './f2-client';
+import { F4APIClient } from './f4-client';
+import { registerF4IPC } from './f4-ipc';
 import { registerF2IPC } from './f2-ipc';
 import { localSearchClientFactory, registerSearchIPC } from './search-ipc';
 
@@ -51,7 +53,8 @@ function createOnboardingWindow(): void {
   // F2 프로필·답장 초안, F3 검색 통로. 메일 통로와 같은 신뢰 화면·토큰 규칙을 쓴다.
   const unregisterF2 = registerF2IPC(ipcMain, window.webContents, rendererURL, new F2APIClient(configuration));
   const unregisterSearch = registerSearchIPC(ipcMain, window.webContents, rendererURL, localSearchClientFactory(configuration));
-  window.once('closed', () => { unregister(); unregisterF2(); unregisterSearch(); });
+  const unregisterF4 = registerF4IPC(ipcMain, window.webContents, rendererURL, new F4APIClient(configuration));
+  window.once('closed', () => { unregister(); unregisterF2(); unregisterSearch(); unregisterF4(); });
 
   if (developmentURL) {
     void window.loadURL(developmentURL);

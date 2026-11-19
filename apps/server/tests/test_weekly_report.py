@@ -368,8 +368,9 @@ def test_unconfigured_registration_and_errors_do_not_leak_details(service):
         assert "SECRET_MAIL_CONTENT" not in response.text and TOKEN not in response.text
 
 
-def test_production_main_routes_are_unchanged():
-    assert all(not path.startswith("/reports/") for path in create_app().openapi()["paths"])
+def test_production_main_routes_register_f4():
+    paths = create_app().openapi()["paths"]
+    assert "/reports/weekly" in paths and "/reports/weekly/options" in paths
 
 
 def test_concurrent_edit_wins_over_an_in_flight_regeneration(service):

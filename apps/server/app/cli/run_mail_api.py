@@ -20,6 +20,7 @@ from app.mail_api_config import MailAPIConfigurationError, read_api_token
 from app.main import create_app
 from app.services.f5 import F5Service
 from app.services.search import SearchService
+from app.services.weekly_report_runtime import WeeklyReportRuntime
 
 
 def main():
@@ -48,6 +49,7 @@ def main():
             SQLRecentSearchRepository(engine),
         )
         application.state.profile_draft = F2Context(F2Repository(engine))
+        application.state.weekly_reports = WeeklyReportRuntime(engine)
         # 실제 Calendar transport는 별도 승인·권한 확인 전까지 차단한다.
         application.state.f5_service = F5Service(F5Repository(engine))
         print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")

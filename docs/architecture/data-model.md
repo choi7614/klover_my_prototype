@@ -217,3 +217,12 @@ idle/executing/failed/uncertain/blocked/simulated/succeeded다.
 테스트 영수증은 approved가 되지 않는다. 불명확한 실행은 후속 권한 오류가 나도 입력 잠금을 유지한다.
 실행 중 프로세스 종료는 수동 조정 대상이다. 기존 사용자·계정·암호문·메일·수신 커서는 변경하지 않는다.
 이 이력을 운영 DB에 실제 적용했는지는 별도 확인하며, 자동 마이그레이션은 하지 않는다.
+
+## F4 보고서 저장소 (공통 패치 적용 후)
+
+`weekly_reports`: report_id(PK), user_id(FK), selection_key, revision, payload(JSONB).
+(user_id, selection_key)는 유일하다. payload에는 account_id·프로필·대상 메일 스냅샷·
+검증된 문서를 보관하며 저장 버전을 비교해 갱신한다. 조회·편집 때 사용자와 계정을
+다시 확인한다. 기존 사용자·메일·계정·키·수신 커서는 수정하지 않는다.
+신규 이력은 0006_f4, 현재 down_revision은 0005_f5다. 통합 직전 head가 바뀌면
+예약 번호와 down_revision을 다시 확인해야 한다. 기존 이력은 수정하지 않는다.

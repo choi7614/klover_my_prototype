@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -93,3 +94,18 @@ class Mail(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     is_read: Mapped[bool] = mapped_column(Boolean, server_default="false")
     analysis_status: Mapped[str] = mapped_column(String(20), server_default="pending")
+
+
+class WeeklyReportRow(Base):
+    """F4 보고서. 소유 계정은 검증된 payload와 선택 키에 함께 저장한다."""
+
+    __tablename__ = "weekly_reports"
+    __table_args__ = (
+        UniqueConstraint("user_id", "selection_key", name="uq_weekly_report_owner_selection"),
+    )
+
+    report_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), nullable=False)
+    selection_key: Mapped[str] = mapped_column(Text, nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
