@@ -47,27 +47,33 @@ function contacts(value: unknown): MailDetail['to'] {
   return value.map(item => { const row = record(item); return { addr: text(row.addr), name: text(row.name) }; });
 }
 
+export type LocalAPIConfiguration = Configuration;
+
+/** main 전용: 로컬 API 주소와 토큰 파일을 확인해 읽는다. F2·F3 통로도 같은 규칙을 쓴다. 실패하면 null. */
+export async function readLocalAPI(configuration: Configuration): Promise<{ base: URL; token: string } | null> {
+  try {
+    const base = localAPIURL(configuration.baseURL);
+    const file = configuration.tokenFile;
+    if (!file || !isAbsolute(file)) return null;
+    const handle = await open(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+    let token: string;
+    try {
+      const stat = await handle.stat();
+      if (!stat.isFile() || stat.size > 256 || (process.platform !== 'win32' && (stat.mode & 0o077) !== 0)) return null;
+      token = (await handle.readFile('utf8')).trim();
+    } finally { await handle.close(); }
+    return /^[A-Za-z0-9_-]{43}$/.test(token) ? { base, token } : null;
+  } catch { return null; }
+}
+
 export class MailAPIClient implements MailReadBridge {
   constructor(private readonly configuration: Configuration, private readonly fetcher: typeof fetch = fetch) {}
 
   // 새 메일 가져오기는 Gmail 수신을 기다리므로 조회보다 길게 기다린다.
   private async request<T>(path: string, parse: (value: unknown) => T, method: 'GET' | 'POST' = 'GET', timeout = 10000): Promise<MailResult<T>> {
-    let base: URL;
-    let token: string;
-    try {
-      base = localAPIURL(this.configuration.baseURL);
-      const file = this.configuration.tokenFile;
-      if (!file || !isAbsolute(file)) return mailFailure('configuration');
-      const handle = await open(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
-      try {
-        const stat = await handle.stat();
-        if (!stat.isFile() || stat.size > 256 || (process.platform !== 'win32' && (stat.mode & 0o077) !== 0)) {
-          return mailFailure('configuration');
-        }
-        token = (await handle.readFile('utf8')).trim();
-      } finally { await handle.close(); }
-      if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return mailFailure('configuration');
-    } catch { return mailFailure('configuration'); }
+    const local = await readLocalAPI(this.configuration);
+    if (!local) return mailFailure('configuration');
+    const { base, token } = local;
 
     try {
       const response = await this.fetcher(new URL(path, base), {

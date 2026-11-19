@@ -73,15 +73,15 @@
 2. 02 main/preload: `MailAPIClient.sync()`, `klover:mail:sync` IPC, preload `mail.sync`.
 3. 03 App 경로: `/mail/inbox/:mailId?`, `/search`, `searchClient` 주입 자리.
 4. 04 공유 타입 재생성(`pnpm gen:api-types`), 05 api.md·mail-read-api.md 문구.
-5. 남은 요청(다음 단위): F2·F3용 main/preload IPC 클라이언트를 `App`의 `f2Client`·`searchClient`로 연결.
+5. F2·F3용 main/preload IPC 연결: 완료(통합 채팅, `integrate/F2-F3-ipc`). `App`이 `window.klover.f2`·`search`가 있으면 실제 연결, 없으면 '준비 부족'.
 
 ## 다음 할 일
 
 1. 맥북에서 새로고침으로 실제 Gmail 새 메일 수신 확인 (`docs/dev/F0-mailbox-run.md`)
-2. F2·F3 서버 통로(IPC) 연결 (통합 채팅). 선택: `shared/mail-read.ts`의 수동 `MailSyncResult`를 생성 타입으로 교체
+2. 맥북에서 실제 앱으로 프로필 저장·답장 초안·검색 흐름 확인 (F2·F3 통로 연결됨). 선택: `shared/mail-read.ts`의 수동 `MailSyncResult`를 생성 타입으로 교체
 3. 작성·보관·삭제 단위 진행
 
 ## 인수인계 메모
 
 - 멈춘 지점: 공통 패치 01~05 적용·검사 완료.
-- 주의할 점: 이후 F2·F3 IPC는 F0의 `mail-ipc.ts`와 같은 방식(신뢰한 화면만, 인증 값은 main에서만)으로 만든다.
+- 주의할 점: F2·F3 통로(`main/f2-*.ts`, `main/search-ipc.ts`)는 `mail-ipc.ts`의 `trustedMailSender`와 `mail-client.ts`의 `readLocalAPI`(토큰 읽기)를 함께 쓴다. 바꿀 때 세 통로를 같이 검사한다.
