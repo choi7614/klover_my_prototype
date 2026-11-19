@@ -17,7 +17,7 @@
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치(#16)·IPC 연결([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `c7bfb65` 2026-11-19 | 맥북 실제 앱 확인, 실제 DB 0004 적용 확인, 실제 AI 어댑터 연결 | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 ([#24](https://github.com/choi7614/klover_my_prototype/pull/24)), 공통 패치 01 적용 ([#30](https://github.com/choi7614/klover_my_prototype/pull/30)) | `1478e70` 2026-11-19 | 맥북 실제 제공자로 검색 확인, 의미 검색(bge-m3) 연결, 보낸 메일 열기 계약 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
 | F4 주간 보고 | `feat/F4-weekly-report` | 없음 | develop 병합 ([#22](https://github.com/choi7614/klover_my_prototype/pull/22)), 공통 패치 01~05 적용 ([#23](https://github.com/choi7614/klover_my_prototype/pull/23)) | `565929f` 2026-11-19 | 맥북 0006 설치·진입 확인, F1 저장(0007)·실제 AI 연결 후 생성 확인 | [F4-weekly-report-status.md](F4-weekly-report-status.md) | 2026-11-19 |
-| F5 AI 스캔 | `feat/F5-ai-scan` | 없음 | PR 대기 — F1 결과→제안 변환·생성 (develop `369d511` 위) | PR 커밋 2026-11-19 | 통합 채팅: F1 on_analyzed에 `AnalysisScanHook` 연결, 맥북 fixture 메일로 제안 생성·S04 확인, 알림·트레이(S10) | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-19 |
+| F5 AI 스캔 | `feat/F5-ai-scan` | 없음 | PR 대기 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32)) — F1 결과→제안 변환·생성 | `06e41f6` 2026-11-19 | 통합 채팅: F1 on_analyzed에 `AnalysisScanHook` 연결, 맥북 fixture 메일로 제안 생성·S04 확인, 알림·트레이(S10) | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-19 |
 
 ## 공통·통합 작업
 
