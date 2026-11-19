@@ -11,18 +11,18 @@ docs/design/screens/S03-inbox.md 를 읽고, mockups/png/S03-inbox.png 처럼 �
 
 ## 화면 목록
 
-| ID | 화면 | 기능 | 담당 | 정의서 | 목업 |
-| --- | --- | --- | --- | --- | --- |
-| S01 | 첫 실행 설정 (5단계) | F0 | A | [S01-onboarding.md](S01-onboarding.md) | [S01-onboarding.png](mockups/png/S01-onboarding.png) |
-| S02 | 빈 받은편지함 | F0 | A | [S02-inbox-empty.md](S02-inbox-empty.md) | [S02-inbox-empty.png](mockups/png/S02-inbox-empty.png) |
-| S03 | 받은편지함 (AI 분류) — **기준 화면** | F0·F1 | A·C | [S03-inbox.md](S03-inbox.md) | [S03-inbox.png](mockups/png/S03-inbox.png) |
-| S04 | 메일 읽기 + AI 제안 | F5 | C | [S04-mail-suggestions.md](S04-mail-suggestions.md) | [S04-mail-suggestions.png](mockups/png/S04-mail-suggestions.png) |
-| S05 | 새 메일 작성 | F0 | A | [S05-compose.md](S05-compose.md) | [S05-compose.png](mockups/png/S05-compose.png) |
-| S06 | 답장 초안 | F2 | D | [S06-reply-draft.md](S06-reply-draft.md) | [S06-reply-draft.png](mockups/png/S06-reply-draft.png) |
-| S07 | 자연어 검색 | F3 | D | [S07-search.md](S07-search.md) | [S07-search.png](mockups/png/S07-search.png) |
-| S08 | 주간 보고 | F4 | D (화면 A) | [S08-weekly-report.md](S08-weekly-report.md) | [S08-weekly-report.png](mockups/png/S08-weekly-report.png) |
-| S09 | 설정 · 내 프로필·문체 | F2 | D | [S09-settings-profile.md](S09-settings-profile.md) | [S09-settings-profile.png](mockups/png/S09-settings-profile.png) |
-| S10 | Windows 알림 · 트레이 · 놓친 제안 | F0·F5 | A·C | [S10-notifications-tray.md](S10-notifications-tray.md) | [S10-notifications-tray.png](mockups/png/S10-notifications-tray.png) |
+| ID | 화면 | 기능 | 정의서 | 목업 |
+| --- | --- | --- | --- | --- |
+| S01 | 첫 실행 설정 (5단계) | F0 | [S01-onboarding.md](S01-onboarding.md) | [S01-onboarding.png](mockups/png/S01-onboarding.png) |
+| S02 | 빈 받은편지함 | F0 | [S02-inbox-empty.md](S02-inbox-empty.md) | [S02-inbox-empty.png](mockups/png/S02-inbox-empty.png) |
+| S03 | 받은편지함 (AI 분류) — **기준 화면** | F0·F1 | [S03-inbox.md](S03-inbox.md) | [S03-inbox.png](mockups/png/S03-inbox.png) |
+| S04 | 메일 읽기 + AI 제안 | F5 | [S04-mail-suggestions.md](S04-mail-suggestions.md) | [S04-mail-suggestions.png](mockups/png/S04-mail-suggestions.png) |
+| S05 | 새 메일 작성 | F0 | [S05-compose.md](S05-compose.md) | [S05-compose.png](mockups/png/S05-compose.png) |
+| S06 | 답장 초안 | F2 | [S06-reply-draft.md](S06-reply-draft.md) | [S06-reply-draft.png](mockups/png/S06-reply-draft.png) |
+| S07 | 자연어 검색 | F3 | [S07-search.md](S07-search.md) | [S07-search.png](mockups/png/S07-search.png) |
+| S08 | 주간 보고 | F4 | [S08-weekly-report.md](S08-weekly-report.md) | [S08-weekly-report.png](mockups/png/S08-weekly-report.png) |
+| S09 | 설정 · 내 프로필·문체 | F2 | [S09-settings-profile.md](S09-settings-profile.md) | [S09-settings-profile.png](mockups/png/S09-settings-profile.png) |
+| S10 | Windows 알림 · 트레이 · 놓친 제안 | F0·F5 | [S10-notifications-tray.md](S10-notifications-tray.md) | [S10-notifications-tray.png](mockups/png/S10-notifications-tray.png) |
 
 목업 원본은 `mockups/*.html`(브라우저로 열면 보임), 이미지는 `mockups/png/*.png`. 목업 위 노란 번호는 각 정의서의 "구성 요소" 번호와 같다.
 
@@ -81,17 +81,17 @@ docs/design/screens/S03-inbox.md 를 읽고, mockups/png/S03-inbox.png 처럼 �
 
 ## 화면 정의서에서 새로 필요해진 것
 
-화면을 정의하면서 기존 문서에 없던 항목이 생겼다. 구현 담당이 `docs/architecture/api.md`·`data-model.md`에 먼저 추가한 뒤 구현한다.
+화면을 정의하면서 기존 문서에 없던 항목이 생겼다. 해당 작업 채팅이 `docs/architecture/api.md`·`data-model.md`에 먼저 추가한 뒤 구현한다.
 
-| 항목 | 화면 | 담당 |
+| 항목 | 화면 | 작업 채팅 |
 | --- | --- | --- |
-| `GET /status/readiness` (사용 시작일, 보낸 메일 수 → 기능 준비 상태) | S02 | B |
-| `mails.evidence_spans` (요약·할 일·마감을 뽑은 본문 위치) | S03 | C |
-| 메일 임시 저장 API, `GET /contacts?q=` (받는 사람 자동완성) | S05 | B |
-| `drafts.evidence[]` 위치 형식 (밑줄 표시용) | S06 | D |
-| `PATCH /reports/weekly/{id}` (편집 내용 저장) | S08 | D |
-| 트레이 아이콘 '새 제안' 배지 버전 | S10 | A |
-| 키보드 단축키 (`Ctrl K`·`Ctrl N`·`J/K`·`E`·`R`·`Del`) | 공통 | A |
+| `GET /status/readiness` (사용 시작일, 보낸 메일 수 → 기능 준비 상태) | S02 | 통합 |
+| `mails.evidence_spans` (요약·할 일·마감을 뽑은 본문 위치) | S03 | F1 |
+| 메일 임시 저장 API, `GET /contacts?q=` (받는 사람 자동완성) | S05 | 통합 |
+| `drafts.evidence[]` 위치 형식 (밑줄 표시용) | S06 | F2 |
+| `PATCH /reports/weekly/{id}` (편집 내용 저장) | S08 | F4 |
+| 트레이 아이콘 '새 제안' 배지 버전 | S10 | F0 |
+| 키보드 단축키 (`Ctrl K`·`Ctrl N`·`J/K`·`E`·`R`·`Del`) | 공통 | F0 |
 
 ## 정의서 형식
 
@@ -99,7 +99,7 @@ docs/design/screens/S03-inbox.md 를 읽고, mockups/png/S03-inbox.png 처럼 �
 
 ```markdown
 # Sxx. 화면 이름
-> 기능 · 담당 · 라우트 · 목업
+> 기능 · 라우트 · 목업
 ## 1. 목적
 ## 2. 진입 · 나가기
 ## 3. 레이아웃            (영역별 크기)

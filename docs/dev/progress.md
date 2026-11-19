@@ -1,6 +1,6 @@
 # 개발 현황판
 
-> 갱신: 2026-11-19 · 기준: `origin/develop@71eac03` · 갱신 도구: Claude
+> 갱신: 2026-11-19 · 기준: `origin/develop@f282640` · 갱신 도구: Claude
 
 **도구를 바꾸기 전·이어받은 직후 이 표부터 갱신한다.** 규칙은 [AGENTS.md](../../AGENTS.md)의 '도구 전환과 인수인계'.
 도구 전환용 프롬프트 모음: **[handoff-prompts.md](handoff-prompts.md)** · status 문서 양식: [status-template.md](status-template.md)
@@ -23,7 +23,7 @@
 
 | 작업 | 브랜치 | 작업 도구 | 상태 | 마지막 커밋 | 다음 할 일 | 갱신일 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 규칙 단일화·인수인계·CI | `chore/agent-guidelines` | Claude | 진행 중 | (이번 커밋) | 묶음 승인 후 develop 대상 PR, develop 병합은 별도 승인 | 2026-11-19 |
+| 규칙 단일화·인수인계·CI | `chore/agent-guidelines` | 없음 | develop 병합 ([#14](https://github.com/choi7614/klover_my_prototype/pull/14), `f282640`) | `ae4d00b` 2026-11-19 | 후속: 문서 담당 표기 정리(1인 개발) PR | 2026-11-19 |
 | 공통 서버·DB·Gmail 기반 | `feat/server-foundation` 외 4개 | 없음 | develop 병합 (#4~#9) | `b24f9d6` 2026-11-18 | 추가 작업 없음 | 2026-11-19 |
 
 ## 마이그레이션 번호 예약
