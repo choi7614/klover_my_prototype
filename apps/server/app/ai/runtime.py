@@ -1,7 +1,53 @@
-"""실제 제공자 연결 지점. 미설정 상태에서 테스트 대역으로 대체하지 않는다."""
+"""실제 제공자 연결 지점. .env의 AI_PROVIDER로 Claude 또는 로컬 Ollama(Qwen 등)를 고른다.
 
+- AI_PROVIDER가 비어 있으면 지금처럼 미연결(ProvidersNotConfigured)이다.
+- 어느 경우에도 테스트 대역이나 가짜 결과로 대체하지 않는다.
+- 임베딩은 제공자와 관계없이 이 컴퓨터의 Ollama(bge-m3 기본)를 쓴다.
+"""
+
+from collections.abc import Mapping
+
+from app.ai.config import AISettings, read_ai_settings
 from app.ai.interfaces import ProvidersNotConfigured, TextEmbedding, TextGeneration
 
+NOT_CONFIGURED = "실제 AI 제공자가 설정되지 않았습니다 (.env의 AI_PROVIDER)"
 
-def load_providers() -> tuple[TextGeneration, TextEmbedding]:
-    raise ProvidersNotConfigured("실제 AI·임베딩 제공자가 아직 연결되지 않았습니다")
+
+def _settings(values: Mapping[str, str | None] | None) -> AISettings:
+    settings = read_ai_settings(values)
+    if settings.provider is None:
+        raise ProvidersNotConfigured(NOT_CONFIGURED)
+    return settings
+
+
+def load_generation(values: Mapping[str, str | None] | None = None) -> TextGeneration:
+    settings = _settings(values)
+    if settings.provider == "claude":
+        from app.ai.claude import ClaudeGeneration
+
+        return ClaudeGeneration(settings.claude)
+    from app.ai.ollama import OllamaGeneration
+
+    return OllamaGeneration(settings.ollama)
+
+
+def load_embedding(values: Mapping[str, str | None] | None = None) -> TextEmbedding:
+    settings = _settings(values)
+    from app.ai.ollama import OllamaEmbedding
+
+    return OllamaEmbedding(settings.embedding, settings.ollama.base_url)
+
+
+def load_providers(
+    values: Mapping[str, str | None] | None = None,
+) -> tuple[TextGeneration, TextEmbedding]:
+    # 설정을 한 번만 읽어 두 제공자가 같은 값을 보게 한다.
+    from app.ai.config import environment_values
+
+    values = environment_values() if values is None else values
+    return load_generation(values), load_embedding(values)
+
+
+def is_external(provider: object) -> bool:
+    """외부 서버로 내용을 보내는 제공자인지. 알 수 없으면 외부로 간주한다."""
+    return getattr(provider, "external_transfer", True) is not False

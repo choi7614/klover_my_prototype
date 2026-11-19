@@ -22,8 +22,15 @@ vectors = await embeddings.embed(EmbeddingRequest(texts=("텍스트",), purpose=
 - `.identity`는 provider/model/mode(`live` 또는 `test`), 임베딩은 `.dimensions`도 제공한다.
 - 제공자 어댑터의 오류는 `ProviderCallError` 같은 고정 오류로 전달하고 외부 본문·키·
   메일 내용·응답 원문을 메시지나 로그에 넣지 않는다. 호출자는 타임아웃을 둔다.
-- 실제 제공자는 미구현이다. `load_providers()`는 `ProvidersNotConfigured`로 중단하며
+- 실제 제공자는 `.env`의 `AI_PROVIDER`(claude/ollama)로 고른다(2026-11-19). 비어 있으면
+  `load_providers()`·`load_generation()`·`load_embedding()`이 `ProvidersNotConfigured`로 중단하며
   fixture 응답으로 대체하지 않는다. 대역은 `tests/f1/support.py`에만 정의했다.
+- `ProviderCallError.code`는 고정 오류 코드(예: `ollama_unreachable`, `claude_refused`)이고
+  메시지는 고정된 한국어 안내다. 제공자에는 `call_timeout`(재시도 포함 권장 시간 제한)과
+  `external_transfer`(Claude는 True, Ollama는 False)가 있다. 실제 Gmail 내용을 다루는 기능은
+  `app.ai.runtime.is_external(generator)`가 True면 보내지 않도록 각 기능에서 막는다(open-questions 14).
+- `GenerationRequest.purpose`별로 모델을 바꿀 수 있다(`CLAUDE_MODEL_DRAFT`, `OLLAMA_MODEL_SEARCH` 등).
+  `identity.model`은 analysis용 모델 이름이다.
 
 ## F2·F3
 

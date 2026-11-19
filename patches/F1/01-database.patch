@@ -1,0 +1,321 @@
+diff --git a/apps/server/migrations/env.py b/apps/server/migrations/env.py
+index 10b0b1e..043f7cf 100644
+--- a/apps/server/migrations/env.py
++++ b/apps/server/migrations/env.py
+@@ -3,14 +3,14 @@
+ from alembic import context
+ 
+ from app.db.config import database_engine, database_url
++from app.db.f1_models import F1Base
+ from app.db.f2_models import F2Base
+-from app.db.repositories.f5_schema import F5Base
+ from app.db.repositories.search_recent import search_metadata
+ 
+ if context.is_offline_mode():
+     context.configure(
+         url=database_url(),
+-        target_metadata=[F5Base.metadata, search_metadata, F2Base.metadata],
++        target_metadata=[F1Base.metadata, search_metadata, F2Base.metadata],
+         literal_binds=True,
+     )
+     with context.begin_transaction():
+@@ -21,7 +21,8 @@ else:
+         with engine.connect() as connection:
+             context.configure(
+                 connection=connection,
+-                target_metadata=[F5Base.metadata, search_metadata, F2Base.metadata],
++                # F1 metadata는 공통·F5 테이블을 포함한다(app/db/f1_models.py).
++                target_metadata=[F1Base.metadata, search_metadata, F2Base.metadata],
+             )
+             with context.begin_transaction():
+                 context.run_migrations()
+diff --git a/apps/server/migrations/versions/0007_f1_analysis.py b/apps/server/migrations/versions/0007_f1_analysis.py
+new file mode 100644
+index 0000000..0c3fc89
+--- /dev/null
++++ b/apps/server/migrations/versions/0007_f1_analysis.py
+@@ -0,0 +1,187 @@
++"""F1 분석 결과·본문/요약 벡터·분류 수정 이력. 기존 메일·계정·토큰은 바꾸지 않는다.
++
++integration/F1-mail-analysis/001_storage.sql을 옮긴 이력이다. 차이:
++- mails의 (mail_id,user_id,account_id) 유일 제약은 0005의 uq_mail_f5_owner를 재사용한다
++  (같은 제약을 중복으로 만들지 않는다).
++- 제약·인덱스에 이름을 붙였다(app/db/f1_models.py와 같은 이름).
++"""
++
++import sqlalchemy as sa
++from alembic import op
++from sqlalchemy.dialects import postgresql
++
++revision = "0007_f1"
++down_revision = "0006_f4"
++branch_labels = None
++depends_on = None
++
++CATEGORIES = "'work_request','meeting','approval','report_share','notice','external','newsletter'"
++
++
++class Vector(sa.types.UserDefinedType):
++    # 검색 경로(search_path)에 public이 없어도 찾도록 확장을 만든 public 스키마로 지정한다.
++    cache_ok = True
++
++    def get_col_spec(self, **_kw):
++        return "public.vector"
++
++
++def upgrade():
++    # pgvector가 설치된 DB(infra의 pgvector/pgvector:pg16)에서만 동작한다.
++    op.execute("CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public")
++    op.create_table(
++        "f1_mail_analysis",
++        sa.Column("mail_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("category", sa.Text(), nullable=True),
++        sa.Column("user_label", sa.Text(), nullable=True),
++        sa.Column("summary", sa.Text(), nullable=True),
++        sa.Column(
++            "action_items",
++            postgresql.JSONB(),
++            server_default=sa.text("'[]'::jsonb"),
++            nullable=False,
++        ),
++        sa.Column("needs_reply", sa.Boolean(), nullable=True),
++        sa.Column("priority", sa.Text(), nullable=True),
++        sa.Column("priority_reason", sa.Text(), nullable=True),
++        sa.Column(
++            "entities",
++            postgresql.JSONB(),
++            server_default=sa.text("""'{"projects":[],"orgs":[],"people":[]}'::jsonb"""),
++            nullable=False,
++        ),
++        sa.Column(
++            "events", postgresql.JSONB(), server_default=sa.text("'[]'::jsonb"), nullable=False
++        ),
++        sa.Column(
++            "evidence_spans",
++            postgresql.JSONB(),
++            server_default=sa.text("'[]'::jsonb"),
++            nullable=False,
++        ),
++        sa.Column("failure_code", sa.Text(), nullable=True),
++        sa.Column("attempts", sa.Integer(), server_default=sa.text("0"), nullable=False),
++        sa.Column("llm_provider", sa.Text(), nullable=True),
++        sa.Column("llm_model", sa.Text(), nullable=True),
++        sa.Column("llm_mode", sa.Text(), nullable=True),
++        sa.Column("embedding_provider", sa.Text(), nullable=True),
++        sa.Column("embedding_model", sa.Text(), nullable=True),
++        sa.Column("embedding_mode", sa.Text(), nullable=True),
++        sa.Column("embedding_dimensions", sa.Integer(), nullable=True),
++        sa.Column(
++            "updated_at",
++            sa.DateTime(timezone=True),
++            server_default=sa.text("now()"),
++            nullable=False,
++        ),
++        sa.CheckConstraint(f"category IN ({CATEGORIES})", name="ck_f1_analysis_category"),
++        sa.CheckConstraint(f"user_label IN ({CATEGORIES})", name="ck_f1_analysis_user_label"),
++        sa.CheckConstraint("priority IN ('high','normal','low')", name="ck_f1_analysis_priority"),
++        sa.CheckConstraint("attempts BETWEEN 0 AND 2", name="ck_f1_analysis_attempts"),
++        sa.CheckConstraint("llm_mode IN ('live','test')", name="ck_f1_analysis_llm_mode"),
++        sa.CheckConstraint(
++            "embedding_mode IN ('live','test')", name="ck_f1_analysis_embedding_mode"
++        ),
++        sa.CheckConstraint(
++            "embedding_dimensions BETWEEN 1 AND 4096", name="ck_f1_analysis_dimensions"
++        ),
++        sa.ForeignKeyConstraint(
++            ["mail_id", "user_id", "account_id"],
++            ["mails.mail_id", "mails.user_id", "mails.account_id"],
++            name="fk_f1_analysis_mail_owner",
++            ondelete="CASCADE",
++        ),
++        sa.PrimaryKeyConstraint("mail_id"),
++        sa.UniqueConstraint("mail_id", "user_id", "account_id", name="uq_f1_analysis_owner"),
++    )
++    op.create_table(
++        "f1_mail_chunks",
++        sa.Column("chunk_id", sa.Text(), nullable=False),
++        sa.Column("mail_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("kind", sa.Text(), nullable=False),
++        sa.Column("seq", sa.Integer(), nullable=False),
++        sa.Column("text", sa.Text(), nullable=False),
++        sa.Column("embedding", Vector(), nullable=False),
++        sa.Column("embedding_dimensions", sa.Integer(), nullable=False),
++        sa.Column("embedding_provider", sa.Text(), nullable=False),
++        sa.Column("embedding_model", sa.Text(), nullable=False),
++        sa.Column("embedding_mode", sa.Text(), nullable=False),
++        sa.Column("received_at", sa.DateTime(timezone=True), nullable=False),
++        sa.Column("category", sa.Text(), nullable=False),
++        sa.CheckConstraint("kind IN ('body','summary')", name="ck_f1_chunk_kind"),
++        sa.CheckConstraint("seq >= 0", name="ck_f1_chunk_seq"),
++        sa.CheckConstraint(
++            "embedding_dimensions BETWEEN 1 AND 4096", name="ck_f1_chunk_dimensions"
++        ),
++        sa.CheckConstraint("embedding_mode IN ('live','test')", name="ck_f1_chunk_embedding_mode"),
++        sa.CheckConstraint(f"category IN ({CATEGORIES})", name="ck_f1_chunk_category"),
++        sa.CheckConstraint(
++            "public.vector_dims(embedding) = embedding_dimensions",
++            name="ck_f1_chunk_vector_dims",
++        ),
++        sa.ForeignKeyConstraint(
++            ["mail_id", "user_id", "account_id"],
++            [
++                "f1_mail_analysis.mail_id",
++                "f1_mail_analysis.user_id",
++                "f1_mail_analysis.account_id",
++            ],
++            name="fk_f1_chunk_analysis_owner",
++            ondelete="CASCADE",
++        ),
++        sa.PrimaryKeyConstraint("chunk_id"),
++        sa.UniqueConstraint("mail_id", "kind", "seq", name="uq_f1_chunk_position"),
++    )
++    op.create_index(
++        "ix_f1_chunks_scope",
++        "f1_mail_chunks",
++        ["user_id", "account_id", "received_at", "category"],
++        unique=False,
++    )
++    op.create_table(
++        "f1_category_feedback",
++        sa.Column("feedback_id", sa.BigInteger(), autoincrement=True, nullable=False),
++        sa.Column("mail_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("from_addr", sa.Text(), nullable=False),
++        sa.Column("subject", sa.Text(), nullable=False),
++        sa.Column("user_label", sa.Text(), nullable=False),
++        sa.Column(
++            "created_at",
++            sa.DateTime(timezone=True),
++            server_default=sa.text("now()"),
++            nullable=False,
++        ),
++        sa.CheckConstraint(f"user_label IN ({CATEGORIES})", name="ck_f1_feedback_user_label"),
++        sa.ForeignKeyConstraint(
++            ["mail_id", "user_id", "account_id"],
++            [
++                "f1_mail_analysis.mail_id",
++                "f1_mail_analysis.user_id",
++                "f1_mail_analysis.account_id",
++            ],
++            name="fk_f1_feedback_analysis_owner",
++            ondelete="CASCADE",
++        ),
++        sa.PrimaryKeyConstraint("feedback_id"),
++    )
++    op.create_index(
++        "ix_f1_feedback_sender",
++        "f1_category_feedback",
++        ["user_id", "account_id", "from_addr", sa.text("feedback_id DESC")],
++        unique=False,
++    )
++
++
++def downgrade():
++    # F1 테이블만 지운다. vector 확장과 기존 메일·계정은 남긴다.
++    op.drop_index("ix_f1_feedback_sender", table_name="f1_category_feedback")
++    op.drop_table("f1_category_feedback")
++    op.drop_index("ix_f1_chunks_scope", table_name="f1_mail_chunks")
++    op.drop_table("f1_mail_chunks")
++    op.drop_table("f1_mail_analysis")
+diff --git a/apps/server/tests/test_f2_pending_migration.py b/apps/server/tests/test_f2_pending_migration.py
+index 74e5b8e..d7db5fa 100644
+--- a/apps/server/tests/test_f2_pending_migration.py
++++ b/apps/server/tests/test_f2_pending_migration.py
+@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
+ from test_postgresql_storage import database as database
+ from test_postgresql_storage import seed_account, store
+ 
++from app.db.f1_models import F1Base
+ from app.db.f2_models import F2Base
+ from app.db.models import Mail
+-from app.db.repositories.f5_schema import F5Base
+ from app.db.repositories.search_recent import search_metadata
+ 
+ 
+@@ -31,7 +31,7 @@ def test_pending_migration_preserves_existing_mail_and_matches_feature_models(da
+             namespace["downgrade"]()
+             namespace["upgrade"]()
+             assert (
+-                compare_metadata(context, [F5Base.metadata, search_metadata, F2Base.metadata]) == []
++                compare_metadata(context, [F1Base.metadata, search_metadata, F2Base.metadata]) == []
+             )
+             namespace["downgrade"]()
+             assert not {"profiles", "drafts", "style_learnings"} & set(
+@@ -40,7 +40,7 @@ def test_pending_migration_preserves_existing_mail_and_matches_feature_models(da
+             assert connection.scalar(select(Mail.mail_id)) == "mail-a"
+             namespace["upgrade"]()
+             assert (
+-                compare_metadata(context, [F5Base.metadata, search_metadata, F2Base.metadata]) == []
++                compare_metadata(context, [F1Base.metadata, search_metadata, F2Base.metadata]) == []
+             )
+     with Session(engine) as session:
+         mail = session.get(Mail, "mail-a")
+diff --git a/apps/server/tests/test_postgresql_storage.py b/apps/server/tests/test_postgresql_storage.py
+index c62145b..30a2f54 100644
+--- a/apps/server/tests/test_postgresql_storage.py
++++ b/apps/server/tests/test_postgresql_storage.py
+@@ -15,9 +15,9 @@ from sqlalchemy.engine import make_url
+ from sqlalchemy.exc import IntegrityError
+ from sqlalchemy.orm import Session
+ 
++from app.db.f1_models import F1Base
+ from app.db.f2_models import F2Base
+ from app.db.models import Mail
+-from app.db.repositories.f5_schema import F5Base
+ from app.db.repositories.mail import MailRepository
+ from app.db.repositories.search_recent import search_metadata
+ 
+@@ -83,7 +83,7 @@ def test_migration_repeat_and_model_match(database):
+         assert (
+             compare_metadata(
+                 MigrationContext.configure(connection),
+-                [F5Base.metadata, search_metadata, F2Base.metadata],
++                [F1Base.metadata, search_metadata, F2Base.metadata],
+             )
+             == []
+         )
+@@ -93,7 +93,7 @@ def test_migration_repeat_and_model_match(database):
+         assert (
+             compare_metadata(
+                 MigrationContext.configure(connection),
+-                [F5Base.metadata, search_metadata, F2Base.metadata],
++                [F1Base.metadata, search_metadata, F2Base.metadata],
+             )
+             == []
+         )
+diff --git a/docs/architecture/data-model.md b/docs/architecture/data-model.md
+index aee2864..dba65c2 100644
+--- a/docs/architecture/data-model.md
++++ b/docs/architecture/data-model.md
+@@ -226,3 +226,26 @@ idle/executing/failed/uncertain/blocked/simulated/succeeded다.
+ 다시 확인한다. 기존 사용자·메일·계정·키·수신 커서는 수정하지 않는다.
+ 신규 이력은 0006_f4, 현재 down_revision은 0005_f5다. 통합 직전 head가 바뀌면
+ 예약 번호와 down_revision을 다시 확인해야 한다. 기존 이력은 수정하지 않는다.
++
++## F1 분석·청크·분류 수정 저장소 (0007_f1, 공통 패치 적용 후)
++
++목표 표의 `mail_chunks`·`category_feedback`와 mails의 AI 열은 실제로 `f1_` 접두사의
++부속 테이블에 저장한다. mails의 기존 열·원문·수신 커서는 바꾸지 않는다.
++
++- `f1_mail_analysis`: mail_id PK, 소유 (mail_id,user_id,account_id) → mails 복합 FK
++  (기존 `uq_mail_f5_owner` 재사용, ON DELETE CASCADE). category/user_label(영문 7종),
++  summary, action_items·entities·events·evidence_spans(JSONB), needs_reply, priority(+이유),
++  failure_code, attempts(0~2), LLM·임베딩의 provider/model/mode(live/test)/dimensions, updated_at.
++  유효 분류는 `user_label ?? category`다.
++- `f1_mail_chunks`: chunk_id PK, kind(body/summary)·seq (mail_id,kind,seq 유일),
++  text, embedding(pgvector `vector`, 차원 미고정 + `vector_dims(embedding)=embedding_dimensions`
++  검사), 임베딩 provider/model/mode, 필터용 received_at·category. 인덱스
++  `ix_f1_chunks_scope(user_id,account_id,received_at,category)`. 검색은 사용자·계정과 임베딩
++  provider/model/dimensions를 반드시 제한한다. 기본 임베딩은 로컬 Ollama bge-m3(1024차원).
++- `f1_category_feedback`: feedback_id PK, 소유 복합 FK, from_addr·subject·user_label·created_at.
++  인덱스 `ix_f1_feedback_sender(user_id,account_id,from_addr,feedback_id DESC)`.
++
++신규 이력은 0007_f1, down_revision은 0006_f4다. `CREATE EXTENSION IF NOT EXISTS vector`를
++포함하므로 pgvector가 있는 DB(infra의 pgvector/pgvector:pg16)에서 실행한다. downgrade는
++F1 테이블만 지우고 확장·메일은 남긴다. ORM 비교용 정의는 `app/db/f1_models.py`이며,
++env.py·비교 검사는 F5 metadata 대신 이를 쓴다(공통·F5 테이블 포함).

@@ -273,7 +273,7 @@ class AnalysisTransaction:
                    embedding_dimensions,embedding_provider,embedding_model,embedding_mode,
                    received_at,category)
                 VALUES (:chunk_id,:mail_id,:user_id,:account_id,:kind,:seq,:text,
-                  CAST(:embedding AS vector),:dimensions,:provider,:model,:mode,
+                  CAST(:embedding AS public.vector),:dimensions,:provider,:model,:mode,
                   :received_at,:category)
             """),
                 {

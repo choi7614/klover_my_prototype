@@ -8,36 +8,101 @@
 | --- | --- |
 | 브랜치 | `feat/F1-mail-analysis` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 (#11) |
-| 마지막 커밋 | `34ebcbc` 2026-11-18 — [F1] 메일 분석·임베딩·저장 경계와 격리 검사 추가 |
-| 기준 develop | `0f68ad1` |
-| 미커밋 변경 | 없음 (원격 기준) |
+| 상태 | PR 대기 (AI 제공자 선택·0007 패치·라우터 등록안) |
+| 마지막 커밋 | 이번 PR의 `[F1] AI 제공자 선택…` 커밋 (2026-11-19) |
+| 기준 develop | `420078e` (로컬 통합, 빨리 감기) |
+| 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
 
-- 완료: 분석 결과 계약·검증·재시도, 임베딩 경계, 테스트 DB 저장소·분류 수정 라우터(미등록), 합성 평가 23건.
-- 부분 완료·미통합: 실제 제공자 로더 미연결(`not_configured`), 저장 SQL·라우터 운영 미반영.
-- 미구현: 실제 LLM/임베딩 연결, 자동 수신 분석 큐, F0 화면 표시, 정확도·성능 측정.
+- 완료(가짜 통신·자동 검사로 확인):
+  - `.env`의 `AI_PROVIDER`로 제공자 선택(`app/ai/config.py`, `runtime.py`). 비우면 미연결, 가짜 결과 대체 없음.
+  - Claude 어댑터(`app/ai/claude.py`): 공식 anthropic SDK, 기본 `claude-opus-5-5`, 기능별 모델
+    (`CLAUDE_MODEL_ANALYSIS` 등), 구조화 출력(JSON 스키마), effort 기본 `low`, 거절 시 다른 모델로
+    넘기기 **끔**(비용 예측), 거절·잘림·인증·한도·시간 초과를 고정 오류 코드로.
+    `AI_CLAUDE_TEST_DATA_ONLY=true` 확인 없으면 켜지지 않음.
+  - Ollama 어댑터(`app/ai/ollama.py`): loopback 주소만, 프록시 무시, 형식 강제(schema/json/none),
+    `think` 선택, 시간 초과·연결 실패·5xx 재시도, 모델 없음·연결 실패 안내 문구. 모델 태그는 `.env` 필수.
+  - 임베딩: 로컬 Ollama `bge-m3`(1024차원, `EMBEDDING_MODEL`·`EMBEDDING_DIMENSIONS`로 변경 가능).
+  - 외부 전송 차단: F1 실행 명령은 Claude + 실제 Gmail 본문(`--allow-gmail-content`)을 DB 열기 전에 거부.
+  - 확인 명령 `python -m app.cli.check_ai [--ping]` 추가. 느린 로컬 모델용 시간 제한을 파이프라인에 전달.
+  - 0007 제안 이력(`patches/F1/files/0007_f1_analysis.py.pending`)과 비교용 ORM(`app/db/f1_models.py`).
+  - 분류 수정 라우터 등록 함수 `register_mail_analysis`(엔진 없으면 503).
+- 부분 완료·미통합: 공통 영역 4개 패치(`patches/F1/`) 미적용 — DB 0007, main 등록·run_mail_api 조립,
+  anthropic 의존성·uv.lock·.env.example, api-types. 적용 전에는 Claude 경로가 "패키지 미설치"로 미연결.
+- 미구현: 실제 모델 호출 확인(맥북), 실제 정확도 85%·30초 성능, 자동 수신 분석 큐, F0 화면 표시,
+  GET 응답의 AI 필드·counts·재분석 API, F2~F5 경로별 외부 전송 차단(각 기능 채팅).
 
 ## 검사 결과
 
-아래 '상세 기록'의 표 참조 (당시 서버 pytest 190 통과, DB 검사 포함). 2026-11-19 develop 기준 CI형 실행(DB 없음)에서는 DB 검사가 skip된다.
+실제 메일·키·네트워크 호출 없음. DB 검사는 이 작업 환경에 만든 **일회용 PostgreSQL 16 + pgvector**
+(`klover_f1_test`, `klover_test`)에서 실행했다. 개발·운영 DB는 쓰지 않았다.
+
+| 검사 | 결과 | 비고 |
+| --- | --- | --- |
+| 서버 pytest (DB 없음, CI와 같은 조건) | 통과 329 / skip 135 / 실패 0 | DB 검사 skip |
+| 서버 pytest (분리 테스트 DB) | 통과 437 / skip 27 / 실패 0 | skip: F5 전용 DB 변수 미지정 24, anthropic 미설치 3 |
+| F1 검사만 (분리 테스트 DB) | 통과 145 / skip 3 | 새 검사 54개(설정·Ollama·Claude·CLI·0007·등록) |
+| 서버 ruff check / format | 통과 | |
+| 4개 패치 적용 사본 | 서버 통과 440 / skip 24, ruff 통과 | anthropic 1.17.0 실제 SDK로 요청 모양 확인(가짜 서버) |
+| 패치 사본 api-types 재생성 | 같은 결과 | `git diff --exit-code packages/api-types` |
+| 패치 사본 데스크톱 lint·typecheck·test | 통과 (test 133) | 기능 브랜치 데스크톱 코드는 변경 없음 |
+| 실제 Claude·Ollama 호출 | **미실행** | 맥북에서 아래 명령으로 확인 |
 
 ## 공통 영역 요청
 
-- `integration/F1-mail-analysis/001_storage.sql` → Alembic 이력으로 옮겨 적용 (번호는 progress.md에서 예약, 0005 후보)
-- 분류 수정 라우터 `app.main` 등록, api-types 재생성 (통합 채팅)
+- `patches/F1/01~04`를 순서대로 적용 ([README](../../patches/F1/README.md)). 마이그레이션 번호 `0007`(부모 `0006_f4`) 예약됨.
+- 그 밖에 새로 만든 `apps/server/tests/conftest.py`는 모든 서버 검사에서 개발자 `.env`의 AI 설정을
+  무시하게 한다(맥북에 `AI_PROVIDER`가 있어도 F4 검사가 '미연결' 기준으로 돌게). 공통 영향이 있어 보고한다.
 
 ## 다음 할 일
 
-1. 실제 LLM·임베딩 어댑터 연결 (`app/ai/runtime.py`)
-2. 통합 채팅에서 저장 구조·라우터 운영 반영
+1. 통합 채팅: `patches/F1/01~04` 적용, 맥북 DB에 `alembic upgrade head`(0007) 확인.
+2. 맥북에서 로컬 LLM 결정 후 아래 '맥북 확인 명령'으로 Ollama·Claude 실제 호출 확인.
+3. 실제 모델로 합성 23건 정확도 측정, 자동 수신 분석 연결, F0 화면 표시(별도 단위).
+
+## 맥북 확인 명령 (사용자가 직접)
+
+`.env`는 커밋하지 않는다. 키는 `.env`에만 적는다.
+
+```bash
+# 0) 통합 후 최신 코드와 의존성
+git pull && cd apps/server && uv sync --locked
+# 1) DB 이력 0007 적용(통합 채팅에서 01 패치 적용 후)
+uv run alembic upgrade head && uv run alembic current        # 0007_f1 (head)
+# 2) Ollama (https://ollama.com 설치 후)
+ollama pull bge-m3                    # 임베딩
+ollama pull <정한-qwen-모델-태그>      # 예: qwen3:14b — 메모리에 맞게
+ollama list
+# 3) .env 예시 (로컬)
+#   AI_PROVIDER=ollama
+#   OLLAMA_MODEL=<위 태그>
+#   OLLAMA_THINK=false        # Qwen3의 생각 출력을 끄면 빨라진다. 오류 나면 비운다
+# 4) 설정·연결 확인 (메일 내용 없음)
+uv run python -m app.cli.check_ai
+uv run python -m app.cli.check_ai --ping
+# 5) 저장 준비·분석 실행 (기본은 fixture 메일만)
+uv run python -m app.cli.analyze_pending check --user-id <id> --account-id <id>
+uv run python -m app.cli.analyze_pending run --user-id <id> --account-id <id> --limit 3
+# 6) Claude로 바꿔 확인할 때 (.env, 테스트 데이터만)
+#   AI_PROVIDER=claude
+#   AI_CLAUDE_TEST_DATA_ONLY=true
+#   ANTHROPIC_API_KEY=<키>
+#   (Ollama는 임베딩용으로 계속 실행)
+uv run python -m app.cli.check_ai --ping   # 아주 적은 토큰 비용 발생
+```
+
+문제가 생기면: `check_ai --ping` 결과의 `generation_hint`·`embedding_hint`를 확인한다.
+JSON 형식 문제가 반복되면 `OLLAMA_FORMAT=json`, 너무 느리면 더 작은 모델이나 `OLLAMA_TIMEOUT_SECONDS`를 늘린다.
 
 ## 인수인계 메모
 
-- 멈춘 지점: 없음 (단위 완료 후 병합)
-- 주의할 점: 테스트 DB는 `KLOVER_F1_TEST_DATABASE_URL`·`KLOVER_TEST_DATABASE_URL`로만 지정. 실제 Gmail 본문을 외부 AI로 보내지 않는다.
+- 멈춘 지점: 없음 (단위 완료, PR 대기)
+- 실패 중이거나 미실행인 검사: 실제 Claude·Ollama 호출, 맥북 DB 0007 적용 미실행
+- 주의할 점: `ProviderIdentity.model`은 분석(analysis)용 모델 이름이다. 기능별로 모델을 바꾸면
+  다른 기능 결과의 기록 모델과 다를 수 있다. Claude 경로는 F2~F5에서도 같은 제공자를 쓰므로,
+  실제 Gmail을 쓰는 동안에는 `AI_PROVIDER=ollama`로 둔다.
 
 ---
 

@@ -1,0 +1,338 @@
+diff --git a/packages/api-types/openapi.json b/packages/api-types/openapi.json
+index fedcb47..9f7192d 100644
+--- a/packages/api-types/openapi.json
++++ b/packages/api-types/openapi.json
+@@ -108,6 +108,71 @@
+         "title": "CalendarPayload",
+         "type": "object"
+       },
++      "CategoryUpdate": {
++        "additionalProperties": false,
++        "properties": {
++          "category": {
++            "enum": [
++              "work_request",
++              "meeting",
++              "approval",
++              "report_share",
++              "notice",
++              "external",
++              "newsletter"
++            ],
++            "title": "Category",
++            "type": "string"
++          }
++        },
++        "required": [
++          "category"
++        ],
++        "title": "CategoryUpdate",
++        "type": "object"
++      },
++      "CategoryUpdated": {
++        "additionalProperties": false,
++        "properties": {
++          "effective_category": {
++            "enum": [
++              "work_request",
++              "meeting",
++              "approval",
++              "report_share",
++              "notice",
++              "external",
++              "newsletter"
++            ],
++            "title": "Effective Category",
++            "type": "string"
++          },
++          "mail_id": {
++            "title": "Mail Id",
++            "type": "string"
++          },
++          "user_label": {
++            "enum": [
++              "work_request",
++              "meeting",
++              "approval",
++              "report_share",
++              "notice",
++              "external",
++              "newsletter"
++            ],
++            "title": "User Label",
++            "type": "string"
++          }
++        },
++        "required": [
++          "mail_id",
++          "user_label",
++          "effective_category"
++        ],
++        "title": "CategoryUpdated",
++        "type": "object"
++      },
+       "Citation": {
+         "additionalProperties": false,
+         "properties": {
+@@ -3777,6 +3842,116 @@
+         ]
+       }
+     },
++    "/mails/{mail_id}/category": {
++      "patch": {
++        "operationId": "update_category_mails__mail_id__category_patch",
++        "parameters": [
++          {
++            "in": "path",
++            "name": "mail_id",
++            "required": true,
++            "schema": {
++              "maxLength": 128,
++              "minLength": 1,
++              "pattern": "^[A-Za-z0-9_-]+$",
++              "title": "Mail Id",
++              "type": "string"
++            }
++          }
++        ],
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/CategoryUpdate"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/CategoryUpdated"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "요청 형식 오류"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "메일 분류 수정",
++        "tags": [
++          "F1 분류 수정"
++        ]
++      }
++    },
+     "/profile": {
+       "get": {
+         "operationId": "profile_profile_get",
+diff --git a/packages/api-types/src/schema.d.ts b/packages/api-types/src/schema.d.ts
+index c576101..fa4ed87 100644
+--- a/packages/api-types/src/schema.d.ts
++++ b/packages/api-types/src/schema.d.ts
+@@ -156,6 +156,23 @@ export interface paths {
+         patch?: never;
+         trace?: never;
+     };
++    "/mails/{mail_id}/category": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        /** 메일 분류 수정 */
++        patch: operations["update_category_mails__mail_id__category_patch"];
++        trace?: never;
++    };
+     "/profile": {
+         parameters: {
+             query?: never;
+@@ -516,6 +533,29 @@ export interface components {
+             /** Title */
+             title: string;
+         };
++        /** CategoryUpdate */
++        CategoryUpdate: {
++            /**
++             * Category
++             * @enum {string}
++             */
++            category: "work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter";
++        };
++        /** CategoryUpdated */
++        CategoryUpdated: {
++            /**
++             * Effective Category
++             * @enum {string}
++             */
++            effective_category: "work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter";
++            /** Mail Id */
++            mail_id: string;
++            /**
++             * User Label
++             * @enum {string}
++             */
++            user_label: "work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter";
++        };
+         /** Citation */
+         Citation: {
+             /** Mail Id */
+@@ -2279,6 +2319,86 @@ export interface operations {
+             };
+         };
+     };
++    update_category_mails__mail_id__category_patch: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path: {
++                mail_id: string;
++            };
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["CategoryUpdate"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["CategoryUpdated"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 요청 형식 오류 */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
+     profile_profile_get: {
+         parameters: {
+             query?: never;

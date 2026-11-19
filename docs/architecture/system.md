@@ -55,7 +55,7 @@ Google Calendar ◀────────┘ (사용자 승인 시 일정 등�
 | 수신 큐·작업 | Redis + arq | `apps/server/workers` |
 | 분석 파이프라인 | ingest → preprocess → analyze(F1) → scan(F5) → embed | `apps/server/app/pipeline` |
 | 저장소 | PostgreSQL 16 + pgvector, SQLAlchemy, Alembic | `apps/server/app/db` |
-| AI 모델 호출부 | LLM·임베딩 인터페이스 + 외부 API 구현, 프롬프트는 MD 파일 | `apps/server/app/ai` |
+| AI 모델 호출부 | LLM·임베딩 인터페이스 + Claude API·로컬 Ollama 구현(`AI_PROVIDER`로 선택), 프롬프트는 MD 파일 | `apps/server/app/ai` |
 | 실시간 푸시 | WebSocket | `apps/server/app/api/ws.py` |
 | 타입 공유 | 서버 OpenAPI → TypeScript 타입 자동 생성 (openapi-typescript) | `packages/api-types` |
 | 로컬 실행 | Docker Compose (Postgres+pgvector, Redis) | `infra/` |

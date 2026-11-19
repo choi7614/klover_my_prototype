@@ -1,5 +1,9 @@
 # F1 공통 통합 요청 — 아직 적용하지 않음
 
+> 2026-11-19 갱신: 이 SQL은 Alembic `0007_f1` 제안과 공통 패치로 옮겼다.
+> 적용은 [patches/F1/README.md](../../patches/F1/README.md)를 따른다. 아래는 이전 기록이며,
+> SQL은 0007 적용 전 F1 검사용으로만 남긴다.
+
 기준: `origin/develop` `0f68ad1`. F1의 일반 파일은 구현되어 있지만 운영 등록은 하지 않았다.
 `001_storage.sql`은 분리된 PostgreSQL 16·pgvector 테스트 DB에서만 적용·검사한 초안이다.
 기존 개발 DB·실제 메일·키·토큰과 Alembic 이력에는 적용하지 않았다.

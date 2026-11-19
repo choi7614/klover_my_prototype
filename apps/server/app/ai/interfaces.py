@@ -20,7 +20,14 @@ class ProvidersNotConfigured(RuntimeError):
 
 
 class ProviderCallError(RuntimeError):
-    """어댑터는 외부 오류·키·본문을 이 예외 메시지로 전달하지 않는다."""
+    """어댑터는 외부 오류·키·본문을 이 예외 메시지로 전달하지 않는다.
+
+    code는 고정 오류 코드(예: ollama_unreachable), 메시지는 고정된 한국어 안내다.
+    """
+
+    def __init__(self, message: str = "AI 호출에 실패했습니다", *, code: str = "provider_error"):
+        super().__init__(message)
+        self.code = code
 
 
 @dataclass(frozen=True, repr=False)

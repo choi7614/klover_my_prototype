@@ -7,10 +7,14 @@ import json
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.ai.interfaces import ProvidersNotConfigured
-from app.ai.runtime import load_providers
+from app.ai.runtime import is_external, load_providers
 from app.db.config import DatabaseConfigurationError, database_engine
 from app.db.repositories.mail_analysis import AnalysisRepository
 from app.pipeline.pending_analysis import process_pending
+
+
+class ExternalTransferBlocked(Exception):
+    pass
 
 
 def main(argv=None):
@@ -33,6 +37,9 @@ def main(argv=None):
     try:
         # 제공자가 없을 때 DB 연결·메일 로드·상태 변경도 하지 않는다.
         providers = load_providers() if args.action == "run" else None
+        if providers is not None and args.allow_gmail_content and is_external(providers[0]):
+            # 보안 확인 전까지 실제 Gmail 본문을 외부 AI(Claude)로 보내지 않는다(open-questions 14).
+            raise ExternalTransferBlocked
         engine = database_engine()
         repository = AnalysisRepository(engine, user_id=args.user_id, account_id=args.account_id)
         ready = repository.readiness(allow_gmail=args.allow_gmail_content)
@@ -52,8 +59,22 @@ def main(argv=None):
                 )
             )
             output = {"status": "completed", "done": batch.done, "failed": batch.failed}
-    except ProvidersNotConfigured:
-        output = {"status": "not_configured", "done": 0, "failed": 0}
+            if any(item.failure_code == "provider_error" for item in batch.outcomes):
+                output["hint"] = (
+                    "AI 호출 실패: python -m app.cli.check_ai --ping 으로 원인을 확인하세요"
+                )
+    except ExternalTransferBlocked:
+        output = {
+            "status": "external_transfer_blocked",
+            "done": 0,
+            "failed": 0,
+            "reason": (
+                "Claude(외부 AI)로는 실제 Gmail 본문을 분석하지 않습니다. 로컬 Ollama를 쓰세요"
+            ),
+        }
+    except ProvidersNotConfigured as error:
+        # 설정 안내 문구는 고정 문장이며 키·주소 값을 담지 않는다.
+        output = {"status": "not_configured", "done": 0, "failed": 0, "reason": str(error)}
     except (SQLAlchemyError, DatabaseConfigurationError):
         output = {"status": "storage_unavailable"}
     except KeyboardInterrupt:
