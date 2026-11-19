@@ -6,7 +6,7 @@ import json
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -98,6 +98,46 @@ class F5Repository:
         if hashlib.sha256(mail.body_text.encode()).hexdigest() != row.body_sha256:
             raise F5Error("stale_source")
         return row
+
+    def scan_source(self, owner, mail_id):
+        """제안 생성에 쓸 원본 본문과 메일 출처(fixture/gmail). 소유·수신 시작 시점을 확인한다."""
+        with Session(self.engine) as session:
+            mail = self._mail(session, owner, mail_id)
+            source = session.scalar(
+                select(MailAccount.source).where(
+                    MailAccount.account_id == owner.account_id,
+                    MailAccount.user_id == owner.user_id,
+                )
+            )
+            return mail.body_text, source
+
+    def stored_analysis(self, owner, mail_id):
+        """F1이 저장한 성공 분석 결과(읽기 전용). 없거나 실패·대기 중이면 None."""
+        with Session(self.engine) as session:
+            self._mail(session, owner, mail_id)
+            if session.scalar(text("SELECT to_regclass('f1_mail_analysis')")) is None:
+                raise F5Error("analysis_storage_unavailable", 503)
+            row = (
+                session.execute(
+                    text("""
+                    SELECT a.mail_id, a.category, a.summary, a.action_items, a.needs_reply,
+                           a.priority, a.priority_reason, a.entities, a.events, a.evidence_spans
+                    FROM f1_mail_analysis a JOIN mails m
+                      ON m.mail_id=a.mail_id AND m.user_id=a.user_id AND m.account_id=a.account_id
+                    WHERE a.mail_id=:mail_id AND a.user_id=:user_id AND a.account_id=:account_id
+                      AND a.failure_code IS NULL AND a.category IS NOT NULL
+                      AND m.analysis_status='done'
+                """),
+                    {
+                        "mail_id": mail_id,
+                        "user_id": owner.user_id,
+                        "account_id": owner.account_id,
+                    },
+                )
+                .mappings()
+                .first()
+            )
+            return None if row is None else dict(row)
 
     def ingest(self, owner, analysis, candidates):
         created, rows = [], []

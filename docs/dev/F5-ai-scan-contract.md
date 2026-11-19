@@ -22,6 +22,14 @@ F1의 공통 AI 호출부를 재구현하지 않는다. F1 어댑터가 원본 `
 같은 문장 속 서로 다른 같은 유형 행동은 **서로 다른 정확한 근거 범위**를 전달해야 한다.
 기존 행동의 교체·철회와 본문 변경 후 자동 재생성은 별도 합의가 필요하다.
 
+### F1 AnalysisResult → ScanInput 변환 (2026-11-19)
+
+`app/pipeline/scan_analysis.py`의 `build_scan_input`과 `F5Service.scan_from_analysis`가 담당한다.
+내용은 F1 결과에서, 근거 문장은 공통 `TextGeneration(purpose=scan)`의 원문 인용에서 가져오고,
+F5가 인용문을 원문에서 직접 찾아 위치를 확정한다. 계약 차이표·재시도·건너뛰기 규칙과
+F1 완료 알림 지점 연결 방법은 [F5-handoff.md](F5-handoff.md)의 'F1 담당에게'를 따른다.
+DB·공통 영역 변경은 없다(새 마이그레이션 없음).
+
 ## 상태·실행
 
 업무 상태는 `pending|approved|dismissed`다. 별도 `execution_status`로 준비·진행·실패·
