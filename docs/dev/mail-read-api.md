@@ -12,7 +12,7 @@ DB 변경이나 마이그레이션은 없다. Windows 앱 목표를 유지하면
 | 실제 새 Gmail 1건 저장·조회·중복 방지 | 사용자가 맥북 CLI에서 확인 |
 | 접근 토큰 갱신 | 합성 Google 응답 자동 검사 통과, 실제 Google 갱신 미확인 |
 | 새 인증·계정·목록·본문 API | 실제 PostgreSQL·HTTP 서버·Node fetch로 합성 메일 검사 |
-| 새 API의 실제 Gmail 본문 조회 | 아래 맥북 검사로 후속 확인 필요 |
+| 새 API의 실제 Gmail 본문 조회 | 사용자 맥북의 check_mail_api에서 listed 1·detail ok 성공 보고 |
 | F0 앱의 메일 목록·본문 표시 | 별도 F0 연결 후 사용자 확인 필요 |
 
 ## 1. 서버 코드가 develop에 병합된 뒤 준비
@@ -67,6 +67,9 @@ uv run --locked --directory apps/server python -m app.cli.check_mail_api
 이 결과를 확인한 뒤 [F0 연결 요청](F0-mail-api-handoff.md)의 문장을 F0 채팅에 보낸다.
 
 ## 3. F0 연결이 develop에 병합된 뒤 앱 실행
+
+검토·묶음 승인 후 F0 브랜치에서 먼저 앱을 확인할 때는
+[F0 메일함 실행 안내](F0-mailbox-run.md)를 따른다. 아래 명령은 develop 병합 후의 순서다.
 
 **이 단계는 F0 구현·검사가 끝나고 병합된 다음에 실행한다.** 현재 서버만으로는
 기존 F0 첫 화면에 메일 목록이 생기지 않는다. F0 채팅은 아래 환경 변수 계약을 구현한다.

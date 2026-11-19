@@ -1,6 +1,6 @@
 # 개발 현황판
 
-> 갱신: 2026-11-19 · 기준: `origin/develop@f282640` · 갱신 도구: Claude
+> 갱신: 2026-11-19 · 기준: `origin/develop@19e0161` · 갱신 도구: Claude
 
 **도구를 바꾸기 전·이어받은 직후 이 표부터 갱신한다.** 규칙은 [AGENTS.md](../../AGENTS.md)의 '도구 전환과 인수인계'.
 도구 전환용 프롬프트 모음: **[handoff-prompts.md](handoff-prompts.md)** · status 문서 양식: [status-template.md](status-template.md)
@@ -12,7 +12,7 @@
 
 | 기능 | 브랜치 | 작업 도구 | 상태 | 마지막 커밋 | 다음 할 일 | status 문서 | 갱신일 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | PR 대기 ([#10](https://github.com/choi7614/klover_my_prototype/pull/10), develop 미병합) | `02eab96` 2026-11-18 | 최신 develop(F1·F2·F3) 반영 후 재검사. main/preload·App·잠금 파일 변경은 통합 채팅에서 확인 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
+| F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | PR 대기 ([#10](https://github.com/choi7614/klover_my_prototype/pull/10), 최신 develop 반영·재검사 통과) | `353b594` 2026-11-19 | PR #10 develop 병합 → F2 화면 경로(`patches/F2/03`) 연결은 통합 채팅 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
 | F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | develop 병합 (#11) | `34ebcbc` 2026-11-18 | 실제 LLM·임베딩 어댑터 연결, 저장 SQL·라우터 운영 반영(통합 채팅) | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치 미적용 | `c7bfb65` 2026-11-19 | `patches/F2/` 01~05 적용(통합 채팅, 마이그레이션 0004 예약됨) | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 (#12) | `deeda1c` 2026-11-19 | 실제 모델 어댑터, F0 화면 진입·메일 열기, F2 초안 열기 연결 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |

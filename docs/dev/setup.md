@@ -4,20 +4,22 @@
 
 ## 현재 실행 가능한 범위
 
-- `apps/desktop/`: Electron + React + TypeScript 앱의 첫 실행 시작 화면.
-- `apps/server/`: 공통 HTTP 서버의 상태 확인 API와 기존 F4 보고 입력 준비 서비스·CLI.
+- `apps/desktop/`: 첫 실행 시작 화면과 인증된 계정의 받은 목록·텍스트 본문 열람.
+- `apps/server/`: 공통 상태 확인·로컬 인증·메일 조회 API와 기존 F4 보고 입력 준비 서비스·CLI.
 - `packages/api-types/`: 실제 서버 OpenAPI에서 자동 생성하는 TypeScript 타입.
 - `infra/docker-compose.yml`: 개발용 PostgreSQL 16+pgvector 이미지, 로컬 전용 접속·영구 볼륨.
 
-공통 서버는 `GET /health`만 제공한다. DB 연결·최소 저장 구조는
-[맥북 DB 실행 안내](local-database.md)에서 별도 실행·검사한다. 메일 API는 아직 없다.
+공통 기본 서버의 `/health`와 별도로, 전용 메일 서버는 인증·계정·받은 메일 조회 API를 제공한다.
+맥북 실제 앱 실행은 [F0 메일함 실행 안내](F0-mailbox-run.md)를 따른다. DB 연결·최소 저장 구조는
+[맥북 DB 실행 안내](local-database.md)에서 별도 실행·검사한다.
 명령 기반 새 메일 수신·조회·토큰 갱신은 [수신 안내](gmail-mail-sync.md)를 따른다.
 
 맥북 전용 Google 로그인·계정 확인 코드는 [Google 연결 안내](google-connection.md)의
-별도 로컬 서버로 실행한다. 토큰을 암호화해 저장하며 실제 Google 접속 결과는 사용자 확인 전이다.
-실제 메일 수신·앱의 연결 버튼·앱용 인증은 아직 없다.
-앱의 Google 연결과 다음 버튼은 비활성이며, F4 CLI가 읽은 메일을 앱에 표시하지 않는다.
-각 첫 단위는 실행·검증할 수 있고, 앱과 서버의 연결은 후속 작업이다.
+별도 로컬 서버로 실행한다. 토큰을 암호화해 저장하며, 사용자가 맥북 로그인·새 메일 수신·API 본문 조회 성공을 보고했다.
+실제 앱의 Gmail 표시는 사용자 후속 확인으로 구분한다.
+앱은 main 전용 로컬 인증으로 계정·목록·본문을 조회한다. 기존 Gmail 연결과 수신 CLI를 사용한다.
+Google 연결·다음 버튼과 프로필·알림 설정·AI 기능은 미완료 상태를 유지한다.
+F4 보고 입력 CLI는 별도이며 자동으로 보고서를 만들지 않는다.
 
 ## 데스크톱 실행·검증 (F0 첫 단위)
 
