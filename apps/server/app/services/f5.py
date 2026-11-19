@@ -2,8 +2,20 @@
 
 from pydantic import ValidationError
 
+from app.ai.interfaces import ProvidersNotConfigured
+from app.ai.runtime import is_external
 from app.pipeline.scan import scan
-from app.schemas.f5 import CalendarPayload, ExecutionReceipt, ReplyPayload, TodoPayload
+from app.pipeline.scan_analysis import ScanFailed, build_scan_input
+from app.schemas.f5 import (
+    CalendarPayload,
+    ExecutionReceipt,
+    Principal,
+    ReplyPayload,
+    ScanResult,
+    TodoPayload,
+)
+from app.schemas.f5_scan import AnalysisScanOutcome, AnalysisScanResult
+from app.schemas.mail_analysis import AnalysisMail, AnalysisResult
 from app.services.calendar import BlockedCalendar, event_id
 from app.services.f5_errors import CalendarError, F5Error
 
@@ -15,6 +27,52 @@ class F5Service:
 
     def scan(self, owner, analysis):
         return scan(self.repository, owner, analysis)
+
+    async def scan_from_analysis(
+        self,
+        owner,
+        mail_id,
+        analysis,
+        generator,
+        *,
+        allow_gmail=False,
+        allow_test_provider=False,
+        timeout=None,
+    ) -> AnalysisScanResult:
+        """F1 분석 결과로 제안을 만든다(저장만, 실행 없음). 같은 메일을 다시 넣어도 중복되지 않는다.
+
+        - owner는 신뢰한 작업 컨텍스트(F1 작업의 사용자·계정)에서만 받는다.
+        - generator는 공통 TextGeneration(purpose=scan). 제안할 것이 없으면 부르지 않는다.
+        - 실제 Gmail 본문은 allow_gmail일 때만, 외부 전송 제공자(Claude)로는 보내지 않는다.
+        """
+        owner = Principal.model_validate(owner)
+        analysis = AnalysisResult.model_validate(analysis)
+        body_text, source = self.repository.scan_source(owner, mail_id)
+        if generator is not None:
+            if generator.identity.mode == "test" and not allow_test_provider:
+                raise ProvidersNotConfigured("기본 실행에서는 테스트 제공자를 사용하지 않습니다")
+            if source != "fixture" and (not allow_gmail or is_external(generator)):
+                # 보안 확인 전까지 실제 Gmail 본문을 외부 AI로 보내지 않는다(open-questions 14).
+                raise ScanFailed("external_transfer_blocked")
+        elif source != "fixture" and not allow_gmail:
+            raise ScanFailed("external_transfer_blocked")
+        if timeout is None:
+            timeout = _call_timeout(generator)
+        build = await build_scan_input(mail_id, body_text, analysis, generator, timeout=timeout)
+        if not build.has_candidates:
+            return AnalysisScanResult(
+                status="nothing_to_suggest",
+                result=ScanResult(items=[], created_ids=[]),
+                skipped=build.skipped,
+                attempts=build.attempts,
+            )
+        result = self.scan(owner, build.scan_input)
+        return AnalysisScanResult(
+            status="created" if result.created_ids else "unchanged",
+            result=result,
+            skipped=build.skipped,
+            attempts=build.attempts,
+        )
 
     @staticmethod
     def _payload(row, override):
@@ -63,3 +121,59 @@ class F5Service:
         if row.type != "calendar":
             raise F5Error("invalid_suggestion_type", 422)
         return self.calendar.conflicts(owner, payload)
+
+
+def _call_timeout(provider) -> float:
+    # 제공자가 알려 준 시간 제한(재시도 포함)을 쓴다. 로컬 모델은 20초보다 느릴 수 있다.
+    value = getattr(provider, "call_timeout", None)
+    if isinstance(value, int | float) and not isinstance(value, bool) and 0 < value <= 7200:
+        return float(value)
+    return 20.0
+
+
+class AnalysisScanHook:
+    """F1 '분석 완료 알림 지점'(on_analyzed)에 등록할 콜백.
+
+    hook = AnalysisScanHook(F5Service(F5Repository(engine)), load_generation())
+    await hook(mail, result)   # mail: AnalysisMail, result: AnalysisResult
+
+    실패해도 예외를 던지지 않고 결과(status=failed, 고정 코드)를 돌려준다.
+    F5 실패가 이미 확정된 F1 분석 저장을 되돌리지 않게 하기 위해서다.
+    """
+
+    def __init__(self, service, generator, *, allow_gmail=False, allow_test_provider=False):
+        self.service = service
+        self.generator = generator
+        self.allow_gmail = allow_gmail
+        self.allow_test_provider = allow_test_provider
+
+    async def __call__(self, mail, result) -> AnalysisScanOutcome:
+        mail = AnalysisMail.model_validate(mail)
+        owner = Principal(user_id=mail.user_id, account_id=mail.account_id)
+        try:
+            outcome = await self.service.scan_from_analysis(
+                owner,
+                mail.mail_id,
+                result,
+                self.generator,
+                allow_gmail=self.allow_gmail,
+                allow_test_provider=self.allow_test_provider,
+            )
+        except ScanFailed as error:
+            return _failed(mail.mail_id, error.code)
+        except ProvidersNotConfigured:
+            return _failed(mail.mail_id, "provider_not_configured")
+        except F5Error as error:
+            return _failed(mail.mail_id, error.code)
+        except Exception:
+            return _failed(mail.mail_id, "scan_unavailable")
+        return AnalysisScanOutcome(
+            mail_id=mail.mail_id,
+            status=outcome.status,
+            created=len(outcome.result.created_ids),
+            skipped=len(outcome.skipped),
+        )
+
+
+def _failed(mail_id, code):
+    return AnalysisScanOutcome(mail_id=mail_id, status="failed", failure_code=code)

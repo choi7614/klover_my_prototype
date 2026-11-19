@@ -8,14 +8,30 @@
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 — 앱 연결 단위 [#25](https://github.com/choi7614/klover_my_prototype/pull/25) (`841f782`), 공통 패치 01~02 적용 ([#28](https://github.com/choi7614/klover_my_prototype/pull/28), `integrate/F5-patches`) |
-| 마지막 구현 커밋 | `7b96be1` — 앱 제안·할 일 화면 연결과 main/preload 공통 패치 (CI 통과) |
-| 병합 커밋 | `72fb8e4` — 승인된 PR #20 병합 |
-| 기준 develop | `420078e` (F4 공통 패치까지 포함, fast-forward 로컬 통합) |
+| 상태 | PR 대기 — F1 결과→F5 제안 변환·생성 단위 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32)) |
+| 마지막 구현 커밋 | `06e41f6` — F1 분석 결과로 제안 만들기 |
+| 기준 develop | `2b4cf25` (#31까지 로컬 통합) |
 | 미커밋 변경 | 없음 (이 현황 갱신도 커밋·Push) |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
+
+### 이번 단위 (2026-11-19, Claude): F1 분석 결과로 F5 제안 만들기
+
+- 완료: `app/pipeline/scan_analysis.py` — F1 `AnalysisResult` + 원본 본문 → F5 `ScanInput` 변환.
+  제안 내용(일정 제목·시각·장소, 할 일 제목·마감)은 F1 결과 그대로, 근거 문장만 공통 `TextGeneration(purpose=scan)`이
+  원문에서 인용하고 F5가 원문에서 직접 찾아 위치를 확정한다. 프롬프트는 `app/ai/prompts/scan.md`.
+- 로컬 Qwen처럼 형식을 어길 수 있는 모델 대비: `<think>`·코드 블록 제거, 형식 위반·원문에 없는 인용·빠진 근거는
+  한 번 다시 묻고, 두 번째에도 형식 위반이면 제안 없이 `invalid_response`, 일부 인용만 없으면 그 항목만 버리고 이유를 남긴다.
+- 지어내지 않음: 종료 시각 없는 일정(`event_end_unknown`), 300자 넘는 제목, 원문에 없는 근거는 제안하지 않는다.
+- 입구: `F5Service.scan_from_analysis(owner, mail_id, analysis, generator)`(async),
+  F1 완료 지점용 `AnalysisScanHook(service, generator)`(예외 대신 결과 반환), 수동 명령 `python -m app.cli.f5_scan`.
+  저장소에 `scan_source`(본문·출처)와 `stored_analysis`(F1 성공 분석 읽기 전용) 추가.
+- 안전: 생성은 저장만 한다(pending·idle, 실행·Calendar 호출 없음). 실제 Gmail 본문은 `--allow-gmail-content` +
+  로컬 제공자에서만 AI에 보낸다(Claude면 `external_transfer_blocked`). 테스트 제공자는 기본 거부.
+- F1 파일·공통 영역·DB 이력은 바꾸지 않았다(0008 예약·patches/F5/03 불필요). F1 on_analyzed 연결 방법은
+  [F5-handoff.md](F5-handoff.md) 'F1 담당에게'에 적었다.
+- 미실행: 실제 AI(Claude·Ollama Qwen) 호출, 실제 메일·운영 DB. 실제 모델의 인용 정확도는 미측정이다.
 
 ### 공통 패치 적용 (2026-11-19, 통합 채팅, `integrate/F5-patches`)
 
@@ -59,7 +75,18 @@ F1과 F5 계약 사이에는 행동 키·근거 인용·본문 해시 등의 변
 
 ## 검사 결과
 
-이번 단위(앱 연결):
+이번 단위(F1 결과→제안):
+
+| 검사 | 결과 | 비고 |
+| --- | --- | --- |
+| 서버 pytest (분리 F5 테스트 DB 포함) | **405 통과 / skip 108 / 실패 0** | 클라우드 세션 안 임시 PostgreSQL 16 `klover_f5_test`(루프백 32769). F1·공통 DB 검사는 pgvector가 없어 skip |
+| 서버 pytest (DB 없음, CI와 같은 조건) | **377 통과 / skip 136** | |
+| 새 F5 검사 | 변환 25개 + DB 4개 | 가짜 제공자(mode=test)만 사용. 형식 위반·인용 변형·누락·중복·시간 초과·외부 전송 차단·재실행 중복 없음 |
+| Ruff check·format | 통과 | |
+| 데스크톱 검사 | 미실행 | 화면 코드 변경 없음 |
+| 실제 AI·실제 메일 | **미실행** | 맥북·API 키·Ollama 없음 |
+
+이전 단위(앱 연결):
 
 | 검사 | 결과 | 비고 |
 | --- | --- | --- |
@@ -96,14 +123,15 @@ KLOVER_F5_TEST_DATABASE_URL을 모두 이 DB로 지정했다.
 
 ## 다음 할 일
 
-0. 통합 채팅에서 `patches/F5/` 01→02 적용, 맥북 실제 앱에서 메일 제안 패널·할 일 화면 확인.
-1. F1 결과 변환과 F0 화면·알림 연결을 별도 단위로 구현·검사한다.
-2. 운영 DB의 0005_f5 실제 적용은 사용자 환경에서 별도로 확인한다.
-3. 실제 권한과 실행 코드 확인 후에만 Calendar 동의/실제 실행을 별도로 검토한다. main 병합은 승인 범위가 아니다.
+0. 통합 채팅: F1 분석 완료 알림 지점(on_analyzed)에 `AnalysisScanHook` 연결([F5-handoff.md](F5-handoff.md)).
+1. 맥북: fixture 메일로 F1 분석 → `python -m app.cli.f5_scan` → 앱 S04 패널·할 일 화면에서 제안 확인(로컬 Qwen 인용 정확도 확인).
+2. 알림·트레이(S10)·`/suggestion-events` 연결, Calendar 실제 연결은 별도 단위.
+3. 운영 DB의 0005_f5 실제 적용은 사용자 환경에서 별도로 확인한다.
 
 ## 인수인계 메모
 
-- 멈춘 지점: 앱 연결 단위 PR #25 CI 통과·develop 병합 완료. 공통 패치 `patches/F5/`는 통합 채팅 적용 대기.
+- 멈춘 지점: F1 결과→F5 제안 변환·생성 단위 PR 생성(develop 병합 전). F1 완료 지점 연결은 통합 채팅 대기.
+- 이전: 앱 연결 단위 PR #25·공통 패치 01~02(#28) develop 병합 완료.
 - 이전: 구현·로컬 통합 검사·GitHub CI 통과, PR #20 develop 병합 완료.
 - 미실행: 실제 LLM·Google Calendar·메일 발송·OS 알림/트레이·운영 DB 마이그레이션.
 - 주의: F5 테스트 성공은 실제 Calendar 등록 성공이 아니다. 실행 중 프로세스 종료는 담당자 조정 대상이다.
