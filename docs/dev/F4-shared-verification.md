@@ -81,5 +81,9 @@ DB는 이 작업이 만든 PostgreSQL16+pgvector 컨테이너의 `klover_f4_test
 
 ## 인계 메모
 
-최종 커밋·Push·PR·CI 결과는 후속 갱신과 F4 status/현황판에 남긴다.
-공통 파일과 원래 검토 작업 폴더 보존 여부를 커밋 전 다시 확인한다.
+[PR #22](https://github.com/choi7614/klover_my_prototype/pull/22)에 기존 기능 브랜치를 Push했다. 코드 커밋 `1576fc8`의
+GitHub CI 서버·데스크톱 작업은 모두 성공했다. CI는 DB 검사를 skip하므로 위 전용 DB
+406개 결과와 구분한다. 인계 문서 커밋도 같은 CI를 통과한 뒤 병합한다.
+공통 보호 파일·첫 단위 네 파일은 최신 develop과 차이가 없고 원래 검토 폴더는 HEAD
+`0f68ad1`·미커밋 파일 32개 그대로다. 커밋 전 민감 파일명·키/토큰 패턴과 합성 fixture를
+확인했다. 이 작업용 임시 검증 사본·테스트 DB 컨테이너만 검사 후 정리한다.
