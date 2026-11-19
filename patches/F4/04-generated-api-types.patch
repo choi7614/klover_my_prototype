@@ -1,6 +1,6 @@
 --- a/packages/api-types/openapi.json
 +++ b/packages/api-types/openapi.json
-@@ -256,6 +256,31 @@
+@@ -414,6 +414,31 @@
          "title": "DraftState",
          "type": "object"
        },
@@ -32,12 +32,10 @@
        "ErrorDetail": {
          "properties": {
            "code": {
-@@ -336,6 +361,99 @@
-           "quote"
-         ],
-         "title": "EvidenceSentence",
-+        "type": "object"
-+      },
+@@ -549,6 +574,28 @@
+         "title": "EvidenceSpan",
+         "type": "object"
+       },
 +      "ExcludedReportMail": {
 +        "additionalProperties": false,
 +        "properties": {
@@ -60,6 +58,13 @@
 +        "title": "ExcludedReportMail",
 +        "type": "object"
 +      },
+       "ExecutionReceipt": {
+         "additionalProperties": false,
+         "properties": {
+@@ -590,6 +637,77 @@
+         "title": "ExecutionReceipt",
+         "type": "object"
+       },
 +      "GenerateWeeklyReport": {
 +        "additionalProperties": false,
 +        "properties": {
@@ -129,13 +134,17 @@
 +          }
 +        },
 +        "title": "GenerateWeeklyReport",
-         "type": "object"
-       },
++        "type": "object"
++      },
        "HealthResponse": {
-@@ -381,24 +499,6 @@
+         "properties": {
+           "status": {
+@@ -631,24 +749,6 @@
+           "sync_started_at"
+         ],
          "title": "LocalSession",
-         "type": "object"
-       },
+-        "type": "object"
+-      },
 -      "MailContact": {
 -        "properties": {
 -          "addr": {
@@ -152,12 +161,10 @@
 -          "addr"
 -        ],
 -        "title": "MailContact",
--        "type": "object"
--      },
+         "type": "object"
+       },
        "MailDetail": {
-         "properties": {
-           "analysis_status": {
-@@ -416,7 +516,7 @@
+@@ -668,7 +768,7 @@
            },
            "cc": {
              "items": {
@@ -166,7 +173,7 @@
              },
              "title": "Cc",
              "type": "array"
-@@ -452,7 +552,7 @@
+@@ -704,7 +804,7 @@
            },
            "to": {
              "items": {
@@ -175,7 +182,7 @@
              },
              "title": "To",
              "type": "array"
-@@ -474,6 +574,37 @@
+@@ -726,6 +826,37 @@
          "title": "MailDetail",
          "type": "object"
        },
@@ -213,10 +220,10 @@
        "MailPage": {
          "properties": {
            "items": {
-@@ -876,6 +1007,313 @@
-           "received_at"
+@@ -1145,6 +1276,313 @@
+           "reason"
          ],
-         "title": "Reference",
+         "title": "ReplyPayload",
 +        "type": "object"
 +      },
 +      "ReportItem": {
@@ -527,10 +534,10 @@
          "type": "object"
        },
        "SearchAnswer": {
-@@ -1367,6 +1805,194 @@
-           }
-         },
-         "title": "StyleState",
+@@ -2151,6 +2589,194 @@
+           "version"
+         ],
+         "title": "VersionRequest",
 +        "type": "object"
 +      },
 +      "WeeklyReportDocument": {
@@ -722,88 +729,7 @@
          "type": "object"
        }
      },
-@@ -1542,7 +2168,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -1670,7 +2296,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -1806,7 +2432,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -1944,7 +2570,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -2429,7 +3055,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -2553,7 +3179,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -2679,7 +3305,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -2795,7 +3421,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -2909,7 +3535,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -2960,6 +3586,600 @@
+@@ -3744,6 +4370,600 @@
          "summary": "Style",
          "tags": [
            "F2 프로필·답장 초안"
@@ -1404,24 +1330,6 @@
          ]
        }
      },
-@@ -3025,7 +4245,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
-@@ -3115,7 +4335,7 @@
-                 }
-               }
-             },
--            "description": "Unprocessable Content"
-+            "description": "Unprocessable Entity"
-           },
-           "500": {
-             "content": {
 --- a/packages/api-types/src/schema.d.ts
 +++ b/packages/api-types/src/schema.d.ts
 @@ -204,6 +204,75 @@
@@ -1500,7 +1408,7 @@
          options?: never;
          head?: never;
          patch?: never;
-@@ -342,6 +411,13 @@
+@@ -562,6 +631,13 @@
              /** Version */
              version: number;
          };
@@ -1514,9 +1422,9 @@
          /** ErrorDetail */
          ErrorDetail: {
              /** Code */
-@@ -370,6 +446,37 @@
-             /** Quote */
-             quote: string;
+@@ -606,6 +682,15 @@
+             /** Start */
+             start: number;
          };
 +        /** ExcludedReportMail */
 +        ExcludedReportMail: {
@@ -1526,6 +1434,14 @@
 +             * @enum {string}
 +             */
 +            reason: "notice" | "newsletter";
++        };
+         /** ExecutionReceipt */
+         ExecutionReceipt: {
+             /** External Id */
+@@ -617,6 +702,28 @@
+             mode: "test" | "live" | "internal";
+             /** Todo Id */
+             todo_id?: string | null;
 +        };
 +        /** GenerateWeeklyReport */
 +        GenerateWeeklyReport: {
@@ -1548,11 +1464,10 @@
 +             * @enum {string}
 +             */
 +            template: "profile" | "bullet" | "prose";
-+        };
+         };
          /** HealthResponse */
          HealthResponse: {
-             /**
-@@ -392,16 +499,6 @@
+@@ -640,16 +747,6 @@
              /** User Id */
              user_id: string;
          };
@@ -1569,7 +1484,7 @@
          /** MailDetail */
          MailDetail: {
              /**
-@@ -412,7 +509,7 @@
+@@ -660,7 +757,7 @@
              /** Body Text */
              body_text: string;
              /** Cc */
@@ -1578,7 +1493,7 @@
              /** From Addr */
              from_addr: string;
              /** From Name */
-@@ -431,7 +528,25 @@
+@@ -679,7 +776,25 @@
              /** Subject */
              subject: string;
              /** To */
@@ -1605,10 +1520,10 @@
          };
          /** MailPage */
          MailPage: {
-@@ -634,6 +749,119 @@
-             received_at: string;
-             /** Subject */
-             subject: string;
+@@ -887,6 +1002,119 @@
+         ReplyPayload: {
+             /** Reason */
+             reason: string;
 +        };
 +        /** ReportItem */
 +        ReportItem: {
@@ -1725,9 +1640,9 @@
          };
          /** SearchAnswer */
          SearchAnswer: {
-@@ -776,6 +1004,92 @@
-              */
-             traits: string[];
+@@ -1185,6 +1413,92 @@
+             /** Version */
+             version: number;
          };
 +        /** WeeklyReportDocument */
 +        WeeklyReportDocument: {
@@ -1818,119 +1733,59 @@
      };
      responses: never;
      parameters: never;
-@@ -917,7 +1231,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -1020,7 +1334,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -1127,7 +1441,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -1234,7 +1548,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -1610,7 +1924,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -1715,7 +2029,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -1820,7 +2134,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -1921,7 +2235,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -2022,7 +2336,7 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -2069,7 +2383,7 @@
+@@ -2478,6 +2792,480 @@
              };
          };
      };
--    search_search_post: {
 +    generate_reports_weekly_post: {
-         parameters: {
-             query?: never;
-             header?: never;
-@@ -2078,7 +2392,7 @@
-         };
-         requestBody: {
-             content: {
--                "application/json": components["schemas"]["SearchRequest"];
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
 +                "application/json": components["schemas"]["GenerateWeeklyReport"];
-             };
-         };
-         responses: {
-@@ -2088,7 +2402,7 @@
-                     [name: string]: unknown;
-                 };
-                 content: {
--                    "application/json": components["schemas"]["SearchResponse"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
 +                    "application/json": components["schemas"]["WeeklyReportDocument"];
-                 };
-             };
-             /** @description Unauthorized */
-@@ -2118,7 +2432,16 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
 +            /** @description Conflict */
 +            409: {
 +                headers: {
@@ -1941,16 +1796,16 @@
 +                };
 +            };
 +            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -2127,8 +2450,17 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Internal Server Error */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
 +            /** @description 서버 내부 오류 */
-             500: {
++            500: {
 +                headers: {
 +                    [name: string]: unknown;
 +                };
@@ -1960,32 +1815,69 @@
 +            };
 +            /** @description Bad Gateway */
 +            502: {
-                 headers: {
-                     [name: string]: unknown;
-                 };
-@@ -2147,7 +2479,7 @@
-             };
-         };
-     };
--    recent_search_recent_get: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
 +    options_reports_weekly_options_get: {
-         parameters: {
-             query?: never;
-             header?: never;
-@@ -2162,7 +2494,7 @@
-                     [name: string]: unknown;
-                 };
-                 content: {
--                    "application/json": components["schemas"]["RecentSearch"][];
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
 +                    "application/json": components["schemas"]["WeeklyReportOptions"];
-                 };
-             };
-             /** @description Unauthorized */
-@@ -2192,7 +2524,389 @@
-                     "application/json": components["schemas"]["ErrorResponse"];
-                 };
-             };
--            /** @description Unprocessable Content */
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
 +            /** @description Conflict */
 +            409: {
 +                headers: {
@@ -2319,135 +2211,6 @@
 +            };
 +        };
 +    };
-+    search_search_post: {
-+        parameters: {
-+            query?: never;
-+            header?: never;
-+            path?: never;
-+            cookie?: never;
-+        };
-+        requestBody: {
-+            content: {
-+                "application/json": components["schemas"]["SearchRequest"];
-+            };
-+        };
-+        responses: {
-+            /** @description Successful Response */
-+            200: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["SearchResponse"];
-+                };
-+            };
-+            /** @description Unauthorized */
-+            401: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Forbidden */
-+            403: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Not Found */
-+            404: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Unprocessable Entity */
-             422: {
-                 headers: {
-                     [name: string]: unknown;
-@@ -2221,4 +2935,78 @@
-             };
-         };
-     };
-+    recent_search_recent_get: {
-+        parameters: {
-+            query?: never;
-+            header?: never;
-+            path?: never;
-+            cookie?: never;
-+        };
-+        requestBody?: never;
-+        responses: {
-+            /** @description Successful Response */
-+            200: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["RecentSearch"][];
-+                };
-+            };
-+            /** @description Unauthorized */
-+            401: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Forbidden */
-+            403: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Not Found */
-+            404: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Unprocessable Entity */
-+            422: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Internal Server Error */
-+            500: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+            /** @description Service Unavailable */
-+            503: {
-+                headers: {
-+                    [name: string]: unknown;
-+                };
-+                content: {
-+                    "application/json": components["schemas"]["ErrorResponse"];
-+                };
-+            };
-+        };
-+    };
- }
+     search_search_post: {
+         parameters: {
+             query?: never;

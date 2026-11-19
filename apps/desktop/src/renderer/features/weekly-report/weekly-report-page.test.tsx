@@ -125,6 +125,19 @@ describe('S08 기능 화면', () => {
     expect(api.generate).not.toHaveBeenCalled();
   });
 
+  it('F2에 보고 대상이 비어 있으면 입력받은 뒤 생성한다', async () => {
+    const api = client();
+    api.options.mockResolvedValue({ ...options, profile: { ...options.profile!, report_recipient: '' } });
+    render(<WeeklyReportPage client={api} />);
+    await screen.findByText('보고 대상을 입력해 주세요');
+    expect(api.generate).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: '보고서 열기' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('보고 대상'), { target: { value: '직접 입력한 팀장' } });
+    fireEvent.click(screen.getByRole('button', { name: '보고서 열기' }));
+    await ready();
+    expect(api.generate).toHaveBeenCalledWith(expect.objectContaining({ recipient: '직접 입력한 팀장' }));
+  });
+
   it('사용 일주일 전에는 생성하지 않는다', async () => {
     const api = client(); api.options.mockResolvedValue({ ...options, remaining_days: 3 });
     render(<WeeklyReportPage client={api} />);

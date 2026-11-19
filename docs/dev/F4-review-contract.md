@@ -1,39 +1,41 @@
-# F4 후속 구현 검토 계약
+# F4 공통 연결 계약
 
-> 2026-11-19 · 검토 기준 `develop@0f68ad1` · 기존 F4 브랜치는 통합하지 않음
+> 2026-11-19 · 기준 `develop@9ac5421` · 기존 F4 브랜치로 로컬 통합
 
-기존 첫 단위의 스키마·서비스·저장소와 21개 테스트는 그대로 사용한다.
-후속 코드는 기능별 파일에 추가한다. 공통 진입부·DB 모델·기존 마이그레이션·
-API·생성 공유 타입·잠금 파일은 수정하지 않는다. 등록과 운영 DDL은 별도 패치로 제안한다.
+첫 단위의 스키마·서비스·저장소·검사 파일은 원본 그대로다. 운영 공통 파일은
+최신 develop을 보존하며 새 변경은 [patches/F4/](../../patches/F4/README.md)에만 둔다.
 
-## 연결 경계
+## 입력·인증·AI 경계
 
-- F1: 기존 `ReportMailRepository`를 유지한다. DB 메일 기본 열과 분석 결과를 합치는
-  어댑터를 추가하며, 분석 포트가 없거나 결과가 미완료면 기존 준비 실패를 유지한다.
-- F2: 소유 사용자와 보고 섹션 순서·표현·대상을 가진 프로필 포트를 추가한다.
-  실제 프로필 저장소가 없어 테스트 대역으로 검사한다. 프로필을 임의 생성하지 않는다.
-- AI: `app/ai/` 안에 F4 생성 포트를 둔다. 공통 F1 AI 인터페이스가 현재 없어 실제
-  제공자는 만들지 않는다. 검토용 결과에는 `test_double` 표시를 보존한다.
-- 인증: 기존 로컬 Bearer/Origin 검사와 `LocalSession`을 재사용한다. HTTP 요청의
-  사용자 ID를 받지 않는다. 운영 앱에는 보고 경로를 등록하지 않는다.
+- F1: `F1ReportMailRepository(AnalysisRepository(engine, user_id, account_id))`로 받은/보낸
+  메일과 분석을 읽는다. 한국 날짜·수신 시작 경계·사용자 수정 분류를 우선하며
+  pending/failed를 요약하거나 제외 수에 숨기지 않는다.
+- F2: `F2Repository.report_profile`의 `ProfileState.exists`를 확인한다. 섹션 키만 표시
+  이름으로 바꾸고 순서·문체·대상을 유지한다. 조직은 빈 값을 허용하고 빈 대상은 입력받는다.
+- AI: 공통 `TextGeneration.generate(GenerationRequest)`에 `purpose="weekly_report"`,
+  F4 프롬프트·JSON 스키마·포함 메일만 전달한다. 제외 메일·user_id는 보내지 않는다.
+  `load_providers` 미설정이면 생성을 거부한다. 별도 SDK·키·가짜 기본 응답은 없다.
+- 대역: 명시적 검사 모드만 허용하고 저장·API·화면의 `test_double` 표시를 유지한다.
+  운영 런타임은 대역 분석을 pending으로 취급하며 저장된 대역 보고서도 거부한다.
+- 인증: 기존 Bearer·Host·Origin·LocalSession을 재사용한다. 사용자·계정은 요청에서
+  받지 않는다. 운영 등록은 미통합이며 테스트·검토 앱에서만 명시적으로 등록한다.
 
-## 저장·편집
+## 저장·근거·편집
 
-기능 전용 `weekly_reports` 테이블 계약은 report_id, user_id, selection_key,
-revision, payload다. 사용자+선택 키를 유일하게 하고 수정은 revision 비교 후 갱신한다.
-payload에는 프로필·대상 메일 스냅샷·검증된 보고서가 들어간다. 스냅샷은 편집과
-근거 재조회에 사용하며 HTML은 화면에 실행하지 않는다. 등록할 DDL은 승인 전 미적용이다.
-로컬 검토에서는 가짜 메일만 넣은 별도 SQLite 파일로 저장·재실행을 검증한다.
+`weekly_reports(report_id, user_id, selection_key, revision, payload)`에 저장한다.
+선택 키에 계정·기간·프로필·문체·대상을 포함하고 사용자+선택 키는 유일하다. payload에는
+계정·대상 메일·프로필·검증 문서를 보관한다. 수정은 버전 비교 후 갱신하며 조회·제외 조회·
+편집 때 사용자와 계정을 다시 확인한다. 다른 소유자는 404다.
 
-`POST /reports/weekly`는 같은 선택의 저장본을 재사용한다. `regenerate=true`는
-기존 revision이 일치해야 교체하며 생성·검증·저장 실패는 기존 저장본을 보존한다.
-`GET /reports/weekly/options`, `GET /reports/weekly/{id}`, 제외 목록 조회,
-`PATCH /reports/weekly/{id}`를 기능 라우터에서 제공한다. 소유자가 다르면 모두 404다.
-섹션 순서와 이름은 프로필과 같아야 하고 각 항목은 비어 있지 않은 본문과 실제
-대상 메일 ID를 1개 이상 가져야 한다. 제외·타 사용자·기간 밖·없는 ID는 거부한다.
-근거 ID 검증이 문장의 의미까지 증명하는 것은 아니며 실제 모델 품질 검증은 미완료다.
+같은 선택의 저장본을 재사용하고 재생성은 현재 메일을 다시 읽는다. AI·검증·저장 실패와
+동시 수정 때 기존 편집본을 보존한다. `GET /reports/weekly/options`, `POST /reports/weekly`,
+`GET /reports/weekly/{id}`, `/excluded`, `PATCH /reports/weekly/{id}`만 제공한다.
 
-S08은 기능 컴포넌트와 전송 포트로 구현한다. 브라우저에서 인증 API를 직접 호출하거나
-토큰을 보관하지 않는다. 검토 프록시만 임시 가짜 계정 토큰을 Node에서 전달한다.
-운영 화면 진입과 Electron IPC 연결은 F0 전달 항목이다. 자동 생성·내보내기·발송·
-메일 외 정보는 이번 구현에서 제외한다. 30초 성능은 실제 모델을 검사하기 전까지 미검증이다.
+섹션 이름·순서는 프로필과 같고 항목마다 비어 있지 않은 본문·실제 대상 mail_id가 필요하다.
+제외·다른 사용자·기간 밖·없는 ID·중복 근거·중복 항목을 거부한다. ID 검증이 문장 의미까지
+보증하지는 않는다. 실제 모델의 사실성·30초 성능은 별도다.
+
+S08 기능 화면은 정해진 다섯 IPC 동작을 받는다. 실제 main/preload·앱 경로는 패치에만
+있다. Renderer에 URL·토큰·파일·임의 HTTP 권한을 주지 않는다. 검토 실행기는 합성 메일·
+별도 SQLite·임시 토큰만 사용하며 운영 DB·Gmail에 연결하지 않는다. Word·발송·예약·메일
+외 입력은 이번 범위 밖이다. 최신 검사 결과는 [F4-shared-verification.md](F4-shared-verification.md).

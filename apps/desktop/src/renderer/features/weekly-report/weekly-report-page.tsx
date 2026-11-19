@@ -93,7 +93,7 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
         if (!live) return;
         setOptions(next); setPeriod(next.default_period);
         setRecipient(next.profile?.report_recipient || ''); setTemplate('profile');
-        if (next.profile && next.remaining_days === 0) {
+        if (next.profile && next.remaining_days === 0 && next.profile.report_recipient.trim()) {
           const document = await client.generate({ ...next.default_period, template: 'profile', recipient: next.profile.report_recipient });
           if (live) display(document);
         }
@@ -169,7 +169,7 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
         <Button variant="secondary" className="border-ai-border bg-ai text-ai-foreground hover:bg-ai-text" disabled={!mayGenerate} onClick={() => requestGeneration('regenerate')}><RefreshCw />다시 만들기</Button>
       </div>
     </div>
-    {options?.generation === 'test_double' && <p className="border-b border-warning-border bg-warning-subtle px-6 py-2 text-caption text-warning">검토용 테스트 대역 · 가짜 메일만 사용합니다. 실제 AI 생성·F1/F2 연결·앱 화면 진입은 미통합입니다.</p>}
+    {options?.generation === 'test_double' && <p className="border-b border-warning-border bg-warning-subtle px-6 py-2 text-caption text-warning">검토용 테스트 대역 · 가짜 메일만 사용합니다. 실제 AI 생성 결과가 아닙니다.</p>}
     {error && <div role="alert" className="border-b border-warning-border bg-warning-subtle px-6 py-3 text-body text-warning">{error}</div>}
     {message && <p role="status" className="border-b bg-success-subtle px-6 py-2 text-caption text-success">{message}</p>}
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -178,7 +178,9 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
         {options && !options.profile && <Empty title="주간 보고 프로필이 없습니다" description="프로필과 보고 양식을 연결한 뒤 다시 열어 주세요." />}
         {options && options.remaining_days > 0 && <Empty title={`사용 1주 후부터 만들 수 있어요 (${options.remaining_days}일 남음)`} description={`${options.available_on}부터 사용할 수 있습니다.`} />}
         {options?.profile && options.remaining_days === 0 && !report && busy && <Loading sections={options.profile.report_sections} />}
-        {options?.profile && !busy && !report && <Empty title="보고서를 아직 만들지 못했어요" description="연결 상태를 확인한 뒤 보고서 열기를 눌러 주세요." />}
+        {options?.profile && !busy && !report && (recipient.trim()
+          ? <Empty title="보고서를 아직 만들지 못했어요" description="연결 상태를 확인한 뒤 보고서 열기를 눌러 주세요." />
+          : <Empty title="보고 대상을 입력해 주세요" description="위 입력란에 보고 대상을 적은 뒤 보고서 열기를 눌러 주세요." />)}
         {report && <>
           <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-heading font-bold">{report.title}</h1><span className="text-caption text-muted-foreground">{dirty ? '저장하지 않은 수정 있음' : `저장본 · 버전 ${report.revision}`}</span></div>
           <p className="mt-2 text-caption text-muted-foreground">{report.subtitle} · {report.generation === 'test_double' ? '테스트 대역 결과' : report.generation === 'ai' ? '◆ AI 작성' : '업무 메일 없음'} — 내용을 바로 고칠 수 있어요</p>

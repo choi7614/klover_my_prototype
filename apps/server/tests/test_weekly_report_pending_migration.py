@@ -22,7 +22,7 @@ def test_f4_proposed_migration_preserves_mail_and_can_be_repeated(database):
     namespace = {}
     exec(compile(proposal.read_text(encoding="utf-8"), str(proposal), "exec"), namespace)
     assert namespace["revision"] == "0006_f4"
-    assert namespace["down_revision"] == "0004_f2"
+    assert namespace["down_revision"] == "0005_f5"
     with engine.begin() as connection:
         with Operations.context(MigrationContext.configure(connection)):
             # 제안 합본에서도 같은 검사를 한다. 이 스키마에는 합성 데이터만 있다.

@@ -1,4 +1,7 @@
-# F4 후속 구현·검사 보고
+# F4 후속 구현·검사 보고 (이전 검토 기록)
+
+> 이 문서는 `0f68ad1` 당시 보관 기록이다. 현재 구현·실제 계약·검사는
+> [F4-shared-verification.md](F4-shared-verification.md)를 따른다. 아래 미통합·승인 대기는 당시 상태다.
 
 > 2026-11-19 · 검토 기준: `develop@0f68ad18ef924a5659ec52980d8e91cf83df2143`
 > 검토 폴더: `/workspace/klover-f4-review` (브랜치를 만들지 않은 별도 작업 폴더)

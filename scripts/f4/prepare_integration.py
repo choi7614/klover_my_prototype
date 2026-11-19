@@ -194,49 +194,9 @@ contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.plat
         if name.endswith("api.md"):
             addition = """\n## F4 주간 보고 (공통 패치 적용 후)\n\n기존 로컬 Bearer·Origin·연결 계정 검사를 그대로 사용한다.\n`GET /reports/weekly/options`, `POST /reports/weekly`, `GET /reports/weekly/{id}`,\n`GET /reports/weekly/{id}/excluded`, `PATCH /reports/weekly/{id}`를 등록한다.\n프로필은 F2, 메일 입력은 F1, AI는 공통 TextGeneration을 사용한다. 실제 제공자가 없으면\n503으로 종료하며 대역으로 대체하지 않는다. 운영 서비스는 run_mail_api에서 조립한다.\n사용자·계정은 요청 본문에서 받지 않고, 편집은 expected_revision과 근거를 검증한다.\n일정 예약·내보내기·발송 경로는 추가하지 않는다.\n"""
         else:
-            addition = """\n## F4 보고서 저장소 (공통 패치 적용 후)\n\n`weekly_reports`: report_id(PK), user_id(FK), selection_key, revision, payload(JSONB).\n(user_id, selection_key)는 유일하다. payload에는 account_id·프로필·대상 메일 스냅샷·\n검증된 문서를 보관하며 저장 버전을 비교해 갱신한다. 조회·편집 때 사용자와 계정을\n다시 확인한다. 기존 사용자·메일·계정·키·수신 커서는 수정하지 않는다.\n신규 이력은 0006_f4, 현재 down_revision은 0004_f2다. 통합 직전 head가 바뀌면\n예약 번호와 down_revision을 다시 확인해야 한다. 기존 이력은 수정하지 않는다.\n"""
+            addition = """\n## F4 보고서 저장소 (공통 패치 적용 후)\n\n`weekly_reports`: report_id(PK), user_id(FK), selection_key, revision, payload(JSONB).\n(user_id, selection_key)는 유일하다. payload에는 account_id·프로필·대상 메일 스냅샷·\n검증된 문서를 보관하며 저장 버전을 비교해 갱신한다. 조회·편집 때 사용자와 계정을\n다시 확인한다. 기존 사용자·메일·계정·키·수신 커서는 수정하지 않는다.\n신규 이력은 0006_f4, 현재 down_revision은 0005_f5다. 통합 직전 head가 바뀌면\n예약 번호와 down_revision을 다시 확인해야 한다. 기존 이력은 수정하지 않는다.\n"""
         file.write_text(file.read_text() + addition)
         CHANGES.setdefault("05-shared-documents", []).append(name)
-
-    # develop에도 재현된 오래된 테스트 가정. 실제 공통 테스트는 수정하지 않는다.
-    replace(
-        tree,
-        "06-existing-database-checks",
-        "apps/server/tests/test_postgresql_storage.py",
-        "from app.db.models import Base, Mail\n",
-        "from app.db.f2_models import F2Base\nfrom app.db.models import Base, Mail\n",
-    )
-    name = "apps/server/tests/test_postgresql_storage.py"
-    file = tree / name
-    source = file.read_text()
-    if source.count("[Base.metadata, search_metadata]") != 2:
-        raise RuntimeError("공통 DB 비교 검사 변경 위치를 확인하세요")
-    file.write_text(
-        source.replace(
-            "[Base.metadata, search_metadata]", "[Base.metadata, search_metadata, F2Base.metadata]"
-        )
-    )
-    replace(
-        tree,
-        "06-existing-database-checks",
-        "apps/server/tests/test_f2_pending_migration.py",
-        '        with Operations.context(context):\n            namespace["upgrade"]()',
-        '        with Operations.context(context):\n            # 최신 head에 이미 적용된 F2를 분리 테스트 스키마에서만 되돌려 반복 검사한다.\n            namespace["downgrade"]()\n            namespace["upgrade"]()',
-    )
-    replace(
-        tree,
-        "06-existing-database-checks",
-        "apps/server/tests/test_mail_read_api.py",
-        "from types import SimpleNamespace\nfrom sqlalchemy import create_engine\n",
-        "from types import SimpleNamespace\nfrom cryptography.fernet import Fernet\nfrom sqlalchemy import create_engine\n",
-    )
-    replace(
-        tree,
-        "06-existing-database-checks",
-        "apps/server/tests/test_mail_read_api.py",
-        "run_mail_api.load_settings=lambda:SimpleNamespace(expected_email=os.environ['MAIL_API_TEST_EMAIL'])",
-        "run_mail_api.load_settings=lambda:SimpleNamespace(expected_email=os.environ['MAIL_API_TEST_EMAIL'],encryption_key=Fernet.generate_key())",
-    )
 
 
 def main():
@@ -321,7 +281,7 @@ def main():
             if args.validation_dir.exists():
                 raise SystemExit("검사 경로가 이미 있습니다. 기존 파일은 덮지 않습니다.")
             shutil.copytree(tree, args.validation_dir)
-    print("F4 패치 6개 생성·적용 가능성 확인 완료. 공통 원본은 변경하지 않았습니다.")
+    print("F4 패치 5개 생성·적용 가능성 확인 완료. 공통 원본은 변경하지 않았습니다.")
 
 
 if __name__ == "__main__":

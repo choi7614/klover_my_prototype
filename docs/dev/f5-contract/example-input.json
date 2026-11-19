@@ -1,0 +1,57 @@
+{
+  "schema_version": "f1.scan-input.v1",
+  "mail_id": "f5-mail",
+  "body_sha256": "1b4df70abf8cac7938d3425dbd5e26998d0c946d56f27462a4c8ddd6e35f39d3",
+  "offset_unit": "unicode_codepoint",
+  "events": [
+    {
+      "action_key": "meeting-1",
+      "evidence_spans": [
+        {
+          "mail_id": "f5-mail",
+          "start": 10,
+          "end": 39,
+          "quote": "📅 11월 20일 오후 2시에 테스트 회의를 합니다."
+        }
+      ],
+      "payload": {
+        "title": "합성 회의",
+        "start": "2026-11-20T14:00:00+09:00",
+        "end": "2026-11-20T15:00:00+09:00",
+        "location": "테스트 회의실",
+        "calendar_id": "synthetic-calendar"
+      }
+    }
+  ],
+  "action_items": [
+    {
+      "action_key": "upload-1",
+      "evidence_spans": [
+        {
+          "mail_id": "f5-mail",
+          "start": 40,
+          "end": 61,
+          "quote": "자료를 11월 19일까지 올려 주세요."
+        }
+      ],
+      "payload": {
+        "title": "합성 자료 업로드",
+        "due": "2026-11-19"
+      }
+    }
+  ],
+  "reply": {
+    "action_key": "reply-1",
+    "evidence_spans": [
+      {
+        "mail_id": "f5-mail",
+        "start": 62,
+        "end": 80,
+        "quote": "참석 가능 여부를 회신해 주세요."
+      }
+    ],
+    "payload": {
+      "reason": "참석 가능 여부 회신"
+    }
+  }
+}

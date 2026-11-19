@@ -192,3 +192,28 @@ style_learnings는 user_id(PK/FK), payload(jsonb: status/analyzed_count/phrases/
 payload(jsonb: DraftState 전체), version(int>=1)을 저장한다. 사용자·버전 조건으로 갱신한다.
 학습 기록 삭제는 해당 사용자 기록을 지우고 학습 동의를 끄며 프로필 버전을 올린다.
 세부 계약과 F4 읽기 포트는 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.
+
+
+## F5 저장 구조 (0005_f5)
+
+0004_f2 뒤에 0005_f5를 추가한다. 기존 0001~0004, F2 프로필/초안과 F3 검색 기록은 보존한다.
+메일 소유자 복합 유일 제약 `uq_mail_f5_owner(mail_id,user_id,account_id)`를 추가한다.
+F5 메타데이터(공통 테이블 복사본 포함), search_metadata, F2Base.metadata를 함께 비교한다.
+목표 표의 suggestions/todos는 실제로 충돌을 피한 f5_ 접두사의 다음 테이블에 저장한다.
+
+- f5_suggestions: suggestion_id PK, 소유 사용자/계정/메일 복합 FK, type(calendar/todo/reply),
+  action_key/evidence_key, body_sha256, payload/evidence_spans(JSON), status,
+  execution_status/execution_mode/execution_payload/execution_token/started_at/result/last_error,
+  version, notified_at/created_at/resolved_at. 같은 메일·유형·행동 키 또는 근거는 유일하다.
+- f5_todos: todo_id PK, 소유 사용자/계정, mail_id/suggestion_id(선택), request_id/request_payload,
+  title/due/status(open/completed)/version/created_at/updated_at. 제안당 하나이며
+  직접 생성은 사용자·계정·request_id로 중복을 막는다. 소유권 복합 FK가 있다.
+- f5_suggestion_outbox: event_id PK, suggestion_id 유일, 소유자 복합 FK, created_at/delivered_at.
+  제안 생성과 함께 저장하고 전달 확인 전까지 재조회한다.
+- f5_dismissals: suggestion_id PK와 소유자 복합 FK, dismissed_at. 감지 기준 자동 조정은 하지 않는다.
+
+status는 pending/approved/dismissed, execution_status는
+idle/executing/failed/uncertain/blocked/simulated/succeeded다.
+테스트 영수증은 approved가 되지 않는다. 불명확한 실행은 후속 권한 오류가 나도 입력 잠금을 유지한다.
+실행 중 프로세스 종료는 수동 조정 대상이다. 기존 사용자·계정·암호문·메일·수신 커서는 변경하지 않는다.
+이 이력을 운영 DB에 실제 적용했는지는 별도 확인하며, 자동 마이그레이션은 하지 않는다.

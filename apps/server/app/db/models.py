@@ -64,6 +64,7 @@ class Mail(Base):
             name="fk_mail_account_owner",
         ),
         UniqueConstraint("account_id", "source_message_id", name="uq_mail_source_message"),
+        UniqueConstraint("mail_id", "user_id", "account_id", name="uq_mail_f5_owner"),
         CheckConstraint("direction IN ('received', 'sent')", name="ck_mail_direction"),
         CheckConstraint(
             "mailbox IN ('inbox', 'sent', 'draft', 'archive', 'spam', 'trash')",

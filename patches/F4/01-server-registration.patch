@@ -1,6 +1,6 @@
 --- a/apps/server/app/main.py
 +++ b/apps/server/app/main.py
-@@ -8,6 +8,7 @@
+@@ -9,6 +9,7 @@
  from app.api.mail_sync import register_mail_sync
  from app.api.profile_draft import register_profile_draft
  from app.api.search import register_search_api
@@ -8,32 +8,32 @@
  from app.schemas.common import ErrorResponse
  
  
-@@ -26,6 +27,7 @@
+@@ -27,6 +28,7 @@
      register_mail_sync(application)
      register_profile_draft(application)
      register_search_api(application)
 +    register_weekly_report_api(application)
+     register_f5_api(application)
      return application
- 
  
 --- a/apps/server/app/cli/run_mail_api.py
 +++ b/apps/server/app/cli/run_mail_api.py
-@@ -18,6 +18,7 @@
- from app.mail_api_config import MailAPIConfigurationError, read_api_token
+@@ -20,6 +20,7 @@
  from app.main import create_app
+ from app.services.f5 import F5Service
  from app.services.search import SearchService
 +from app.services.weekly_report_runtime import WeeklyReportRuntime
  
  
  def main():
-@@ -46,6 +47,7 @@
+@@ -48,6 +49,7 @@
              SQLRecentSearchRepository(engine),
          )
          application.state.profile_draft = F2Context(F2Repository(engine))
 +        application.state.weekly_reports = WeeklyReportRuntime(engine)
+         # 실제 Calendar transport는 별도 승인·권한 확인 전까지 차단한다.
+         application.state.f5_service = F5Service(F5Repository(engine))
          print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")
-         print("터미널을 켜두세요. 종료는 Control+C입니다.")
-         uvicorn.run(
 --- a/apps/server/tests/test_weekly_report.py
 +++ b/apps/server/tests/test_weekly_report.py
 @@ -368,8 +368,9 @@
@@ -60,4 +60,4 @@
 +        "/reports/weekly/{report_id}/excluded",
          "/search",
          "/search/recent",
-     }
+         "/suggestions",

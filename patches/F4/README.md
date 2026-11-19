@@ -1,6 +1,6 @@
 # F4 공통 연결 패치 — 실제 파일에는 미적용
 
-> 기준 develop: `b147cfd` · 원본 SHA-256은 [baseline.json](baseline.json)
+> 기준 develop: `9ac5421` · 원본 SHA-256은 [baseline.json](baseline.json)
 
 기존 F4 브랜치는 최신 develop과 로컬 통합했지만 아래 공통 변경은 이 디렉터리의
 패치에만 들어 있다. feature 코드 병합이 운영 등록·DB 설치·앱 진입 완료를 뜻하지 않는다.
@@ -13,7 +13,6 @@
 | 3 | [03-screen-ipc.patch](03-screen-ipc.patch) | 제한된 F4 main/preload 통로 5개, 인증된 `/report/weekly` 진입, 기존 F0/F2/F3 보존 |
 | 4 | [04-generated-api-types.patch](04-generated-api-types.patch) | 최신 전체 OpenAPI에서 F4를 추가해 자동 생성한 타입 |
 | 5 | [05-shared-documents.patch](05-shared-documents.patch) | 공통 API·데이터 모델 문서 반영 |
-| 6 | [06-existing-database-checks.patch](06-existing-database-checks.patch) | develop에서도 재현된 공통 DB 검사 3건의 오래된 가정 수정. 운영 코드는 바꾸지 않음 |
 
 ## 연결 계약과 적용 전 확인
 
@@ -26,8 +25,8 @@
   실제 제공자는 여전히 없다. 미설정은 503이며 가짜 기본 응답으로 대체하지 않는다.
 - 대역은 분리된 테스트 DB·명시적 허용에서만 연결한다. 저장한 대역 보고서도 기본 운영
   런타임에서는 거부한다. 실제 Gmail의 외부 AI 전송 실험과 30초 성능 측정은 하지 않았다.
-- 마이그레이션 제안은 `0006_f4`, 현재 down_revision은 `0004_f2`다. 0005는 F1 후보로
-  남겨 둔다. 실제 적용 직전 progress.md의 예약과 Alembic head를 확인한다. F1 이력이 먼저
+- 마이그레이션 제안은 `0006_f4`, 현재 down_revision은 `0005_f5`다. 실제 적용 직전
+  progress.md의 예약과 Alembic head를 확인한다. F1 이력이 먼저
   반영되는 등 head가 바뀌면 이 패치를 다시 생성·검사한다. 이 패치와 F1 패치가 각각 다른
   head를 만드는 상태로 동시에 적용하지 않는다.
 - 03은 화면에 토큰·임의 주소·파일 접근 권한을 주지 않는다. main에서 기존 readLocalAPI·
@@ -45,7 +44,6 @@ git apply --check patches/F4/02-report-storage.patch
 git apply --check patches/F4/03-screen-ipc.patch
 git apply --check patches/F4/04-generated-api-types.patch
 git apply --check patches/F4/05-shared-documents.patch
-git apply --check patches/F4/06-existing-database-checks.patch
 ```
 
 생성기는 임시 복사본에서만 공통 파일을 편집하고 OpenAPI·타입을 생성한다. 실제 원본에는
@@ -56,6 +54,6 @@ git apply --check patches/F4/06-existing-database-checks.patch
 01은 F4 등록 부재 보호 검사도 등록 확인 검사로 바꾼다. 실제 기능 브랜치에서는 등록
 부재 검사가 계속 통과해야 한다. 제안 합본은 검사 제외 없이 전체 pytest를 실행한다.
 
-06의 공통 검사 실패는 F4 변경 전 develop 사본에서도 재현했다. 이미 등록된 F2 테이블의
-중복 생성, 모델 비교 목록의 F2 누락, 메일 서버 검사 대역 설정의 암호화 키 누락이다.
-키는 검사 자식 프로세스에서 매번 새로 만드는 합성 값이며 실제 설정·키는 읽지 않는다.
+초기 기준 `b147cfd`에서 발견했던 공통 검사 3건은 최신 develop의 F5 병합에서 이미
+수정됐다. 중복 수정 패치는 최종 제안에 포함하지 않는다. 기존 F5 경로·저장소·공유 타입과
+마이그레이션을 보존한 상태에서 F4만 추가하도록 패치를 다시 생성했다.

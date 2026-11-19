@@ -8,7 +8,7 @@
      String,
      Text,
      UniqueConstraint,
-@@ -92,3 +93,18 @@
+@@ -93,3 +94,18 @@
      received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
      is_read: Mapped[bool] = mapped_column(Boolean, server_default="false")
      analysis_status: Mapped[str] = mapped_column(String(20), server_default="pending")
@@ -37,7 +37,7 @@
 +from sqlalchemy.dialects import postgresql
 +
 +revision = "0006_f4"
-+down_revision = "0004_f2"
++down_revision = "0005_f5"
 +branch_labels = None
 +depends_on = None
 +
