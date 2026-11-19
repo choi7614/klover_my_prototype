@@ -12,12 +12,50 @@ from sqlalchemy.orm import Session
 from app.ai.interfaces import ProviderIdentity, ProvidersNotConfigured
 from app.db.models import Mail, MailAccount
 from app.pipeline.embed import body_chunks, validate_vectors
-from app.schemas.mail_analysis import AnalysisMail, AnalysisResult, CategoryExample
+from app.schemas.mail_analysis import (
+    AnalysisMail,
+    AnalysisResult,
+    CategoryExample,
+    MailAnalysisView,
+)
 from app.schemas.report import MailCategory, ReportMail
 
 
 def _json(value):
     return json.dumps(value, ensure_ascii=False, allow_nan=False)
+
+
+def _view(row, allow_test_providers: bool) -> MailAnalysisView:
+    status = row["analysis_status"]
+    user_label = row["user_label"]
+    test_result = "test" in (row["llm_mode"], row["embedding_mode"])
+    if status != "done" or (test_result and not allow_test_providers):
+        # 대기·실패, 또는 운영에서 테스트 대역 결과면 결과 없이 대기로 보여 준다(가짜 결과 금지).
+        shown = "pending" if status == "done" else status
+        return MailAnalysisView(
+            mail_id=row["mail_id"],
+            analysis_status=shown,
+            category=user_label,
+            user_label=user_label,
+            failure_code=row["failure_code"] if shown == "failed" else None,
+        )
+    # 근거 위치는 현재 원문 범위 안의 것만 보낸다.
+    length = len(row["body_text"] or "")
+    spans = [span for span in row["evidence_spans"] or [] if span["end"] <= length]
+    return MailAnalysisView(
+        mail_id=row["mail_id"],
+        analysis_status="done",
+        category=user_label or row["category"],
+        ai_category=row["category"],
+        user_label=user_label,
+        summary=row["summary"],
+        needs_reply=row["needs_reply"],
+        action_items=row["action_items"] or [],
+        priority=row["priority"],
+        priority_reason=row["priority_reason"],
+        has_events=bool(row["events"]),
+        evidence_spans=spans,
+    )
 
 
 class AnalysisRepository:
@@ -100,6 +138,51 @@ class AnalysisRepository:
                 .with_for_update(skip_locked=True, of=Mail)
             ).first()
             yield AnalysisTransaction(self, session, *row) if row else None
+
+    def _shown(self):
+        # 앱 받은편지함·보관함에 보이는 받은 메일만 분석 화면 대상이다.
+        return self._query().where(
+            Mail.direction == "received", Mail.mailbox.in_(["inbox", "archive"])
+        )
+
+    def requeue(self, mail_id: str) -> str | None:
+        """failed 메일을 pending으로 되돌린다. 없거나 남의 메일은 None, 그 밖엔 바뀐 뒤 상태."""
+        with Session(self.engine) as session, session.begin():
+            row = session.execute(
+                self._shown().where(Mail.mail_id == mail_id).with_for_update(of=Mail)
+            ).first()
+            if row is None:
+                return None
+            mail, _ = row
+            if mail.analysis_status == "failed":
+                # 이전 실패 기록(failure_code)은 남겨 두고 메일 상태만 대기로 바꾼다.
+                mail.analysis_status = "pending"
+            return mail.analysis_status
+
+    def views(self, mail_ids) -> tuple[MailAnalysisView, ...]:
+        """앱 표시용 분석 결과. 소유자 범위 밖·없는 메일은 빠진다. 입력 순서를 지킨다."""
+        ids = list(dict.fromkeys(mail_ids))
+        if not ids:
+            return ()
+        with self.engine.connect() as connection:
+            rows = connection.execute(
+                text("""
+                SELECT m.mail_id,m.analysis_status,m.body_text,a.category,a.user_label,a.summary,
+                       a.action_items,a.needs_reply,a.priority,a.priority_reason,a.events,
+                       a.evidence_spans,a.failure_code,a.llm_mode,a.embedding_mode
+                FROM mails m JOIN mail_accounts account
+                  ON account.account_id=m.account_id AND account.user_id=m.user_id
+                LEFT JOIN f1_mail_analysis a ON a.mail_id=m.mail_id
+                  AND a.user_id=m.user_id AND a.account_id=m.account_id
+                WHERE m.user_id=:user_id AND m.account_id=:account_id
+                  AND m.direction='received' AND m.mailbox IN ('inbox','archive')
+                  AND m.received_at>=account.sync_started_at
+                  AND m.mail_id = ANY(:ids)
+            """),
+                {"user_id": self.user_id, "account_id": self.account_id, "ids": ids},
+            ).mappings()
+            found = {row["mail_id"]: _view(row, self.allow_test_providers) for row in rows}
+        return tuple(found[mail_id] for mail_id in ids if mail_id in found)
 
     def set_category(self, mail_id: str, category: MailCategory) -> bool:
         if category not in get_args(MailCategory):

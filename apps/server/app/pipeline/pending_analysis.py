@@ -1,7 +1,8 @@
-"""명시적 pending 실행. 제공자를 주입하며 일반 앱·Gmail 수신에 자동 등록하지 않는다."""
+"""pending 메일 분석 실행. 제공자를 주입한다. CLI와 자동 분석 작업자(auto_analysis)가 함께 쓴다."""
 
 from app.ai.interfaces import ProvidersNotConfigured, TextEmbedding, TextGeneration
 from app.db.repositories.mail_analysis import AnalysisRepository
+from app.pipeline.analysis_hooks import AnalysisHooks, AnalysisOwner
 from app.pipeline.analyze import AnalysisFailed, analyze
 from app.pipeline.embed import EmbeddingFailed, embed_mail
 from app.schemas.mail_analysis import AnalysisModel, AnalysisOutcome
@@ -38,6 +39,7 @@ async def process_pending(
     allow_gmail: bool = False,
     mail_id: str | None = None,
     reanalyze: bool = False,
+    hooks: AnalysisHooks | None = None,
 ) -> BatchResult:
     if type(limit) is not int or not 1 <= limit <= 100:
         raise ValueError("실행 개수는 1~100이어야 합니다")
@@ -47,8 +49,10 @@ async def process_pending(
         repository.allow_test_providers
     ):
         raise ProvidersNotConfigured("기본 실행에서는 테스트 제공자를 사용하지 않습니다")
+    owner = AnalysisOwner(user_id=repository.user_id, account_id=repository.account_id)
     outcomes = []
     for _ in range(limit):
+        analyzed = None
         with repository.claim(
             allow_gmail=allow_gmail, mail_id=mail_id, reanalyze=reanalyze
         ) as work:
@@ -93,8 +97,11 @@ async def process_pending(
                 outcome = AnalysisOutcome(
                     mail_id=work.mail.mail_id, status="done", attempts=attempts
                 )
-        # 여기까지 트랜잭션이 확정된 뒤에만 완료를 반환한다. 이벤트 전송은 별도 연결 사항이다.
+                analyzed = result
+        # 여기까지 트랜잭션이 확정된 뒤에만 완료를 반환하고 분석 완료 알림 지점을 부른다.
         outcomes.append(outcome)
+        if analyzed is not None and hooks is not None:
+            await hooks.notify(owner, outcome.mail_id, analyzed)
         if mail_id is not None:
             break
     return BatchResult(outcomes=tuple(outcomes))

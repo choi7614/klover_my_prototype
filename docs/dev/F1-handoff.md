@@ -1,6 +1,6 @@
 # F1 → F2~F5 전달 계약과 확인 방법
 
-> 2026-11-19 · F1 기능 브랜치 로컬 구현 · 운영 통합 전
+> 2026-11-19 · F1 기능 브랜치 · 자동 분석·분석 완료 알림 지점 추가(공통 연결은 patches/F1/05~07)
 
 ## 공통 AI·임베딩 호출 (F2·F3·F4·F5 공통)
 
@@ -52,8 +52,46 @@ vectors = await embeddings.embed(EmbeddingRequest(texts=("텍스트",), purpose=
 ## F5
 
 AnalysisResult의 action_items/events/needs_reply/priority/entities/evidence_spans와 mail_id가
-입력 계약이다. Calendar 쓰기·제안 생성·사용자 승인·알림·이벤트 전달을 대신 구현하지
-않았다. 분석 저장과 이벤트 연결은 [공통 통합 요청](../../integration/F1-mail-analysis/README.md)을 따른다.
+입력 계약이다. Calendar 쓰기·제안 생성·사용자 승인·알림·이벤트 전달은 F1이 대신 구현하지 않는다.
+
+### 분석 완료 알림 지점 (2026-11-19, `app/pipeline/analysis_hooks.py`)
+
+F1이 새 메일을 분석해 **DB에 확정(commit)한 직후** 등록된 콜백을 부른다. F5는 이 지점에 제안 만들기를 이어 붙인다.
+F1은 F5 코드를 부르지 않으며, 연결(등록 한 줄)은 통합 채팅이 실행 명령에서 한다.
+
+```python
+from app.pipeline.analysis_hooks import AnalysisOwner
+from app.schemas.mail_analysis import AnalysisResult
+
+def on_analyzed(owner: AnalysisOwner, mail_id: str, result: AnalysisResult) -> None:
+    ...  # owner.user_id / owner.account_id 범위 안에서만 읽고 쓴다. result.mail_id == mail_id
+
+# run_mail_api.py (patches/F1/05 적용 뒤, 통합 채팅):
+unregister = analysis_runner.hooks.register(on_analyzed)   # async def 콜백도 된다
+```
+
+| 항목 | 약속 |
+| --- | --- |
+| 부르는 때 | 분석 성공(`analysis_status='done'`)이 확정된 뒤 한 번. 실패(failed)·AI 미설정·외부 차단(pending)은 부르지 않는다 |
+| 인수 | `owner`(user_id·account_id), `mail_id`, 검증된 `AnalysisResult`(근거 `evidence_spans`는 원문 인덱스, 모든 결과는 `mail_id`로 근거 메일과 연결) |
+| 스레드 | 서버 안의 F1 자동 분석 작업자 스레드 하나(asyncio 루프 안). 메일 순서대로 하나씩 부른다 |
+| 시간 | 일반 함수는 짧게 끝낸다(다음 메일 분석을 막는다). async 콜백은 `CALLBACK_TIMEOUT`(10초) 안에 끝나야 한다 |
+| 오류 | 콜백 예외·시간 초과는 기록(콜백 이름·오류 종류만)하고 삼킨다. 분석 상태(done)는 그대로, 다음 콜백·메일 처리도 계속 |
+| 전달 보장 | 없음(서버 메모리 안 즉시 알림, 재전송·outbox 없음). 서버가 알림 직전에 꺼지면 그 알림은 사라진다. 놓친 메일은 F1 저장소의 done 메일을 다시 읽어 보완한다 |
+| 재분석 | 실패 메일을 다시 시도해 성공하면 그때 한 번 더 부른다. 같은 mail_id로 여러 번 올 수 있으니 수신 측은 mail_id 기준으로 중복을 막는다 |
+| 테스트 결과 | 테스트 대역(mode=test) 결과는 분리 테스트 스키마에서만 생긴다. 운영 저장소에서는 저장 자체가 거부된다 |
+
+CLI(`analyze_pending run`)는 이 지점을 부르지 않는다(명시적 수동 실행). 필요하면 `process_pending(..., hooks=...)`로 넘긴다.
+
+## 새 메일 자동 분석 (2026-11-19, `app/pipeline/auto_analysis.py`)
+
+- 방식: 앱 새로고침 `POST /mails/sync`가 저장을 끝내면 `MailSyncContext.after_sync` → `AutoAnalysis.kick()`으로
+  '분석 시작' 신호만 주고 바로 응답한다. 서버 안 작업자 스레드 하나가 pending이 없어질 때까지 분석한다.
+  (비교: 요청 안에서 분석까지 끝내기 → 요청이 수십 초 붙잡혀 탈락. 앱이 sync 뒤 별도 분석 요청 → 앱·main 통로와 대기가 늘어 탈락.)
+- 상태 `auto_analysis`: `ready`(로컬 AI) / `not_configured`(AI 미설정, 분석 안 함·pending 유지) /
+  `external_blocked`(Claude 등 외부 AI, 실제 Gmail 본문 전송 안 함·pending 유지) / `not_connected`(실행 명령에 미조립).
+- 실패는 `failed`+고정 실패 코드. `POST /mails/{mail_id}/analysis/retry`(또는 `AutoAnalysis.retry`)가 pending으로 되돌리고 다시 분석한다.
+- 앱 표시는 기존 `/mails` 응답을 바꾸지 않고 `GET /mails/analysis/batch?ids=`로 따로 읽는다(형식은 `docs/architecture/api.md`).
 
 ## 검사와 평가
 

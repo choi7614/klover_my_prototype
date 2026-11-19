@@ -31,8 +31,13 @@
   main/preload `mail.sync` IPC(02), App 경로 `/mail/inbox/:mailId?`·`/search`(03), 공유 타입 재생성(04), api 문서(05).
   이제 앱 새로고침이 서버를 거쳐 실제로 Gmail 새 메일을 가져온다(실제 Gmail 확인은 미실행).
   `/search`는 F3 IPC가 없어 '준비 부족' 클라이언트로 열린다.
+- F1 분류·요약 표시(2026-11-19, Claude, `feat/F1-mail-analysis`에서 F0 파일 변경): `mailbox-page.tsx`에 선택 prop
+  `analysis`(F1 통로)를 추가해 목록 한 줄에 ◆ 요약·분류·회신 필요·마감 태그, 읽기 영역에 AI 요약 박스와 대기·실패 상태를 보여 준다.
+  `routes.tsx`의 `MailboxRoute`가 그대로 전달한다. 통로가 없으면 기존 모양 그대로. 서버 `app/api/mail_sync.py`에
+  `MailSyncContext.after_sync`(저장 성공 뒤 F1 자동 분석 신호, 응답 형식 변경 없음)를 추가했다. 공통 연결은 `patches/F1/05·07`.
+  자세한 내용은 [F1-analysis-status.md](F1-analysis-status.md).
 - S04 제안 패널(F5)은 F5 미착수라 만들지 않았다. S04의 회신 초안 진입은 S03 도구 줄 버튼과 같은 경로다.
-- 미구현: 작성·발송, 보관·삭제·스팸, 트레이·알림, F1 AI 표시, F2·F3 서버 통로(IPC), 주기 자동 수신.
+- 미구현: 작성·발송, 보관·삭제·스팸, 트레이·알림, 주기 자동 수신. (F1 AI 표시는 F1 브랜치에서 구현, 공통 패치 F1/07 적용 전)
 
 ## 검사 결과
 
