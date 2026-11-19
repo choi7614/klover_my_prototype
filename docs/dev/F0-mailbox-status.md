@@ -8,7 +8,7 @@
 | --- | --- |
 | 브랜치 | `feat/F0-mailbox` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 (#17), 공통 패치 `patches/F0` 01~05 적용 (통합 채팅 `integrate/F0-patches`) |
+| 상태 | develop 병합 (#17), 공통 패치 `patches/F0` 01~05 적용 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18), `integrate/F0-patches`) |
 | 마지막 커밋 | `438b29d` 2026-11-19 — [F0] 새로고침을 Gmail 새 메일 가져오기로 바꾸고 F2·F3 화면 진입 연결 |
 | 기준 develop | `4b24378` (#17 병합, 공통 패치는 이 위에 적용) |
 | 미커밋 변경 | 없음 |
