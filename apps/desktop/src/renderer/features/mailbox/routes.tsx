@@ -4,9 +4,10 @@ import { MailboxPage } from './mailbox-page';
 import { SearchPage } from '../search/search-page';
 import { SearchClientError, type SearchClient, type SearchNavigation } from '../search/contracts';
 import { validMailId, type MailError, type MailReadBridge, type MailSession } from '../../../shared/mail-read';
+import type { F5Client } from '../suggestions/types';
 
 /** `/mail/inbox/:mailId?` — 검색 결과 등에서 특정 메일을 선택한 채로 연다. 공통 App이 등록한다. */
-export function MailboxRoute(props: { api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void }) {
+export function MailboxRoute(props: { api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void; suggestions?: F5Client }) {
   const { mailId } = useParams();
   const initial = mailId && validMailId(mailId) ? mailId : null;
   return <MailboxPage key={initial ?? 'inbox'} {...props} initialMailId={initial} />;

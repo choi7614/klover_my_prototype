@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { MailReadBridge } from '../shared/mail-read';
 import type { F2Bridge } from '../shared/f2-bridge';
 import type { F4Bridge } from '../shared/f4-bridge';
+import type { F5Bridge } from '../shared/f5-bridge';
 import type { SearchBridge, SearchMessage } from '../shared/search-bridge';
 
 // 화면에는 필요한 정보와 정해진 통로만 공개한다. Node·파일·임의 IPC 접근은 공개하지 않는다.
@@ -48,4 +49,15 @@ const weeklyReport = Object.freeze<F4Bridge>({
   excluded: id => ipcRenderer.invoke('klover:weekly-report:excluded', id),
   save: (id, revision, sections) => ipcRenderer.invoke('klover:weekly-report:save', id, revision, sections),
 });
-contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport }));
+// F5 AI 제안·할 일. 인수는 main에서 다시 검사한다. 알림 outbox·캘린더 직접 호출 통로는 없다.
+const suggestions = Object.freeze<F5Bridge>({
+  list: query => ipcRenderer.invoke('klover:suggestions:list', query),
+  get: suggestionId => ipcRenderer.invoke('klover:suggestions:get', suggestionId),
+  approve: (suggestionId, request) => ipcRenderer.invoke('klover:suggestions:approve', suggestionId, request),
+  dismiss: (suggestionId, request) => ipcRenderer.invoke('klover:suggestions:dismiss', suggestionId, request),
+  conflicts: (suggestionId, payload) => ipcRenderer.invoke('klover:suggestions:conflicts', suggestionId, payload),
+  todos: query => ipcRenderer.invoke('klover:suggestions:todos', query),
+  createTodo: request => ipcRenderer.invoke('klover:suggestions:createTodo', request),
+  updateTodo: (todoId, request) => ipcRenderer.invoke('klover:suggestions:updateTodo', todoId, request),
+});
+contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport, suggestions }));

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Archive, File, Inbox, PenLine, RefreshCw, Send, Settings, Trash2 } from 'lucide-react';
+import { Archive, File, Inbox, PenLine, RefreshCw, Send, Settings, SquareCheck, Trash2 } from 'lucide-react';
 import logo from '@brand/klover-logo.svg';
 import mark from '@brand/klover-mark.svg';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { MailSuggestions } from '../suggestions/mail-suggestions';
+import type { F5Client } from '../suggestions/types';
 import { mailFailure, type MailDetail, type MailError, type MailReadBridge, type MailSession, type MailSummary } from '../../../shared/mail-read';
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -16,8 +18,10 @@ const isAuthenticationError = (error: MailError) => ['unauthorized', 'forbidden'
 // 다른 화면(F2·F3)으로의 이동은 해시 경로만 바꾼다. 실제 화면 등록은 공통 App이 맡는다.
 const go = (path: string) => { window.location.hash = path; };
 
-export function MailboxPage({ api, session, onDisconnected, initialMailId = null }: {
+export function MailboxPage({ api, session, onDisconnected, initialMailId = null, suggestions }: {
   api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void;
+  /** F5 제안·할 일 통로. 없으면 제안 패널 없이 S03 모양만 보여 준다. */
+  suggestions?: F5Client;
   /** 검색 결과 등에서 특정 메일을 열고 들어올 때 처음 선택할 메일 */
   initialMailId?: string | null;
 }) {
@@ -155,7 +159,8 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
             const Component = Icon as typeof Send;
             return <button key={String(label)} disabled className="flex h-[34px] items-center gap-2 px-3 text-body text-muted-foreground opacity-40"><Component className="size-4" aria-hidden="true" />{String(label)}</button>;
           })}
-          <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능 · 준비 중</p>
+          <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능</p>
+          <a href="#/todos" className="mt-1 flex h-[34px] items-center gap-2 rounded-md px-3 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><SquareCheck className="size-4" aria-hidden="true" />할 일</a>
           <a href="#/report/weekly" className="mt-auto rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring">주간 보고</a>
           <a href="#/settings/profile" className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
         </aside>
@@ -194,18 +199,32 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
               className="inline-flex h-8 items-center gap-1.5 rounded-md bg-ai px-3 text-body font-semibold text-ai-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span aria-hidden="true">◆</span>답장 초안 만들기</a>
           </div>}
-          {detail && <article className="mx-auto max-w-[816px] px-7 py-5">
-            <h2 className="break-words text-heading font-bold">{subject(detail.subject)}</h2>
-            <div className="my-4 space-y-1 border-b pb-4 text-body">
-              <p><strong>{detail.from_name || detail.from_addr}</strong> <span className="text-muted-foreground">&lt;{detail.from_addr}&gt;</span></p>
-              <p className="break-words text-caption text-muted-foreground">받는 사람: {detail.to.map(contact => contact.name ? `${contact.name} <${contact.addr}>` : contact.addr).join(', ') || '—'}</p>
-              {detail.cc.length > 0 && <p className="break-words text-caption text-muted-foreground">참조: {detail.cc.map(contact => contact.addr).join(', ')}</p>}
-              <time className="block text-caption text-muted-foreground" dateTime={detail.received_at}>{timestamp(detail.received_at)} (한국 시간)</time>
-            </div>
-            <div className="whitespace-pre-wrap break-words text-body leading-7" data-testid="mail-text-body">{detail.body_text || '텍스트 본문이 없습니다.'}</div>
-          </article>}
+          {detail && (suggestions
+            // F5: 제안이 있는 메일만 S04(본문 + 제안 패널)로, 없으면 아래 S03 모양 그대로 보여 준다.
+            ? <MailSuggestions key={detail.mail_id} mailId={detail.mail_id} body={detail.body_text} client={suggestions}
+              header={<MailHead detail={detail} />} fallback={<MailArticle detail={detail} />} />
+            : <MailArticle detail={detail} />)}
         </section>
       </div>
     </main>
   );
+}
+
+function MailHead({ detail }: { detail: MailDetail }) {
+  return <>
+    <h2 className="break-words text-heading font-bold">{subject(detail.subject)}</h2>
+    <div className="my-4 space-y-1 border-b pb-4 text-body">
+      <p><strong>{detail.from_name || detail.from_addr}</strong> <span className="text-muted-foreground">&lt;{detail.from_addr}&gt;</span></p>
+      <p className="break-words text-caption text-muted-foreground">받는 사람: {detail.to.map(contact => contact.name ? `${contact.name} <${contact.addr}>` : contact.addr).join(', ') || '—'}</p>
+      {detail.cc.length > 0 && <p className="break-words text-caption text-muted-foreground">참조: {detail.cc.map(contact => contact.addr).join(', ')}</p>}
+      <time className="block text-caption text-muted-foreground" dateTime={detail.received_at}>{timestamp(detail.received_at)} (한국 시간)</time>
+    </div>
+  </>;
+}
+
+function MailArticle({ detail }: { detail: MailDetail }) {
+  return <article className="mx-auto max-w-[816px] px-7 py-5">
+    <MailHead detail={detail} />
+    <div className="whitespace-pre-wrap break-words text-body leading-7" data-testid="mail-text-body">{detail.body_text || '텍스트 본문이 없습니다.'}</div>
+  </article>;
 }
