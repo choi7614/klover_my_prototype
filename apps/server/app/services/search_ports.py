@@ -14,6 +14,10 @@ from app.schemas.search import (
 )
 
 
+class ModelOutputInvalid(ValueError):
+    """모델 응답이 재시도 후에도 계약 형식을 지키지 않았다. 응답 원문은 담지 않는다."""
+
+
 class QueryParser(Protocol):
     async def parse(self, *, query: str, reference_date: date) -> ParseOutput:
         """메일 원문을 받지 않고 질의만 조건/주제로 나눈다. 날짜 기준은 한국 날짜다."""

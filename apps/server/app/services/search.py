@@ -9,6 +9,7 @@ from uuid import uuid4
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
+from app.ai.interfaces import ProvidersNotConfigured
 from app.schemas.search import (
     AnswerDraft,
     Citation,
@@ -23,7 +24,12 @@ from app.schemas.search import (
     SearchResult,
     SearchScope,
 )
-from app.services.search_ports import QueryParser, SearchAnswerer, SemanticSearch
+from app.services.search_ports import (
+    ModelOutputInvalid,
+    QueryParser,
+    SearchAnswerer,
+    SemanticSearch,
+)
 from app.services.search_rules import (
     SEOUL,
     SearchError,
@@ -188,6 +194,10 @@ class SearchService:
                 )
                 output = ParseOutput.model_validate(output)
                 base = normalize_intent(output, reference_date)
+            except ProvidersNotConfigured:
+                raise SearchError(
+                    "parser_unavailable", "질문 해석 기능이 아직 연결되지 않았어요.", 503
+                ) from None
             except (ValidationError, ValueError, TypeError):
                 raise SearchError(
                     "parse_failed", "질문을 이해하지 못했어요. 조건을 확인해 주세요."
@@ -280,6 +290,25 @@ class SearchService:
                     self.answerer.answer(query=request.query, parsed=parsed, mails=evidence),
                     self.model_timeout,
                 )
+            except ProvidersNotConfigured:
+                yield {
+                    "type": "answer_error",
+                    "data": {
+                        "code": "answer_unavailable",
+                        "message": "답변 기능이 아직 연결되지 않았어요. 검색 결과를 확인해 주세요.",
+                    },
+                }
+                return
+            except ModelOutputInvalid:
+                # 재시도 후에도 형식·근거가 맞지 않은 응답은 근거 확인 실패로 안내한다.
+                yield {
+                    "type": "answer_error",
+                    "data": {
+                        "code": "invalid_answer",
+                        "message": "답변의 근거를 확인하지 못했어요. 검색 결과를 확인해 주세요.",
+                    },
+                }
+                return
             except Exception:
                 yield {
                     "type": "answer_error",
