@@ -8,5 +8,6 @@ interface Window {
     f2?: import('../shared/f2-bridge').F2Bridge;
     weeklyReport?: import('../shared/f4-bridge').F4Bridge;
     search?: import('../shared/search-bridge').SearchBridge;
+    suggestions?: import('../shared/f5-bridge').F5Bridge;
   }>;
 }

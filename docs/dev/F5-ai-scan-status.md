@@ -8,7 +8,7 @@
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 — 앱 연결 단위 [#25](https://github.com/choi7614/klover_my_prototype/pull/25) (`841f782`), 공통 패치 적용 전 |
+| 상태 | develop 병합 — 앱 연결 단위 [#25](https://github.com/choi7614/klover_my_prototype/pull/25) (`841f782`), 공통 패치 01~02 적용 (통합 채팅 `integrate/F5-patches`) |
 | 마지막 구현 커밋 | `7b96be1` — 앱 제안·할 일 화면 연결과 main/preload 공통 패치 (CI 통과) |
 | 병합 커밋 | `72fb8e4` — 승인된 PR #20 병합 |
 | 기준 develop | `420078e` (F4 공통 패치까지 포함, fast-forward 로컬 통합) |
@@ -17,7 +17,17 @@
 
 ## 현재 상태
 
-### 이번 단위 (2026-11-19, Claude): 앱에서 F5 API 쓰기
+### 공통 패치 적용 (2026-11-19, 통합 채팅, `integrate/F5-patches`)
+
+- `patches/F5/` 01 → 02를 develop `5971346` 위에 적용했다. `baseline.json`의 대상 파일 12개가 현재 develop과 모두 같아 그대로 적용했다.
+- 이제 앱에서 보인다: 메일을 열면 S04 제안 패널, 사이드바 '할 일' 메뉴와 `/todos` 화면.
+- 통로는 `klover:suggestions:*` 8개만 추가됐다. 기존 메일 4·F2 10·검색·주간 보고 5개 통로와 메일함·검색·답장 초안·주간 보고 경로는 그대로다.
+- 토큰은 main(`readLocalAPI`)에서만 읽고 화면에는 `{ ok, data | error.code }`만 넘긴다.
+- 캘린더·회신 승인 버튼은 꺼져 있다(`calendarReady`·`replyReady` 기본 false, 운영 화면에서 켜지 않음). 승인·무시·할 일 추가·완료 요청은 버튼 클릭 처리 함수 안에서만 실행된다.
+- 검사: 데스크톱 lint·typecheck·build 통과, Vitest 22개 파일 154개 통과(F5 브랜치 기록과 같음). 서버·DB·공유 타입·잠금 파일은 바꾸지 않았다.
+- 미실행: Electron 실제 창, 실제 DB의 0005 설치. 제안을 만드는 쪽(F1 결과→F5 입력)이 아직 없어 실제 앱에서는 제안 목록이 비어 있는 것이 정상이다.
+
+### 이전 단위 (2026-11-19, Claude): 앱에서 F5 API 쓰기
 
 - 완료(F5 브랜치): `features/suggestions/ipc-client.ts`(통로 → `F5Client`, 통로 없으면 '준비 중'),
   `mail-suggestions.tsx`(메일 ID로 제안 조회 → `SuggestionReader`, 없으면 S03 모양 유지),

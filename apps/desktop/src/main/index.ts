@@ -6,6 +6,8 @@ import { developmentRendererURL, registerMailReadIPC } from './mail-ipc';
 import { F2APIClient } from './f2-client';
 import { F4APIClient } from './f4-client';
 import { registerF4IPC } from './f4-ipc';
+import { F5APIClient } from './f5-client';
+import { registerF5IPC } from './f5-ipc';
 import { registerF2IPC } from './f2-ipc';
 import { localSearchClientFactory, registerSearchIPC } from './search-ipc';
 
@@ -54,7 +56,8 @@ function createOnboardingWindow(): void {
   const unregisterF2 = registerF2IPC(ipcMain, window.webContents, rendererURL, new F2APIClient(configuration));
   const unregisterSearch = registerSearchIPC(ipcMain, window.webContents, rendererURL, localSearchClientFactory(configuration));
   const unregisterF4 = registerF4IPC(ipcMain, window.webContents, rendererURL, new F4APIClient(configuration));
-  window.once('closed', () => { unregister(); unregisterF2(); unregisterSearch(); unregisterF4(); });
+  const unregisterF5 = registerF5IPC(ipcMain, window.webContents, rendererURL, new F5APIClient(configuration));
+  window.once('closed', () => { unregister(); unregisterF2(); unregisterSearch(); unregisterF4(); unregisterF5(); });
 
   if (developmentURL) {
     void window.loadURL(developmentURL);
