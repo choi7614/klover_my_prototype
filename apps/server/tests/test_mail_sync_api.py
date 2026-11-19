@@ -194,3 +194,36 @@ def test_concurrent_requests_run_once(monkeypatch):
     assert second.status_code == 409
     assert first["response"].status_code == 200
     assert calls == [1]
+
+
+def test_after_sync_runs_only_after_successful_save(fake_sync):
+    """F1 자동 분석 신호 자리: 저장 성공 뒤에만 부르고, 응답 형식은 그대로다."""
+    signals = []
+    context = MailSyncContext(object(), FakeClient, after_sync=lambda: signals.append("kick"))
+    with build(context) as http:
+        response = http.post("/mails/sync", headers=auth())
+    assert response.status_code == 200
+    assert set(response.json()) == {"saved", "skipped", "mode", "token_refreshed"}
+    assert signals == ["kick"]
+
+
+def test_after_sync_failure_does_not_break_response(fake_sync):
+    def broken():
+        raise RuntimeError(SECRET)
+
+    with build(MailSyncContext(object(), FakeClient, after_sync=broken)) as http:
+        response = http.post("/mails/sync", headers=auth())
+    assert response.status_code == 200
+    assert SECRET not in response.text
+
+
+def test_after_sync_is_not_called_when_gmail_fails(monkeypatch):
+    def fail(*_):
+        raise GoogleConnectionError("합성 실패")
+
+    monkeypatch.setattr(mail_sync, "synchronize", fail)
+    signals = []
+    context = MailSyncContext(object(), FakeClient, after_sync=lambda: signals.append("kick"))
+    with build(context) as http:
+        assert http.post("/mails/sync", headers=auth()).status_code == 502
+    assert signals == []
