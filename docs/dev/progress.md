@@ -14,8 +14,8 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | develop 병합 (#17), 공통 패치 01~05 적용 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18)) | `438b29d` 2026-11-19 | 맥북 실제 Gmail 새로고침·F2·F3 화면 흐름 확인, 작성·보관·삭제 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
 | F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | develop 병합 (#11) | `34ebcbc` 2026-11-18 | 실제 LLM·임베딩 어댑터 연결, 저장 SQL·라우터 운영 반영(통합 채팅) | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
-| F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치(#16)·IPC 연결(`integrate/F2-F3-ipc`) | `c7bfb65` 2026-11-19 | 맥북 실제 앱 확인, 실제 DB 0004 적용 확인, 실제 AI 어댑터 연결 | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
-| F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 (#12), F0 진입(#17)·IPC 연결(`integrate/F2-F3-ipc`) | `deeda1c` 2026-11-19 | 실제 모델 어댑터(의미 검색·답변), 보낸 메일 열기 계약, 맥북 실제 앱 확인 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
+| F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치(#16)·IPC 연결([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `c7bfb65` 2026-11-19 | 맥북 실제 앱 확인, 실제 DB 0004 적용 확인, 실제 AI 어댑터 연결 | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
+| F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 (#12), F0 진입(#17)·IPC 연결([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `deeda1c` 2026-11-19 | 실제 모델 어댑터(의미 검색·답변), 보낸 메일 열기 계약, 맥북 실제 앱 확인 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
 | F4 주간 보고 | `feat/F4-weekly-report` | 없음 | develop 병합 (#2), 1단위 완료 | `ba541e8` 2026-11-18 | 2단위: F2 프로필·AI 인터페이스 연결 (최신 develop에서 이어받기) | [F4-weekly-report-status.md](F4-weekly-report-status.md) | 2026-11-19 |
 | F5 AI 스캔 | 없음 | 없음 | 미착수 | — | 요청 시 최신 develop에서 `feat/F5-ai-scan` 생성 | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-19 |
 
@@ -26,7 +26,7 @@
 | 규칙 단일화·인수인계·CI | `chore/agent-guidelines` | 없음 | develop 병합 ([#14](https://github.com/choi7614/klover_my_prototype/pull/14), `f282640`) | `ae4d00b` 2026-11-19 | 후속: 문서 담당 표기 정리(1인 개발) PR | 2026-11-19 |
 | F0 PR 갱신·F2 공통 패치 적용 | `integrate/F2-patches` | 없음 | develop 병합 ([#16](https://github.com/choi7614/klover_my_prototype/pull/16)) | `d726783` 2026-11-19 | F1 저장 SQL을 0005로 옮기기(요청 시) | 2026-11-19 |
 | F0 공통 패치 적용 | `integrate/F0-patches` | 없음 | develop 병합 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18)) | `57256d8` 2026-11-19 | F2·F3 main/preload IPC 연결 | 2026-11-19 |
-| F2·F3 main/preload 통로 | `integrate/F2-F3-ipc` | 없음 | PR 대기 | — 2026-11-19 | 맥북 실제 앱 확인, 실제 AI 어댑터 연결 | 2026-11-19 |
+| F2·F3 main/preload 통로 | `integrate/F2-F3-ipc` | 없음 | develop 병합 ([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `e0e68ae` 2026-11-19 | 맥북 실제 앱 확인, 실제 AI 어댑터 연결 | 2026-11-19 |
 | 공통 서버·DB·Gmail 기반 | `feat/server-foundation` 외 4개 | 없음 | develop 병합 (#4~#9) | `b24f9d6` 2026-11-18 | 추가 작업 없음 | 2026-11-19 |
 
 ## 마이그레이션 번호 예약
