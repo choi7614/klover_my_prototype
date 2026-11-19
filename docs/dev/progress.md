@@ -1,6 +1,6 @@
 # 개발 현황판
 
-> 갱신: 2026-11-19 · 기준: `origin/develop@905398b` · 갱신 도구: Claude
+> 갱신: 2026-11-19 · 기준: `origin/develop@dbdf236` · 갱신 도구: Codex
 
 **도구를 바꾸기 전·이어받은 직후 이 표부터 갱신한다.** 규칙은 [AGENTS.md](../../AGENTS.md)의 '도구 전환과 인수인계'.
 도구 전환용 프롬프트 모음: **[handoff-prompts.md](handoff-prompts.md)** · status 문서 양식: [status-template.md](status-template.md)
@@ -31,7 +31,8 @@
 | F5 공통 패치 적용 | `integrate/F5-patches` | 없음 | develop 병합 ([#28](https://github.com/choi7614/klover_my_prototype/pull/28)) | `0af5876` 2026-11-19 | F1 결과→F5 입력 변환 | 2026-11-19 |
 | F1·F3 공통 패치 적용 | `integrate/F1-F3-patches` | 없음 | develop 병합 ([#30](https://github.com/choi7614/klover_my_prototype/pull/30)) | `8e4e267` 2026-11-19 | F2 초안 AI 연결, 자동 분석·표시 | 2026-11-19 |
 | F2 답장 초안 AI 연결 | `integrate/F2-ai` | 없음 | develop 병합 ([#31](https://github.com/choi7614/klover_my_prototype/pull/31)) | `3da516a` 2026-11-19 | 맥북 실제 AI 확인 | 2026-11-19 |
-| F1 자동 분석 공통 패치 05~07 적용 | `integrate/F1-auto-analysis` | 없음 | PR 대기 | (이 PR) 2026-11-19 | 병합 후 맥북 실기 확인 | 2026-11-19 |
+| F1 자동 분석 공통 패치 05~07 적용 | `integrate/F1-auto-analysis` | 없음 | develop 병합 (#34, `dbdf236`) | `138db45` 2026-11-19 | 맥북 실기에서 메일 목록·본문·요약·분류·제안 표시 확인, 나머지 흐름 후속 | 2026-11-19 |
+| F2 답장 작성 관점 보완 | `fix/F2-reply-perspective` | Codex | 진행 중 (로컬 수정·검사 완료, 묶음 승인 대기) | 미커밋, 기준 `dbdf236` | 승인 후 게시·맥북 초안 재검증, 이후 Claude API 합성 연결 확인. develop 병합은 별도 승인 | 2026-11-19 |
 | 공통 서버·DB·Gmail 기반 | `feat/server-foundation` 외 4개 | 없음 | develop 병합 (#4~#9) | `b24f9d6` 2026-11-18 | 추가 작업 없음 | 2026-11-19 |
 
 ## 마이그레이션 번호 예약

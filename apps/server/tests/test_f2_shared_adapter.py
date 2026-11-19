@@ -82,3 +82,82 @@ def test_common_provider_failure_is_explicit_and_does_not_echo_output(failure, c
         asyncio.run(adapter.generate(input_for()))
     assert error.value.code == code and error.value.status == status
     assert "synthetic-private" not in str(error.value) + error.value.message
+
+
+def test_reply_author_and_recipient_are_distinct_even_for_first_person_incoming_mail():
+    request = input_for().model_copy(
+        update={
+            "profile": Profile(name="합성 수신 담당자", org="합성 공급사"),
+            "original": input_for().original.model_copy(
+                update={"from_name": "합성 문의자", "body_text": "저는 고객입니다. 자료를 주세요."}
+            ),
+        }
+    )
+    generator = SharedSyntheticGeneration()
+    asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(request))
+    payload = json.loads(generator.requests[0].user_prompt)
+    assert payload["reply_context"] == {
+        "task": "reply_to_sender",
+        "author": {"name": "합성 수신 담당자", "org": "합성 공급사"},
+        "recipient": {"name": "합성 문의자", "address": "synthetic@example.invalid"},
+    }
+    assert payload["original"]["body_text"] == request.original.body_text
+    assert request.profile.name == "합성 수신 담당자"
+
+
+@pytest.mark.parametrize("body", ["합성 본문", "  합성\n본문  "])
+def test_incoming_mail_echo_is_rejected_without_exposing_content(body):
+    response = json.dumps(
+        {
+            "body": body,
+            "directions": ["요청 확인", "추가 문의"],
+            "selected_direction": "요청 확인",
+            "evidence": [],
+        }
+    )
+    adapter = SharedDraftAI(SharedSyntheticGeneration(response), allow_test_provider=True)
+    with pytest.raises(F2Error) as error:
+        asyncio.run(adapter.generate(input_for()))
+    assert error.value.code == "invalid_ai_output"
+    assert "합성" not in error.value.message
+
+
+@pytest.mark.parametrize("label", ["shorter", "politer", "REWRITE"])
+def test_edit_action_codes_are_rejected_as_reply_directions(label):
+    response = json.dumps(
+        {
+            "body": "자료 요청을 확인했습니다.",
+            "directions": [label, "추가 문의"],
+            "selected_direction": label,
+            "evidence": [],
+        }
+    )
+    adapter = SharedDraftAI(SharedSyntheticGeneration(response), allow_test_provider=True)
+    with pytest.raises(F2Error) as error:
+        asyncio.run(adapter.generate(input_for()))
+    assert error.value.code == "invalid_ai_output"
+
+
+def test_revision_keeps_user_reply_and_action_separate_from_incoming_mail():
+    request = input_for().model_copy(
+        update={
+            "action": "shorter",
+            "direction": "추가 문의",
+            "current_body": "대상 기간을 알려 주세요.",
+        }
+    )
+    response = json.dumps(
+        {
+            "body": "기간을 알려 주세요.",
+            "directions": ["요청 확인", "추가 문의"],
+            "selected_direction": "추가 문의",
+            "evidence": [],
+        }
+    )
+    generator = SharedSyntheticGeneration(response)
+    result = asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(request))
+    payload = json.loads(generator.requests[0].user_prompt)
+    assert payload["action"] == "shorter"
+    assert payload["direction"] == "추가 문의"
+    assert payload["current_body"] == "대상 기간을 알려 주세요."
+    assert result.body == "기간을 알려 주세요."
