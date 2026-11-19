@@ -1,16 +1,16 @@
 diff --git a/apps/server/app/cli/run_mail_api.py b/apps/server/app/cli/run_mail_api.py
-index c612d4f..89bca36 100644
+index c612d4f..eb30865 100644
 --- a/apps/server/app/cli/run_mail_api.py
 +++ b/apps/server/app/cli/run_mail_api.py
-@@ -48,6 +48,8 @@ def main():
-             SQLSearchRepository(engine),
-             SQLRecentSearchRepository(engine),
-         )
+@@ -35,6 +35,8 @@ def main():
+         settings = load_settings()
+         engine = database_engine()
+         application = create_app()
 +        # F1 분류 수정(PATCH /mails/{mail_id}/category). 소유자는 기존 인증 세션에서만 정한다.
 +        application.state.mail_analysis_engine = engine
-         application.state.profile_draft = F2Context(F2Repository(engine))
-         application.state.weekly_reports = WeeklyReportRuntime(engine)
-         # 실제 Calendar transport는 별도 승인·권한 확인 전까지 차단한다.
+         application.state.mail_api = MailAPIContext(
+             token,
+             MailQueryRepository(engine, settings.expected_email),
 diff --git a/apps/server/app/main.py b/apps/server/app/main.py
 index a3838bd..872f1a9 100644
 --- a/apps/server/app/main.py

@@ -1,6 +1,6 @@
 # F1 공통 연결 패치 — 적용 전 (통합 채팅용)
 
-> 2026-11-19 · F1 기능 브랜치 `feat/F1-mail-analysis` · 기준 develop `420078e`
+> 2026-11-19 · F1 기능 브랜치 `feat/F1-mail-analysis` · 기준 develop `5971346`
 > 이 디렉터리의 패치는 **아직 적용하지 않았다.** 공통 영역은 통합 채팅에서만 적용한다.
 
 F1 브랜치에는 AI 제공자 선택(`app/ai/runtime.py` 등), 분류 수정 등록 함수
@@ -24,6 +24,8 @@ F1 브랜치에는 AI 제공자 선택(`app/ai/runtime.py` 등), 분류 수정 �
 - 0007은 `CREATE EXTENSION IF NOT EXISTS vector`를 실행한다. pgvector가 있는 DB(infra의
   `pgvector/pgvector:pg16`)에서 실행한다. downgrade는 F1 테이블만 지운다.
 - 02 적용 후 `PATCH /mails/{mail_id}/category`가 운영 앱에 생긴다. 엔진이 없으면 503이다.
+- 02와 `patches/F3/01-search-ai-wiring.patch`는 같은 `run_mail_api.py`를 고친다. 서로 다른 줄을
+  고치도록 맞춰 두어 어느 순서로 적용해도 된다(2026-11-19 확인).
 - 03 적용 전에는 Claude 경로가 "anthropic 패키지 미설치"로 미연결이며, 관련 검사 일부는 skip이다.
 - 패치 적용만으로 실제 AI가 켜지지 않는다. `.env`에 `AI_PROVIDER` 등을 설정해야 한다.
 
@@ -42,5 +44,6 @@ pnpm --filter desktop lint && pnpm --filter desktop typecheck && pnpm --filter d
 ```
 
 F1 채팅의 확인 결과(분리 PostgreSQL 16 + pgvector 일회용 DB, 실제 메일·키 없음):
-네 패치를 모두 적용한 사본에서 서버 pytest **440 통과·24 skip**, ruff 통과,
-`pnpm gen:api-types` 재생성 결과 동일, 데스크톱 lint·typecheck 통과·test 133 통과.
+develop `5971346`에 F1을 합친 상태에서 F1 01~04와 F3 01을 모두 적용한 사본의 서버 pytest
+**460 통과·24 skip**, ruff 통과. (이전 기준 `420078e`에서는 서버 440 통과·24 skip,
+`pnpm gen:api-types` 재생성 결과 동일, 데스크톱 lint·typecheck 통과·test 133 통과.)
