@@ -125,10 +125,6 @@
 | F4 | POST | `/reports/weekly` | 주간 보고 생성 |
 | F4 | GET | `/reports/weekly/{report_id}/excluded` | 제외된 메일 |
 | F4 | POST | `/reports/weekly/{report_id}/export` | Word 내보내기 |
-| F5 | GET | `/suggestions` | 제안 목록 (`status=pending`: 놓친 제안 포함) |
-| F5 | POST | `/suggestions/{id}/approve` | 승인 (수정값 포함 가능) |
-| F5 | POST | `/suggestions/{id}/dismiss` | 무시 |
-| F5 | GET·POST·PATCH | `/todos` | 할 일 |
 
 ## WebSocket `/ws` (설계·미구현)
 
@@ -146,3 +142,34 @@ GET/PATCH /drafts/{draft_id}, POST /drafts/{draft_id}/revise.
 인증·Origin 제한은 기존 로컬 메일 조회 API를 그대로 따른다. 발송 API는 추가하지 않는다.
 AI 미연결은 503 ai_unavailable이며 합성 결과로 대체하지 않는다.
 입력·출력·버전·동의·오류 계약은 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.
+
+
+## F5 제안·할 일 API (서버 등록·Calendar 기본 차단)
+
+F5 전용 라우터를 공통 앱에 등록하고 로컬 실행 명령에서 기존 인증 계정의 저장소에 연결한다.
+새 DB 이력은 0005_f5이며 기존 계정·메일·Gmail 수신·F2·F3 경로는 유지한다.
+실제 F1 입력 전달·F0 IPC/화면·WebSocket·Calendar HTTP transport는 미연결이다.
+
+| 메서드 | 경로 | 계약 |
+| --- | --- | --- |
+| GET | `/suggestions` | status, mail_id, notified, limit(1~100), cursor; items/next_cursor |
+| GET | `/suggestions/{suggestion_id}` | 인증된 사용자·계정의 제안 1건 |
+| POST | `/suggestions/{suggestion_id}/approve` | 필수 version, 선택 payload(유형별 전체 수정값) |
+| POST | `/suggestions/{suggestion_id}/dismiss` | 필수 version; 무시 이력 저장 |
+| POST | `/suggestions/{suggestion_id}/conflicts` | 수정한 Calendar payload로 읽기 전용 겹침 확인 |
+| GET | `/todos` | status(open/completed), limit, cursor; items/next_cursor |
+| POST | `/todos` | request_id, title, due?, mail_id?; 재시도 중복 제거 |
+| PATCH | `/todos/{todo_id}` | version과 title/due/status 중 하나 이상 |
+| GET | `/suggestion-events` | limit(1~100); 미표시 pending 이벤트 조회 |
+| POST | `/suggestion-events/{event_id}/ack` | 실제 표시 후 확인, 204 |
+
+기존 loopback·Bearer·Origin 거부 정책을 재사용하고 소유자 ID를 클라이언트에서 받지 않는다.
+다른 사용자/계정 ID는 404다. 개인 응답과 오류는 no-store이며 ErrorResponse를 사용한다.
+상태 충돌은 409, 입력 오류 422, Calendar 권한/연결 부족 503, 외부 실행 실패 502다.
+제안 생성은 F1 내부 연결 계약으로만 받으며 외부 POST 경로는 없다.
+
+업무 상태 pending/approved/dismissed와 execution_status를 따로 확인한다.
+Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertain으로 남기고
+입력 변경·무시를 차단한다. 앱 할 일은 내부 저장 성공 후에만 approved가 된다.
+알림 이벤트 조회만으로 표시 완료를 기록하지 않는다. 운영 DB 적용·Google/OS 실행은 별도다.
+[F5 계약](../dev/F5-ai-scan-contract.md), [현황](../dev/F5-ai-scan-status.md)을 따른다.

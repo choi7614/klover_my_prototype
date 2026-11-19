@@ -15,7 +15,9 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db.models import Base, Mail
+from app.db.f2_models import F2Base
+from app.db.models import Mail
+from app.db.repositories.f5_schema import F5Base
 from app.db.repositories.mail import MailRepository
 from app.db.repositories.search_recent import search_metadata
 
@@ -80,7 +82,8 @@ def test_migration_repeat_and_model_match(database):
     with engine.connect() as connection:
         assert (
             compare_metadata(
-                MigrationContext.configure(connection), [Base.metadata, search_metadata]
+                MigrationContext.configure(connection),
+                [F5Base.metadata, search_metadata, F2Base.metadata],
             )
             == []
         )
@@ -89,7 +92,8 @@ def test_migration_repeat_and_model_match(database):
     with engine.connect() as connection:
         assert (
             compare_metadata(
-                MigrationContext.configure(connection), [Base.metadata, search_metadata]
+                MigrationContext.configure(connection),
+                [F5Base.metadata, search_metadata, F2Base.metadata],
             )
             == []
         )

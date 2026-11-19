@@ -1,0 +1,289 @@
+{
+  "$defs": {
+    "CalendarCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "action_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Action Key",
+          "type": "string"
+        },
+        "evidence_spans": {
+          "items": {
+            "$ref": "#/$defs/EvidenceSpan"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Evidence Spans",
+          "type": "array"
+        },
+        "payload": {
+          "$ref": "#/$defs/CalendarPayload"
+        }
+      },
+      "required": [
+        "action_key",
+        "evidence_spans",
+        "payload"
+      ],
+      "title": "CalendarCandidate",
+      "type": "object"
+    },
+    "CalendarPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        },
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        },
+        "location": {
+          "default": "",
+          "maxLength": 1000,
+          "title": "Location",
+          "type": "string"
+        },
+        "calendar_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calendar Id"
+        }
+      },
+      "required": [
+        "title",
+        "start",
+        "end"
+      ],
+      "title": "CalendarPayload",
+      "type": "object"
+    },
+    "EvidenceSpan": {
+      "additionalProperties": false,
+      "properties": {
+        "mail_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Mail Id",
+          "type": "string"
+        },
+        "start": {
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "integer"
+        },
+        "quote": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mail_id",
+        "start",
+        "end",
+        "quote"
+      ],
+      "title": "EvidenceSpan",
+      "type": "object"
+    },
+    "ReplyCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "action_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Action Key",
+          "type": "string"
+        },
+        "evidence_spans": {
+          "items": {
+            "$ref": "#/$defs/EvidenceSpan"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Evidence Spans",
+          "type": "array"
+        },
+        "payload": {
+          "$ref": "#/$defs/ReplyPayload"
+        }
+      },
+      "required": [
+        "action_key",
+        "evidence_spans",
+        "payload"
+      ],
+      "title": "ReplyCandidate",
+      "type": "object"
+    },
+    "ReplyPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "title": "ReplyPayload",
+      "type": "object"
+    },
+    "TodoCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "action_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Action Key",
+          "type": "string"
+        },
+        "evidence_spans": {
+          "items": {
+            "$ref": "#/$defs/EvidenceSpan"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Evidence Spans",
+          "type": "array"
+        },
+        "payload": {
+          "$ref": "#/$defs/TodoPayload"
+        }
+      },
+      "required": [
+        "action_key",
+        "evidence_spans",
+        "payload"
+      ],
+      "title": "TodoCandidate",
+      "type": "object"
+    },
+    "TodoPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        },
+        "due": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "TodoPayload",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "f1.scan-input.v1",
+      "default": "f1.scan-input.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "mail_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "title": "Mail Id",
+      "type": "string"
+    },
+    "body_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Body Sha256",
+      "type": "string"
+    },
+    "offset_unit": {
+      "const": "unicode_codepoint",
+      "default": "unicode_codepoint",
+      "title": "Offset Unit",
+      "type": "string"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/CalendarCandidate"
+      },
+      "maxItems": 50,
+      "title": "Events",
+      "type": "array"
+    },
+    "action_items": {
+      "items": {
+        "$ref": "#/$defs/TodoCandidate"
+      },
+      "maxItems": 50,
+      "title": "Action Items",
+      "type": "array"
+    },
+    "reply": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReplyCandidate"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "mail_id",
+    "body_sha256"
+  ],
+  "title": "ScanInput",
+  "type": "object"
+}
