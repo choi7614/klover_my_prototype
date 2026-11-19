@@ -22,6 +22,8 @@ export class F2APIClient {
     const route = f2Routes[operation];
     const local = await readLocalAPI(this.configuration);
     if (!local) return f2Failure('configuration');
+    // 서버 생성 제한 120초 뒤의 오류 응답까지 받을 여유를 둔다.
+    const signal = AbortSignal.timeout(SLOW.has(operation) ? 150000 : 15000);
     let response: Response;
     try {
       response = await this.fetcher(new URL(route.path(id), local.base), {
@@ -31,15 +33,16 @@ export class F2APIClient {
           ...(body ? { 'Content-Type': 'application/json' } : {}),
         },
         body: body ? JSON.stringify(body) : undefined,
-        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(SLOW.has(operation) ? 90000 : 15000),
+        redirect: 'error', cache: 'no-store', signal,
       });
-    } catch { return f2Failure('connection'); }
+    } catch { return f2Failure(signal.aborted ? 'timeout' : 'connection'); }
     let payload: unknown;
     try {
       const text = await response.text();
       if (text.length > MAX_RESPONSE) return f2Failure('invalid_response');
       payload = JSON.parse(text);
     } catch {
+      if (signal.aborted) return f2Failure('timeout');
       return response.ok ? f2Failure('invalid_response') : f2Failure('unavailable');
     }
     if (!response.ok) {
