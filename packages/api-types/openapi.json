@@ -1,6 +1,113 @@
 {
   "components": {
     "schemas": {
+      "ApproveRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "ApproveRequest",
+        "type": "object"
+      },
+      "CalendarConflict": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date-time",
+            "title": "End",
+            "type": "string"
+          },
+          "start": {
+            "format": "date-time",
+            "title": "Start",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "CalendarConflict",
+        "type": "object"
+      },
+      "CalendarPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "calendar_id": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Id"
+          },
+          "end": {
+            "format": "date-time",
+            "title": "End",
+            "type": "string"
+          },
+          "location": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Location",
+            "type": "string"
+          },
+          "start": {
+            "format": "date-time",
+            "title": "Start",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "start",
+          "end"
+        ],
+        "title": "CalendarPayload",
+        "type": "object"
+      },
       "Citation": {
         "additionalProperties": false,
         "properties": {
@@ -19,6 +126,57 @@
           "mail_id"
         ],
         "title": "Citation",
+        "type": "object"
+      },
+      "ConflictResult": {
+        "additionalProperties": false,
+        "properties": {
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarConflict"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "mode": {
+            "default": "none",
+            "enum": [
+              "test",
+              "live",
+              "none"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "request_hash": {
+            "title": "Request Hash",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "checked",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "request_hash"
+        ],
+        "title": "ConflictResult",
         "type": "object"
       },
       "ContextStatus": {
@@ -286,6 +444,23 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "EventPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionEvent"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "EventPage",
+        "type": "object"
+      },
       "Evidence": {
         "additionalProperties": false,
         "properties": {
@@ -336,6 +511,83 @@
           "quote"
         ],
         "title": "EvidenceSentence",
+        "type": "object"
+      },
+      "EvidenceSpan": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "exclusiveMinimum": 0.0,
+            "title": "End",
+            "type": "integer"
+          },
+          "mail_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "quote": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "start": {
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mail_id",
+          "start",
+          "end",
+          "quote"
+        ],
+        "title": "EvidenceSpan",
+        "type": "object"
+      },
+      "ExecutionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "mode": {
+            "enum": [
+              "test",
+              "live",
+              "internal"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "todo_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Todo Id"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "ExecutionReceipt",
         "type": "object"
       },
       "HealthResponse": {
@@ -878,6 +1130,23 @@
         "title": "Reference",
         "type": "object"
       },
+      "ReplyPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReplyPayload",
+        "type": "object"
+      },
       "SearchAnswer": {
         "additionalProperties": false,
         "properties": {
@@ -1368,6 +1637,521 @@
         },
         "title": "StyleState",
         "type": "object"
+      },
+      "SuggestionEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "mail_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "name": {
+            "const": "suggestion.created",
+            "default": "suggestion.created",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "f5.notification.v1",
+            "default": "f5.notification.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "suggestion_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Suggestion Id",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "calendar",
+              "todo",
+              "reply"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "suggestion_id",
+          "mail_id",
+          "type",
+          "created_at"
+        ],
+        "title": "SuggestionEvent",
+        "type": "object"
+      },
+      "SuggestionPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SuggestionPage",
+        "type": "object"
+      },
+      "SuggestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "body_sha256": {
+            "title": "Body Sha256",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidence_spans": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceSpan"
+            },
+            "title": "Evidence Spans",
+            "type": "array"
+          },
+          "execution_mode": {
+            "enum": [
+              "none",
+              "test",
+              "live",
+              "internal"
+            ],
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "execution_status": {
+            "enum": [
+              "idle",
+              "executing",
+              "failed",
+              "uncertain",
+              "blocked",
+              "simulated",
+              "succeeded"
+            ],
+            "title": "Execution Status",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "mail_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "notified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notified At"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarPayload"
+              },
+              {
+                "$ref": "#/components/schemas/TodoPayload"
+              },
+              {
+                "$ref": "#/components/schemas/ReplyPayload"
+              }
+            ],
+            "title": "Payload"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionReceipt"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "dismissed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suggestion_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Suggestion Id",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "calendar",
+              "todo",
+              "reply"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "suggestion_id",
+          "mail_id",
+          "type",
+          "payload",
+          "evidence_spans",
+          "body_sha256",
+          "status",
+          "execution_status",
+          "execution_mode",
+          "version",
+          "notified_at",
+          "created_at",
+          "resolved_at"
+        ],
+        "title": "SuggestionView",
+        "type": "object"
+      },
+      "TodoCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "due": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due"
+          },
+          "mail_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mail Id"
+          },
+          "request_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "request_id"
+        ],
+        "title": "TodoCreate",
+        "type": "object"
+      },
+      "TodoPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TodoView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "TodoPage",
+        "type": "object"
+      },
+      "TodoPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "due": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "TodoPayload",
+        "type": "object"
+      },
+      "TodoUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "due": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "open",
+                  "completed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "TodoUpdate",
+        "type": "object"
+      },
+      "TodoView": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "due": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due"
+          },
+          "mail_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mail Id"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suggestion_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion Id"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "todo_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Todo Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "todo_id",
+          "mail_id",
+          "suggestion_id",
+          "title",
+          "due",
+          "status",
+          "version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TodoView",
+        "type": "object"
+      },
+      "VersionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VersionRequest",
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -1542,7 +2326,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -1670,7 +2454,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -1806,7 +2590,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -1944,7 +2728,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -2429,7 +3213,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -2553,7 +3337,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -2679,7 +3463,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -2795,7 +3579,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -2909,7 +3693,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3025,7 +3809,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3115,7 +3899,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3146,6 +3930,1324 @@
         "summary": "Recent",
         "tags": [
           "F3 검색"
+        ]
+      }
+    },
+    "/suggestion-events": {
+      "get": {
+        "operationId": "events_suggestion_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Events",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/suggestion-events/{event_id}/ack": {
+      "post": {
+        "operationId": "ack_suggestion_events__event_id__ack_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Ack",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/suggestions": {
+      "get": {
+        "operationId": "list_suggestions_suggestions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "dismissed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mail_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mail Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "notified",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Notified"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "List Suggestions",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/suggestions/{suggestion_id}": {
+      "get": {
+        "operationId": "get_suggestion_suggestions__suggestion_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Get Suggestion",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/suggestions/{suggestion_id}/approve": {
+      "post": {
+        "operationId": "approve_suggestions__suggestion_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Approve",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/suggestions/{suggestion_id}/conflicts": {
+      "post": {
+        "operationId": "conflicts_suggestions__suggestion_id__conflicts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Conflicts",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/suggestions/{suggestion_id}/dismiss": {
+      "post": {
+        "operationId": "dismiss_suggestions__suggestion_id__dismiss_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Dismiss",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/todos": {
+      "get": {
+        "operationId": "list_todos_todos_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "completed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodoPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "List Todos",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      },
+      "post": {
+        "operationId": "create_todo_todos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TodoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodoView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Create Todo",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
+        ]
+      }
+    },
+    "/todos/{todo_id}": {
+      "patch": {
+        "operationId": "update_todo_todos__todo_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "todo_id",
+            "required": true,
+            "schema": {
+              "title": "Todo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TodoUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodoView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Update Todo",
+        "tags": [
+          "F5 제안·할 일 (적용 전)"
         ]
       }
     }

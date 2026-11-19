@@ -11,7 +11,8 @@ from test_postgresql_storage import database as database
 from test_postgresql_storage import seed_account, store
 
 from app.db.f2_models import F2Base
-from app.db.models import Base, Mail
+from app.db.models import Mail
+from app.db.repositories.f5_schema import F5Base
 from app.db.repositories.search_recent import search_metadata
 
 
@@ -26,9 +27,11 @@ def test_pending_migration_preserves_existing_mail_and_matches_feature_models(da
     with engine.begin() as connection:
         context = MigrationContext.configure(connection)
         with Operations.context(context):
+            # 최신 공통 이력에는 F2가 이미 있으므로 역사적 패치의 직전 상태부터 검사한다.
+            namespace["downgrade"]()
             namespace["upgrade"]()
             assert (
-                compare_metadata(context, [Base.metadata, search_metadata, F2Base.metadata]) == []
+                compare_metadata(context, [F5Base.metadata, search_metadata, F2Base.metadata]) == []
             )
             namespace["downgrade"]()
             assert not {"profiles", "drafts", "style_learnings"} & set(
@@ -37,7 +40,7 @@ def test_pending_migration_preserves_existing_mail_and_matches_feature_models(da
             assert connection.scalar(select(Mail.mail_id)) == "mail-a"
             namespace["upgrade"]()
             assert (
-                compare_metadata(context, [Base.metadata, search_metadata, F2Base.metadata]) == []
+                compare_metadata(context, [F5Base.metadata, search_metadata, F2Base.metadata]) == []
             )
     with Session(engine) as session:
         mail = session.get(Mail, "mail-a")

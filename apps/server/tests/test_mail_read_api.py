@@ -274,10 +274,12 @@ def test_real_server_and_node_main_fetch_read_api(database, monkeypatch, capsys)
     script = """
 import os,sys
 from types import SimpleNamespace
+from cryptography.fernet import Fernet
 from sqlalchemy import create_engine
 from app.cli import run_mail_api
 run_mail_api.read_api_token=lambda:os.environ['MAIL_API_TEST_TOKEN']
-run_mail_api.load_settings=lambda:SimpleNamespace(expected_email=os.environ['MAIL_API_TEST_EMAIL'])
+run_mail_api.load_settings=lambda:SimpleNamespace(
+    expected_email=os.environ['MAIL_API_TEST_EMAIL'], encryption_key=Fernet.generate_key())
 run_mail_api.database_engine=lambda:create_engine(os.environ['MAIL_API_TEST_DB'],hide_parameters=True)
 sys.argv=['run_mail_api','--port',os.environ['MAIL_API_TEST_PORT']]
 run_mail_api.main()

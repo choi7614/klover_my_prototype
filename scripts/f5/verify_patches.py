@@ -25,16 +25,34 @@ def main():
     ignored = shutil.ignore_patterns(
         ".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache", "*.pyc"
     )
-    for relative in ["apps/server", "fixtures", "packages/api-types", "docs/architecture"]:
+    for relative in [
+        "apps/server",
+        "fixtures",
+        "packages/api-types",
+        "docs/architecture",
+        "patches",
+        "integration",
+    ]:
         shutil.copytree(ROOT / relative, scratch / relative, ignore=ignored)
     for patch in ["0001-server-and-schema.patch", "0002-generated-api-types.patch"]:
         source = ROOT / "docs/dev/f5-patches" / patch
-        subprocess.run(["git", "apply", "--check", str(source)], cwd=scratch, check=True)
-        subprocess.run(["git", "apply", str(source)], cwd=scratch, check=True)
+        applied = (
+            subprocess.run(
+                ["git", "apply", "--reverse", "--check", str(source)],
+                cwd=scratch,
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
+        if not applied:
+            subprocess.run(["git", "apply", "--check", str(source)], cwd=scratch, check=True)
+            subprocess.run(["git", "apply", str(source)], cwd=scratch, check=True)
     env = {
         **os.environ,
         "KLOVER_F5_TEST_DATABASE_URL": args.database_url,
         "KLOVER_TEST_DATABASE_URL": args.database_url,
+        "KLOVER_F1_TEST_DATABASE_URL": args.database_url,
     }
     env.pop("DATABASE_URL", None)
     server = scratch / "apps/server"
@@ -75,9 +93,11 @@ from alembic.config import Config
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from app.db.models import GoogleCredential, Mail, MailAccount
+from app.db.f2_models import F2Base, ProfileRecord
 from app.db.repositories.mail import MailRepository
 from app.db.repositories.f5 import F5Repository
 from app.db.repositories.f5_schema import F5Base
+from app.db.repositories.search_recent import search_metadata, search_runs
 from app.services.f5 import F5Service
 sys.path.insert(0, str(Path.cwd() / 'tests'))
 from f5.helpers import OWNER, START, BODY, analysis
@@ -92,7 +112,7 @@ os.environ['DATABASE_URL'] = url.render_as_string(hide_password=False)
 engine = create_engine(url, hide_parameters=True)
 config = Config('alembic.ini')
 try:
-    command.upgrade(config, '0002')
+    command.upgrade(config, '0004_f2')
     with Session(engine) as session, session.begin():
         repo = MailRepository(session)
         repo.add_user(user_id=OWNER.user_id)
@@ -106,6 +126,17 @@ try:
         account.sync_cursor = 'synthetic-original-cursor'
         session.add(GoogleCredential(account_id=OWNER.account_id,
                     token_ciphertext='synthetic-original-ciphertext', updated_at=START))
+        session.add(ProfileRecord(
+            user_id=OWNER.user_id, name='보존할 합성 프로필', title='', org='', duties='',
+            frequent_contacts=[], formality=50, reply_length='normal', greeting='', closing='',
+            signature='', style_learning_enabled=False, excluded_phrases=[], report_sections=[],
+            report_recipient='', report_style='bullet', version=1,
+        ))
+        session.execute(search_runs.insert().values(
+            search_id='synthetic-search', user_id=OWNER.user_id, account_id=OWNER.account_id,
+            query='보존할 합성 검색', parsed={}, overrides={}, reference_date='2026-11-19',
+            created_at=START,
+        ))
     def unchanged():
         with Session(engine) as session:
             assert session.get(Mail, 'f5-mail').body_text == BODY
@@ -113,19 +144,24 @@ try:
             credential = session.get(GoogleCredential, OWNER.account_id)
             assert account.sync_cursor == 'synthetic-original-cursor'
             assert credential.token_ciphertext == 'synthetic-original-ciphertext'
+            assert session.get(ProfileRecord, OWNER.user_id).name == '보존할 합성 프로필'
+            query = select(search_runs.c.query).where(search_runs.c.search_id == 'synthetic-search')
+            assert session.scalar(query) == '보존할 합성 검색'
     command.upgrade(config, 'head')
     command.upgrade(config, 'head')
     unchanged()
     with engine.connect() as c:
-        assert compare_metadata(MigrationContext.configure(c), F5Base.metadata) == []
+        target = [F5Base.metadata, search_metadata, F2Base.metadata]
+        assert compare_metadata(MigrationContext.configure(c), target) == []
     service = F5Service(F5Repository(engine))
     assert len(service.scan(OWNER, analysis()).created_ids) == 3
-    command.downgrade(config, '0002')
+    command.downgrade(config, '0004_f2')
     unchanged()
     command.upgrade(config, 'head')
     unchanged()
     with engine.connect() as c:
-        assert compare_metadata(MigrationContext.configure(c), F5Base.metadata) == []
+        target = [F5Base.metadata, search_metadata, F2Base.metadata]
+        assert compare_metadata(MigrationContext.configure(c), target) == []
     assert F5Repository(engine).list(OWNER).items == []
 finally:
     engine.dispose()

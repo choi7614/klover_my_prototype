@@ -79,6 +79,15 @@ def test_openapi_describes_only_implemented_api_and_its_response():
         "/profile/style",
         "/search",
         "/search/recent",
+        "/suggestions",
+        "/suggestions/{suggestion_id}",
+        "/suggestions/{suggestion_id}/approve",
+        "/suggestions/{suggestion_id}/dismiss",
+        "/suggestions/{suggestion_id}/conflicts",
+        "/todos",
+        "/todos/{todo_id}",
+        "/suggestion-events",
+        "/suggestion-events/{event_id}/ack",
     }
     assert schema["paths"]["/health"]["get"]["responses"]["200"]["content"]["application/json"][
         "schema"
