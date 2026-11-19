@@ -156,6 +156,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/mails/{mail_id}/category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 메일 분류 수정 */
+        patch: operations["update_category_mails__mail_id__category_patch"];
+        trace?: never;
+    };
     "/profile": {
         parameters: {
             query?: never;
@@ -515,6 +532,29 @@ export interface components {
             start: string;
             /** Title */
             title: string;
+        };
+        /** CategoryUpdate */
+        CategoryUpdate: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter";
+        };
+        /** CategoryUpdated */
+        CategoryUpdated: {
+            /**
+             * Effective Category
+             * @enum {string}
+             */
+            effective_category: "work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter";
+            /** Mail Id */
+            mail_id: string;
+            /**
+             * User Label
+             * @enum {string}
+             */
+            user_label: "work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter";
         };
         /** Citation */
         Citation: {
@@ -2221,6 +2261,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MailDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_category_mails__mail_id__category_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mail_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryUpdated"];
                 };
             };
             /** @description Unauthorized */

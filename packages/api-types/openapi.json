@@ -108,6 +108,71 @@
         "title": "CalendarPayload",
         "type": "object"
       },
+      "CategoryUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "work_request",
+              "meeting",
+              "approval",
+              "report_share",
+              "notice",
+              "external",
+              "newsletter"
+            ],
+            "title": "Category",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "title": "CategoryUpdate",
+        "type": "object"
+      },
+      "CategoryUpdated": {
+        "additionalProperties": false,
+        "properties": {
+          "effective_category": {
+            "enum": [
+              "work_request",
+              "meeting",
+              "approval",
+              "report_share",
+              "notice",
+              "external",
+              "newsletter"
+            ],
+            "title": "Effective Category",
+            "type": "string"
+          },
+          "mail_id": {
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "user_label": {
+            "enum": [
+              "work_request",
+              "meeting",
+              "approval",
+              "report_share",
+              "notice",
+              "external",
+              "newsletter"
+            ],
+            "title": "User Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mail_id",
+          "user_label",
+          "effective_category"
+        ],
+        "title": "CategoryUpdated",
+        "type": "object"
+      },
       "Citation": {
         "additionalProperties": false,
         "properties": {
@@ -3774,6 +3839,116 @@
         "summary": "Read Mail",
         "tags": [
           "메일 조회"
+        ]
+      }
+    },
+    "/mails/{mail_id}/category": {
+      "patch": {
+        "operationId": "update_category_mails__mail_id__category_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mail_id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "title": "Mail Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryUpdated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "메일 분류 수정",
+        "tags": [
+          "F1 분류 수정"
         ]
       }
     },

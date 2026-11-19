@@ -74,6 +74,7 @@ def test_openapi_describes_only_implemented_api_and_its_response():
         "/mails",
         "/mails/sync",
         "/mails/{mail_id}",
+        "/mails/{mail_id}/category",
         "/profile",
         "/profile/preview",
         "/profile/style",

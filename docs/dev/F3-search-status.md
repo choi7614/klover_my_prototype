@@ -8,8 +8,8 @@
 | --- | --- |
 | 브랜치 | `feat/F3-search` |
 | 작업 도구 | 없음 |
-| 상태 | PR 생성 → develop 병합(사용자 승인) |
-| 마지막 커밋 | 이번 커밋 — [F3] 공통 AI 연결용 질문 해석기·답변기 추가 |
+| 상태 | develop 병합 ([#24](https://github.com/choi7614/klover_my_prototype/pull/24)), 공통 패치 01 적용 (통합 채팅 `integrate/F1-F3-patches`) |
+| 마지막 커밋 | `1478e70` 2026-11-19 — [F3] 공통 AI 연결용 질문 해석기·답변기 추가 |
 | 기준 develop | `420078e` |
 | 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
@@ -25,8 +25,9 @@
     답변 `invalid_answer`·`answer_failed`·`answer_unavailable`. 가짜 결과로 대체하지 않는다.
   - `app/services/search.py`: 제공자 미연결(`ProvidersNotConfigured`)을 `parser_unavailable`/`answer_unavailable`로,
     재시도 후 형식 실패(`ModelOutputInvalid`, `search_ports.py`)를 `invalid_answer`로 정확히 안내.
-- **아직 운영 서버에 연결 안 됨**: 실행 명령 조립(`run_mail_api.py`)은 공통 영역이라 `patches/F3/01-search-ai-wiring.patch`로만 남겼다.
-  패치 적용 전, 그리고 적용 후에도 실제 제공자가 없으면 새 검색은 지금처럼 `503 parser_unavailable`이다.
+- **운영 서버 연결(통합 채팅, `integrate/F1-F3-patches`)**: `patches/F3/01`을 적용해 `run_mail_api.py`가 `load_providers()`로
+  해석기·답변기를 주입한다. 맥북 `.env`에 `AI_PROVIDER`(claude 또는 ollama)를 설정하면 검색이 켜지고,
+  설정이 없으면 지금처럼 `503 parser_unavailable`이다(적용 후 확인: `search_ai()` → `(None, None)`).
 - 이전 완료: 검색 계약·한국 날짜 해석, 격리 조회, 순위 결합·근거 검증, S07 화면, 서버 경로, 0003, F0 진입·IPC 통로.
 - 미구현: 의미 검색(벡터) 어댑터, 보낸 메일 열기, 실제 모델 정확도·5초 성능 확인.
 
