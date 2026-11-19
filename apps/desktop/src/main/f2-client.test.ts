@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -24,11 +24,65 @@ beforeEach(async () => {
   await writeFile(file, token + '\n', { mode: 0o600 });
 });
 afterEach(async () => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
   await Promise.all(servers.splice(0).map(server => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); })));
   await rm(directory, { recursive: true, force: true });
 });
 
 describe('main 전용 F2 서버 호출', () => {
+  // Node의 내장 AbortSignal 타이머를 제어 가능한 시계로 바꾼다. 실제 150초를 기다리지 않는다.
+  function useDeadlineClock() {
+    vi.useFakeTimers();
+    return vi.spyOn(AbortSignal, 'timeout').mockImplementation(milliseconds => {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(new DOMException('synthetic-private', 'TimeoutError')), milliseconds);
+      return controller.signal;
+    });
+  }
+
+  it.each(['createDraft', 'reviseDraft'] as const)('이전 90초를 넘는 %s 응답도 서버 제한 이후까지 기다린다', async operation => {
+    const timeout = useDeadlineClock();
+    let notifyEntered!: () => void;
+    const entered = new Promise<void>(resolve => { notifyEntered = resolve; });
+    const fetcher: typeof fetch = async (_url, options) => {
+      notifyEntered();
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(resolve, 100000);
+        options!.signal!.addEventListener('abort', () => { clearTimeout(timer); reject(options!.signal!.reason); }, { once: true });
+      });
+      return new Response(JSON.stringify({ body: '합성 답장' }));
+    };
+    const pending = new F2APIClient({ baseURL: 'http://127.0.0.1:8000', tokenFile: file }, fetcher)
+      .call(operation, 'draft-1', {});
+    await entered;
+    await vi.advanceTimersByTimeAsync(100000);
+    expect(await pending).toMatchObject({ ok: true, data: { body: '합성 답장' } });
+    expect(timeout).toHaveBeenCalledWith(150000);
+  });
+
+  it.each(['fetch', 'body'] as const)('%s 대기 제한은 연결 실패나 잘못된 JSON과 구분한다', async phase => {
+    useDeadlineClock();
+    let notifyEntered!: () => void;
+    const entered = new Promise<void>(resolve => { notifyEntered = resolve; });
+    const fetcher: typeof fetch = async (_url, options) => {
+      const blocked = () => new Promise<never>((_resolve, reject) => {
+        options!.signal!.addEventListener('abort', () => reject(options!.signal!.reason), { once: true });
+        notifyEntered();
+      });
+      if (phase === 'fetch') return blocked();
+      const response = new Response('{}');
+      response.text = blocked;
+      return response;
+    };
+    const pending = new F2APIClient({ baseURL: 'http://127.0.0.1:8000', tokenFile: file }, fetcher).call('createDraft');
+    await entered;
+    await vi.advanceTimersByTimeAsync(150000);
+    const result = await pending;
+    expect(result).toMatchObject({ ok: false, error: { code: 'timeout' } });
+    expect(JSON.stringify(result)).not.toContain('synthetic-private');
+  });
+
   it('동작마다 정해진 방법·경로로 토큰을 붙여 부르고 본문을 JSON으로 보낸다', async () => {
     const seen: { method?: string; url?: string; auth?: string; body: string }[] = [];
     const base = await listen((request, response) => {

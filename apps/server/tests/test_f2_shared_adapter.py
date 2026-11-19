@@ -73,6 +73,8 @@ def test_test_provider_is_rejected_without_explicit_test_opt_in():
     [
         (ProvidersNotConfigured("synthetic-private"), "ai_unavailable", 503),
         (ProviderCallError("synthetic-private"), "ai_failed", 502),
+        (ProviderCallError("synthetic-private", code="ollama_timeout"), "ai_timeout", 504),
+        (ProviderCallError("synthetic-private", code="claude_timeout"), "ai_timeout", 504),
         ("invalid-json-synthetic-private", "invalid_ai_output", 502),
     ],
 )

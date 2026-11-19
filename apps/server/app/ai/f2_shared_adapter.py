@@ -44,7 +44,11 @@ class SharedDraftAI:
             )
         except ProvidersNotConfigured:
             raise F2Error("ai_unavailable", 503, "AI 연결이 준비되지 않았어요.") from None
-        except ProviderCallError:
+        except ProviderCallError as error:
+            if error.code in {"ollama_timeout", "claude_timeout"}:
+                raise F2Error(
+                    "ai_timeout", 504, "AI 응답이 늦어졌어요. 잠시 뒤 다시 시도해 주세요."
+                ) from None
             raise F2Error("ai_failed", 502, "초안을 만들지 못했어요. 다시 시도해 주세요.") from None
         try:
             result = GeneratedDraft.model_validate_json(raw)

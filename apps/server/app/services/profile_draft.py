@@ -24,8 +24,10 @@ from app.schemas.profile_draft import (
     Reference,
 )
 
-AI_TIMEOUT_SECONDS = 8
-PREVIEW_TIMEOUT_SECONDS = 2
+# 최초 모델 적재·로컬 추론 시간을 허용하되 요청 전체의 대기는 제한한다.
+# 앱 main의 AI 요청 제한(150초)은 서버 제한보다 길어야 한다.
+AI_TIMEOUT_SECONDS = 120
+PREVIEW_TIMEOUT_SECONDS = 30
 
 
 def invalid_output():
