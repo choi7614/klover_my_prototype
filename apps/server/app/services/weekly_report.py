@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
+from app.ai.interfaces import ProviderCallError, ProvidersNotConfigured
 from app.ai.weekly_report import WeeklyReportGenerator
 from app.db.repositories.report_mail import ReportMailRepository
 from app.db.repositories.weekly_report import (
@@ -69,6 +70,7 @@ class WeeklyReportService:
         generator: WeeklyReportGenerator | None = None,
         now=None,
         timeout: float = 30,
+        allow_test_results: bool | None = None,
     ):
         self.mails, self.profiles, self.reports, self.generator = (
             mails,
@@ -78,6 +80,11 @@ class WeeklyReportService:
         )
         self.now = now or (lambda: datetime.now(UTC))
         self.timeout = timeout
+        self.allow_test_results = (
+            generator is not None and generator.mode == "test_double"
+            if allow_test_results is None
+            else allow_test_results
+        )
 
     def _period(self):
         today = self.now().astimezone(REPORT_TIMEZONE).date()
@@ -98,9 +105,17 @@ class WeeklyReportService:
         )
 
     def _check_stored(self, actor, stored):
-        if stored is None or stored.user_id != actor.user_id:
+        if (
+            stored is None
+            or stored.user_id != actor.user_id
+            or stored.account_id != actor.account_id
+        ):
             raise WeeklyReportError("not_found", "보고서를 찾을 수 없습니다.", 404)
         document, source = stored.document, stored.source
+        if document.generation == "test_double" and not self.allow_test_results:
+            raise WeeklyReportError(
+                "ai_unavailable", "검토용 대역 결과는 운영 보고서로 사용할 수 없습니다.", 503
+            )
         mails = [mail for group in source.groups for mail in group.mails]
         all_mails = mails + [item.mail for item in source.excluded]
         if (
@@ -143,9 +158,12 @@ class WeeklyReportService:
         )
         style = profile.report_style if request.template == "profile" else request.template
         recipient = request.recipient or profile.report_recipient
+        if not recipient.strip():
+            raise WeeklyReportError("profile_incomplete", "보고 대상을 입력해 주세요.")
         selection_key = hashlib.sha256(
             json.dumps(
                 dict(
+                    account_id=actor.account_id,
                     period=period.model_dump(mode="json"),
                     profile=profile.model_dump(mode="json"),
                     style=style,
@@ -194,6 +212,14 @@ class WeeklyReportService:
                     )
                     for section in generated.sections
                 )
+            except ProvidersNotConfigured:
+                raise WeeklyReportError(
+                    "ai_unavailable", "보고서 AI가 아직 연결되지 않았습니다.", 503
+                ) from None
+            except ProviderCallError:
+                raise WeeklyReportError(
+                    "ai_failed", "보고서를 만들지 못했어요. 기존 내용은 보존됩니다.", 502
+                ) from None
             except ValidationError:
                 raise WeeklyReportError(
                     "invalid_report", "생성 결과 형식과 근거를 확인하지 못했습니다.", 502
@@ -210,7 +236,10 @@ class WeeklyReportService:
             report_id=existing.document.report_id if existing else uuid4().hex,
             revision=existing.document.revision + 1 if existing else 1,
             period=period,
-            title=f"{profile.org} 주간 업무 보고 ({period.start:%m/%d} – {period.end:%m/%d})",
+            title=(
+                f"{profile.org + ' ' if profile.org else ''}주간 업무 보고 "
+                f"({period.start:%m/%d} – {period.end:%m/%d})"
+            ),
             subtitle=(
                 f"{profile.name} {profile.title} · "
                 f"작성 {stamp.astimezone(REPORT_TIMEZONE):%Y.%m.%d}"
@@ -227,6 +256,7 @@ class WeeklyReportService:
         )
         stored = StoredWeeklyReport(
             user_id=actor.user_id,
+            account_id=actor.account_id,
             selection_key=selection_key,
             profile=profile,
             source=source,

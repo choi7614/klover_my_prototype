@@ -1,28 +1,115 @@
 # API 목록
 
-> 최종 수정: 2026-10-16 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
+> 최종 수정: 2026-11-19 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
 
 이 문서는 **요약 목록**이다. 엔드포인트를 추가·변경하면 여기에 한 줄 반영하고, `packages/api-types`의 타입을 다시 생성한다.
 
-> 구현 상태 (2026-11-12): 아래는 설계 목록이다. 현재 실행 가능한 HTTP 서버와
-> 보고서 API는 없다. F4 첫 단위는 내부 메일 조회 서비스·저장소 계약·fixture CLI만
-> 제공하며 엔드포인트를 추가하지 않는다. 진행 상태는
-> [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
+> 구현 상태 (2026-11-19): `/health`와 로컬 운영자용 인증·받은 메일 조회 API를 구현했다.
+> 나머지 업무 API·WebSocket은 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
+> fixture CLI를 유지하며 보고서 HTTP API를 제공하지 않는다.
+> [서버 실행 안내](../../apps/server/README.md)와 [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
+>
+> F3의 `/search`, `/search/recent` 경로와 공유 타입은 등록했다. 실제 AI·벡터 제공자와
+> F0 화면 연결은 아직 없으며, 새 자연어 검색은 해석 미연결 503으로 알린다.
 
 ## 공통
 
 - 기본 주소: `http://localhost:8000` (데모)
-- 인증: 앱 로그인 후 받은 토큰을 `Authorization: Bearer` 헤더로 전달
-- 날짜: ISO 8601, 시간대 Asia/Seoul
+- 현재 인증: 별도 로컬 API 토큰을 Electron main에서 `Authorization: Bearer` 헤더로 전달한다.
+  일반 사용자 로그인·토큰 발급 서버·다중 사용자 인증은 후속 범위다.
+- `/health`와 개발용 `/docs`·`/openapi.json`은 인증 없이 확인한다. 사용자 데이터나 연결 정보를 반환하지 않는다.
+- 날짜: 시간대 오프셋을 포함한 ISO 8601. 저장된 UTC 값은 앱에서 한국 시간으로 표시한다.
 - 오류 응답: `{ "error": { "code": "...", "message": "..." } }`
+- 현재 오류 코드: `unauthenticated`(401), `forbidden`(403), `not_found`(404),
+  `method_not_allowed`(405), `validation_error`(422), `internal_error`(500),
+  `service_unavailable`(503), 기타 HTTP 오류의 `http_error`.
+  입력값·예외 상세는 응답에 포함하지 않는다.
 
-## 엔드포인트
+## 실행 가능한 공통 API
+
+| 기능 | 메서드 | 경로 | 설명 |
+| --- | --- | --- | --- |
+| 공통 | GET | `/health` | HTTP 프로세스 응답 확인. 200 `{"status":"ok"}`. DB·Gmail·AI 준비 상태는 확인하지 않음 |
+
+실제 앱의 OpenAPI에서 `pnpm gen:api-types`로 `packages/api-types`를 생성한다.
+서버 실행이나 외부 API 연결 없이 생성 가능하며 생성 파일을 직접 수정하지 않는다.
+
+## 실행 가능한 로컬 메일 조회 API
+
+전용 명령 `python -m app.cli.run_mail_api`로 실행한다. 일반 `app.main:app`에는
+경로·OpenAPI만 있고 계정 설정이 없어 데이터 조회를 허용하지 않는다.
+준비·검사·맥북 앱 실행 순서는 [메일 API 안내](../dev/mail-read-api.md)를 따른다.
+
+| 메서드 | 경로 | 응답 |
+| --- | --- | --- |
+| GET | `/auth/session` | `LocalSession`: 연결된 `user_id`, `account_id`, `email`, `sync_started_at` |
+| GET | `/mails?box=inbox&limit=20&cursor=...` | `MailPage`: `items`와 `next_cursor`(마지막은 null). limit 1~100, 기본 20 |
+| GET | `/mails/{mail_id}` | `MailDetail`: 해당 계정의 받은 메일 일반 텍스트 본문 |
+| POST | `/mails/sync` | `MailSyncResult`: `saved`, `skipped`, `mode`(`initial`/`history`/`rescan`), `token_refreshed`. 앱 새로고침용 Gmail 새 받은 메일 가져오기 |
+
+- `MailSummary`: `mail_id`, `subject`, `from_addr`, `from_name`, `preview`(본문 앞 160자),
+  `received_at`, `is_read`, `analysis_status`(`pending`/`done`/`failed`).
+- `MailDetail`: 위 필드와 `to`, `cc`(각 `{addr, name}` 배열), `body_text`.
+  HTML 원문·첨부파일·Google 토큰·API 토큰은 반환하지 않는다.
+- 수신 시각 내림차순, 같은 시각에는 ID 내림차순으로 페이지를 읽는다.
+  cursor는 서버가 준 값 그대로 전달한다. 검색·분류·정렬 변경·다른 편지함은 미지원이며
+  목록의 알 수 없거나 중복된 쿼리 인수는 422다.
+- 소유자는 요청에서 받지 않는다. 기존 로컬 운영자·설정된 Gmail 계정·연결 기록으로 한정하고,
+  사용 시작 이후 받은편지함 메일만 읽는다. 다른 계정 메일 ID도 없는 메일과 같이 404다.
+- 로컬 접속과 허용 Host만 받으며 모든 Origin 헤더를 거부한다. Renderer 직접 fetch 대신
+  Electron main의 Node fetch + 제한된 IPC를 사용한다. CORS를 추가해 우회하지 않는다.
+- 인증 실패 401, 외부 출처 403, DB·계정 준비 부족 503. 개인 응답은 `Cache-Control: no-store`다.
+- 조회(GET)는 저장된 DB를 읽으며 읽음 상태·메일·수신 커서를 바꾸거나 Gmail을 동기화하지 않는다.
+- Gmail 수신은 `POST /mails/sync`만 한다(2026-11-19, F0). CLI `gmail_mail sync`와 같은 수신 기능을 써서
+  사용 시작 시점 이후 받은편지함 메일만 저장하고 이미 저장한 메일은 건너뛴다. 실패한 배치와 커서는 되돌린다.
+  인증·loopback·Host·Origin 규칙과 `Cache-Control: no-store`는 조회와 같다. 같은 서버에서 이미 가져오는 중이면
+  409 `sync_in_progress`, Gmail·토큰 갱신 실패는 502 `gmail_unavailable`(외부 응답 상세 미포함), DB·계정 준비 부족은 503.
+  응답에는 건수만 있고 메일 내용·토큰은 없다. 주기적 자동 수신(WebSocket·작업 큐)은 후속이다.
+
+## F3 검색 API (서버 등록·모델 미연결)
+
+`app.main`에 경로와 OpenAPI를 등록했고, `run_mail_api`는 기존 로컬 인증과 F3 저장소를
+함께 조립한다. AI·벡터 포트는 기본 미연결이다. 준비 부족을 가짜 검색 성공으로 대체하지 않는다.
+
+| 메서드 | 경로 | 계약 |
+| --- | --- | --- |
+| POST | `/search` | `{query, search_id?, overrides?}` → 해석, 전체/일부 일치, 근거가 붙은 답변 또는 답변 실패 |
+| GET | `/search/recent` | 인증된 사용자·계정의 최근 질문 최대 3개 |
+
+- 소유자·계정은 요청에서 받지 않는다. 기존 Bearer·loopback·Host·Origin 거부 규칙과
+  `Cache-Control: no-store`를 유지한다. Renderer 직접 fetch 대신 main/IPC로 연결한다.
+- 재검색의 `null` 조건은 삭제하고, 주제를 바꾸거나 지우면 이전 확장어도 제거한다.
+- `Accept: application/x-ndjson`은 `parsed` → `results` → `answer`/`answer_error` 프레임을
+  전달한다. 스트림 도중 실패는 `error` 프레임이며 HTTP 200이어도 확인해야 한다.
+- `parser_unavailable`/`parse_unavailable`은 503, `parse_failed`/`unsupported_filter`는 422다.
+  결과가 있으면 답변 실패는 결과와 함께 `answer_error`로 구분한다.
+- 실제 메일의 외부 AI 전송은 연결하지 않았다. 조직·미회신·분류·첨부 조건은 미지원이다.
+- 최근 검색을 쓰려면 `0003_search_runs` 마이그레이션이 필요하다. 이번 작업에서는
+  합성 테스트 DB에서만 적용·검사했다. 실제 모델 정확도·5초 성능과 F0/F2 연결은 남아 있다.
+
+세부 계약·검사·연결 요청은 [F3 전달 문서](../dev/F3-search-handoff.md)를 따른다.
+
+## 맥북 전용 Google 연결 경로 (2026-11-19)
+
+`python -m app.cli.run_google_connection`으로 실행하는 별도 로컬 앱에서만 제공한다.
+일반 `app.main:app`의 JSON API·OpenAPI·생성 TS 계약은 그대로다.
+
+| 메서드 | 경로 | 설명 |
+| --- | --- | --- |
+| GET | `/auth/google` | 로컬 연결 안내·동의 시작 폼, HttpOnly 브라우저 쿠키 |
+| POST | `/auth/google` | 같은 출처·폼 토큰 확인 후 Google으로 303 이동, state·PKCE |
+| GET | `/auth/google/callback` | 일회용 요청 검증·코드 교환·Gmail 계정 확인·암호화 저장, HTML 결과 |
+
+이는 로컬 운영자 한 명의 연결 도구다. 아래 설계의 앱용 POST 코드 교환 계약·Bearer 인증은
+구현한 것이 아니다. 사용자는 맥북에서 실제 Gmail 로그인 성공을 확인했다.
+이 연결 도구 자체는 메일 본문·목록을 읽지 않는다.
+자세한 범위와 검사는 [Google 연결 안내](../dev/google-connection.md)를 따른다.
+
+## 업무 엔드포인트 (설계·미구현)
 
 | 기능 | 메서드 | 경로 | 설명 |
 | --- | --- | --- | --- |
 | F0 | POST | `/auth/google` | OAuth 코드 교환, 계정 연결 |
-| F0 | GET | `/mails` | 목록 (`box`, `category`, `smart`, `cursor`, `sort`) |
-| F0 | GET | `/mails/{mail_id}` | 상세 |
 | F0 | POST | `/mails/send` | 보내기 |
 | F0 | POST | `/mails/{mail_id}/archive` | 보관 |
 | F0 | POST | `/mails/{mail_id}/spam` | 스팸 처리 |
@@ -35,8 +122,6 @@
 | F2 | POST | `/profile/preview` | 설정값으로 예시 답장 |
 | F2 | POST | `/drafts` | 답장 초안 생성 |
 | F2 | POST | `/drafts/{draft_id}/revise` | 더 짧게·더 정중하게·다시 쓰기 |
-| F3 | POST | `/search` | 자연어 검색 |
-| F3 | GET | `/search/recent` | 최근 검색 |
 | F4 | POST | `/reports/weekly` | 주간 보고 생성 |
 | F4 | GET | `/reports/weekly/{report_id}/excluded` | 제외된 메일 |
 | F4 | POST | `/reports/weekly/{report_id}/export` | Word 내보내기 |
@@ -45,10 +130,19 @@
 | F5 | POST | `/suggestions/{id}/dismiss` | 무시 |
 | F5 | GET·POST·PATCH | `/todos` | 할 일 |
 
-## WebSocket `/ws`
+## WebSocket `/ws` (설계·미구현)
 
 | 이벤트 | 내용 | 앱 동작 |
 | --- | --- | --- |
 | `mail.received` | 새 메일 도착 (분석 전) | 목록에 추가 |
 | `mail.analyzed` | 분석 완료 (요약·태그) | 목록 갱신 |
 | `suggestion.created` | 새 AI 제안 | Windows 토스트 알림 |
+
+## F2 프로필·답장 초안 API
+
+F2 router는 `app.main`에 등록되어 있다. 0004_f2 마이그레이션을 적용한 DB와 F2Context(로컬 실행 명령에서 조립)가 필요하다.
+GET/PUT /profile, GET/DELETE /profile/style, POST /profile/preview, POST /drafts,
+GET/PATCH /drafts/{draft_id}, POST /drafts/{draft_id}/revise.
+인증·Origin 제한은 기존 로컬 메일 조회 API를 그대로 따른다. 발송 API는 추가하지 않는다.
+AI 미연결은 503 ai_unavailable이며 합성 결과로 대체하지 않는다.
+입력·출력·버전·동의·오류 계약은 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.

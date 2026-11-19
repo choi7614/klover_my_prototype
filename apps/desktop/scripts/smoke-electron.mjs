@@ -15,6 +15,8 @@ const environment = {
   XDG_CACHE_HOME: resolve(temporaryDirectory, 'cache'),
 };
 delete environment.ELECTRON_RUN_AS_NODE;
+delete environment.KLOVER_API_TOKEN_FILE;
+delete environment.KLOVER_API_BASE_URL;
 
 let application;
 try {
@@ -53,7 +55,7 @@ try {
     nodeAccess: typeof window.require,
     platform: window.klover?.platform,
     exposedKeys: Object.keys(window.klover || {}),
-  })), { nodeAccess: 'undefined', platform: process.platform, exposedKeys: ['platform'] });
+  })), { nodeAccess: 'undefined', platform: process.platform, exposedKeys: ['platform', 'mail'] });
 
   const screenshotPath = resolve(desktopDirectory, '../../artifacts/F0-onboarding-electron.png');
   await mkdir(dirname(screenshotPath), { recursive: true });

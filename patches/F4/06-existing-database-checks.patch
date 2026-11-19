@@ -1,0 +1,56 @@
+--- a/apps/server/tests/test_postgresql_storage.py
++++ b/apps/server/tests/test_postgresql_storage.py
+@@ -15,6 +15,7 @@
+ from sqlalchemy.exc import IntegrityError
+ from sqlalchemy.orm import Session
+ 
++from app.db.f2_models import F2Base
+ from app.db.models import Base, Mail
+ from app.db.repositories.mail import MailRepository
+ from app.db.repositories.search_recent import search_metadata
+@@ -80,7 +81,8 @@
+     with engine.connect() as connection:
+         assert (
+             compare_metadata(
+-                MigrationContext.configure(connection), [Base.metadata, search_metadata]
++                MigrationContext.configure(connection),
++                [Base.metadata, search_metadata, F2Base.metadata],
+             )
+             == []
+         )
+@@ -89,7 +91,8 @@
+     with engine.connect() as connection:
+         assert (
+             compare_metadata(
+-                MigrationContext.configure(connection), [Base.metadata, search_metadata]
++                MigrationContext.configure(connection),
++                [Base.metadata, search_metadata, F2Base.metadata],
+             )
+             == []
+         )
+--- a/apps/server/tests/test_f2_pending_migration.py
++++ b/apps/server/tests/test_f2_pending_migration.py
+@@ -26,6 +26,8 @@
+     with engine.begin() as connection:
+         context = MigrationContext.configure(connection)
+         with Operations.context(context):
++            # 최신 head에 이미 적용된 F2를 분리 테스트 스키마에서만 되돌려 반복 검사한다.
++            namespace["downgrade"]()
+             namespace["upgrade"]()
+             assert (
+                 compare_metadata(context, [Base.metadata, search_metadata, F2Base.metadata]) == []
+--- a/apps/server/tests/test_mail_read_api.py
++++ b/apps/server/tests/test_mail_read_api.py
+@@ -274,10 +274,11 @@
+     script = """
+ import os,sys
+ from types import SimpleNamespace
++from cryptography.fernet import Fernet
+ from sqlalchemy import create_engine
+ from app.cli import run_mail_api
+ run_mail_api.read_api_token=lambda:os.environ['MAIL_API_TEST_TOKEN']
+-run_mail_api.load_settings=lambda:SimpleNamespace(expected_email=os.environ['MAIL_API_TEST_EMAIL'])
++run_mail_api.load_settings=lambda:SimpleNamespace(expected_email=os.environ['MAIL_API_TEST_EMAIL'],encryption_key=Fernet.generate_key())
+ run_mail_api.database_engine=lambda:create_engine(os.environ['MAIL_API_TEST_DB'],hide_parameters=True)
+ sys.argv=['run_mail_api','--port',os.environ['MAIL_API_TEST_PORT']]
+ run_mail_api.main()

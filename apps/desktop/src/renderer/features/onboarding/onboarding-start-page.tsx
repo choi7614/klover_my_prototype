@@ -1,10 +1,11 @@
 import { Calendar, Mail, ShieldCheck } from 'lucide-react';
+import type { ReactNode } from 'react';
 import logo from '@brand/klover-logo.svg';
 import mark from '@brand/klover-mark.svg';
 import { Button } from '@/components/ui/button';
 import { WizardSteps } from '@/components/wizard-steps';
 
-export function OnboardingStartPage() {
+export function OnboardingStartPage({ connectionNotice }: { connectionNotice?: ReactNode }) {
   return (
     <main className="flex min-h-screen bg-background">
       <aside className="flex w-[280px] shrink-0 flex-col border-r bg-muted px-6 py-7">
@@ -41,6 +42,7 @@ export function OnboardingStartPage() {
             <p id="account-connection-status" role="status" className="mt-3 text-caption text-muted-foreground">
               현재 계정 연결을 사용할 수 없습니다.
             </p>
+            {connectionNotice}
           </div>
         </div>
 

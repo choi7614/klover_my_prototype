@@ -1,0 +1,28 @@
+{
+  "develop": "b147cfdca9c28a44e04aa9bc7f6b55debae94115",
+  "sha256": {
+    "apps/server/app/main.py": "975bb4ff5a55efb26b08843221963f31aca01eac03b302c9c687c30144cce585",
+    "apps/server/app/cli/run_mail_api.py": "27279051143d56776c95dbd1b74805a654f46240cc8942caae3645fe0630e99c",
+    "apps/server/tests/test_weekly_report.py": "4785d019dba1fde5d1074f3da23f40cc789a92a0f22f1c06c7090f4437c59014",
+    "apps/server/tests/test_http_server.py": "50d3bdaa20f7fe32c711a98f9c146a3910db4ff8ce5fe95e943500b34b59e188",
+    "apps/server/app/db/models.py": "f46eeaad1ef1058ee0b3c2d95324ec8e81d3cdec99bbeee92e5d5b9d68f97a4b",
+    "apps/server/migrations/versions/0006_weekly_reports.py": null,
+    "apps/desktop/src/shared/f4-bridge.ts": null,
+    "apps/desktop/src/main/f4-client.ts": null,
+    "apps/desktop/src/main/f4-client.test.ts": null,
+    "apps/desktop/src/main/f4-ipc.ts": null,
+    "apps/desktop/src/main/f4-ipc.test.ts": null,
+    "apps/desktop/src/main/index.ts": "1d1766134ddfa02ca054f378090b63300a3cab557cf847ceaa4ffd2114057773",
+    "apps/desktop/src/preload/index.ts": "7710a34780b1ff87b8ef1af6e68164d30c44c24b3d98fe0837fb223c0c05cbd3",
+    "apps/desktop/src/renderer/env.d.ts": "3afb8462451a0af438ec34dcb1a3693ff76c35db5a5aa311c46e77e6be2e6205",
+    "apps/desktop/src/renderer/app.tsx": "9456ab21835ae210a2eddd541df1263053df867099de60b11ac46758a3b92b53",
+    "apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx": "62eab7324ae3d6e83347a013f27626e48a5a94ac2013d29e40daf5748747ba73",
+    "docs/architecture/api.md": "7cc361db37e325abe4bea526066c7dc83c4f5608d2d2d082a530a77a232dbd6a",
+    "docs/architecture/data-model.md": "ebf966ee668453150f189a3c5951383761bcd0de25c5e7201e95bb6adedaafd1",
+    "apps/server/tests/test_postgresql_storage.py": "a1267dd728226eb824f0fd6aaf735815852c775dc40716fb6484e7b3eab9b689",
+    "apps/server/tests/test_f2_pending_migration.py": "683c2ff7a3a0b7a81b8d862300da5d4412327545fead98b5bd46b27d01d963e2",
+    "apps/server/tests/test_mail_read_api.py": "6a438631785d9376d8802a8f97e3a4ac404bce3f7a0c7d9d9641292adf99176b",
+    "packages/api-types/openapi.json": "477475b53a56c0d63ccfaee5040a4a591c4f595aa3cd5db1b90fafcfdbc99511",
+    "packages/api-types/src/schema.d.ts": "979341e78cfa3ed23762650b3fb99cab6ee67563e825fb75d29ee6b265fc18da"
+  }
+}

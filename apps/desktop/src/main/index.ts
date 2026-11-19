@@ -1,6 +1,11 @@
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
-import { app, BrowserWindow, Menu, session } from 'electron';
+import { app, BrowserWindow, Menu, session, ipcMain, screen } from 'electron';
+import { MailAPIClient } from './mail-client';
+import { developmentRendererURL, registerMailReadIPC } from './mail-ipc';
+import { F2APIClient } from './f2-client';
+import { registerF2IPC } from './f2-ipc';
+import { localSearchClientFactory, registerSearchIPC } from './search-ipc';
 
 const currentDirectory = fileURLToPath(new URL('.', import.meta.url));
 
@@ -26,17 +31,41 @@ function createOnboardingWindow(): void {
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event) => event.preventDefault());
 
-  if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
-    void window.loadURL(process.env.ELECTRON_RENDERER_URL);
+  const rendererFile = join(currentDirectory, '../renderer/index.html');
+  const developmentURL = !app.isPackaged ? developmentRendererURL(process.env.ELECTRON_RENDERER_URL) : undefined;
+  const rendererURL = developmentURL ?? pathToFileURL(rendererFile).href;
+  const configuration = { baseURL: process.env.KLOVER_API_BASE_URL, tokenFile: process.env.KLOVER_API_TOKEN_FILE };
+  const client = new MailAPIClient(configuration);
+  let mailboxWindow = false;
+  const unregister = registerMailReadIPC(ipcMain, window.webContents, rendererURL, client, () => {
+    if (mailboxWindow || window.isDestroyed()) return;
+    mailboxWindow = true;
+    window.setResizable(true);
+    window.setMaximizable(true);
+    const available = screen.getDisplayMatching(window.getBounds()).workAreaSize;
+    window.setMinimumSize(Math.min(1280, available.width), Math.min(720, available.height));
+    window.setSize(Math.min(1440, available.width), Math.min(900, available.height));
+    window.center();
+    window.setTitle('Klover');
+  });
+  // F2 프로필·답장 초안, F3 검색 통로. 메일 통로와 같은 신뢰 화면·토큰 규칙을 쓴다.
+  const unregisterF2 = registerF2IPC(ipcMain, window.webContents, rendererURL, new F2APIClient(configuration));
+  const unregisterSearch = registerSearchIPC(ipcMain, window.webContents, rendererURL, localSearchClientFactory(configuration));
+  window.once('closed', () => { unregister(); unregisterF2(); unregisterSearch(); });
+
+  if (developmentURL) {
+    void window.loadURL(developmentURL);
   } else {
-    void window.loadFile(join(currentDirectory, '../renderer/index.html'));
+    void window.loadFile(rendererFile);
   }
 }
 
 app.setAppUserModelId('com.koscom.klover');
 
 void app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
+  Menu.setApplicationMenu(process.platform === 'darwin'
+    ? Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, { role: 'windowMenu' }])
+    : null);
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => {
     callback(false);
   });

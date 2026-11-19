@@ -1,0 +1,100 @@
+--- a/apps/server/migrations/env.py
++++ b/apps/server/migrations/env.py
+@@ -4,16 +4,21 @@
+ 
+ from app.db.config import database_engine, database_url
+ from app.db.models import Base
++from app.db.repositories.search_recent import search_metadata
+ 
+ if context.is_offline_mode():
+-    context.configure(url=database_url(), target_metadata=Base.metadata, literal_binds=True)
++    context.configure(
++        url=database_url(), target_metadata=[Base.metadata, search_metadata], literal_binds=True
++    )
+     with context.begin_transaction():
+         context.run_migrations()
+ else:
+     engine = database_engine()
+     try:
+         with engine.connect() as connection:
+-            context.configure(connection=connection, target_metadata=Base.metadata)
++            context.configure(
++                connection=connection, target_metadata=[Base.metadata, search_metadata]
++            )
+             with context.begin_transaction():
+                 context.run_migrations()
+     finally:
+--- /dev/null
++++ b/apps/server/migrations/versions/0003_search_runs.py
+@@ -0,0 +1,37 @@
++"""F3 최근 검색. 기존 사용자·계정·메일은 변경하지 않는다."""
++
++import sqlalchemy as sa
++from alembic import op
++from sqlalchemy.dialects import postgresql
++
++revision = "0003_search_runs"
++down_revision = "0002"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table(
++        "search_runs",
++        sa.Column("search_id", sa.Text(), primary_key=True),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("account_id", sa.Text(), nullable=False),
++        sa.Column("query", sa.Text(), nullable=False),
++        sa.Column("parsed", postgresql.JSONB(), nullable=False),
++        sa.Column("overrides", postgresql.JSONB(), nullable=False),
++        sa.Column("reference_date", sa.Text(), nullable=False),
++        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
++        sa.ForeignKeyConstraint(
++            ["account_id", "user_id"],
++            ["mail_accounts.account_id", "mail_accounts.user_id"],
++            name="fk_search_run_account_owner",
++        ),
++    )
++    op.create_index(
++        "ix_search_run_owner_created", "search_runs", ["user_id", "account_id", "created_at"]
++    )
++
++
++def downgrade():
++    op.drop_index("ix_search_run_owner_created", table_name="search_runs")
++    op.drop_table("search_runs")
+--- a/apps/server/tests/test_postgresql_storage.py
++++ b/apps/server/tests/test_postgresql_storage.py
+@@ -17,6 +17,7 @@
+ 
+ from app.db.models import Base, Mail
+ from app.db.repositories.mail import MailRepository
++from app.db.repositories.search_recent import search_metadata
+ 
+ START = datetime(2026, 11, 18, 0, 0, tzinfo=UTC)
+ 
+@@ -77,11 +78,21 @@
+     engine, config = database
+     command.upgrade(config, "head")
+     with engine.connect() as connection:
+-        assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
++        assert (
++            compare_metadata(
++                MigrationContext.configure(connection), [Base.metadata, search_metadata]
++            )
++            == []
++        )
+     command.downgrade(config, "base")
+     command.upgrade(config, "head")
+     with engine.connect() as connection:
+-        assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
++        assert (
++            compare_metadata(
++                MigrationContext.configure(connection), [Base.metadata, search_metadata]
++            )
++            == []
++        )
+ 
+ 
+ def test_mail_survives_session_and_connection_recreation(database):

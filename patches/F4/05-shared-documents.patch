@@ -1,0 +1,31 @@
+--- a/docs/architecture/api.md
++++ b/docs/architecture/api.md
+@@ -146,3 +146,13 @@
+ 인증·Origin 제한은 기존 로컬 메일 조회 API를 그대로 따른다. 발송 API는 추가하지 않는다.
+ AI 미연결은 503 ai_unavailable이며 합성 결과로 대체하지 않는다.
+ 입력·출력·버전·동의·오류 계약은 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.
++
++## F4 주간 보고 (공통 패치 적용 후)
++
++기존 로컬 Bearer·Origin·연결 계정 검사를 그대로 사용한다.
++`GET /reports/weekly/options`, `POST /reports/weekly`, `GET /reports/weekly/{id}`,
++`GET /reports/weekly/{id}/excluded`, `PATCH /reports/weekly/{id}`를 등록한다.
++프로필은 F2, 메일 입력은 F1, AI는 공통 TextGeneration을 사용한다. 실제 제공자가 없으면
++503으로 종료하며 대역으로 대체하지 않는다. 운영 서비스는 run_mail_api에서 조립한다.
++사용자·계정은 요청 본문에서 받지 않고, 편집은 expected_revision과 근거를 검증한다.
++일정 예약·내보내기·발송 경로는 추가하지 않는다.
+--- a/docs/architecture/data-model.md
++++ b/docs/architecture/data-model.md
+@@ -192,3 +192,12 @@
+ payload(jsonb: DraftState 전체), version(int>=1)을 저장한다. 사용자·버전 조건으로 갱신한다.
+ 학습 기록 삭제는 해당 사용자 기록을 지우고 학습 동의를 끄며 프로필 버전을 올린다.
+ 세부 계약과 F4 읽기 포트는 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.
++
++## F4 보고서 저장소 (공통 패치 적용 후)
++
++`weekly_reports`: report_id(PK), user_id(FK), selection_key, revision, payload(JSONB).
++(user_id, selection_key)는 유일하다. payload에는 account_id·프로필·대상 메일 스냅샷·
++검증된 문서를 보관하며 저장 버전을 비교해 갱신한다. 조회·편집 때 사용자와 계정을
++다시 확인한다. 기존 사용자·메일·계정·키·수신 커서는 수정하지 않는다.
++신규 이력은 0006_f4, 현재 down_revision은 0004_f2다. 통합 직전 head가 바뀌면
++예약 번호와 down_revision을 다시 확인해야 한다. 기존 이력은 수정하지 않는다.

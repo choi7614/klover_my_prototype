@@ -59,3 +59,14 @@ export interface WeeklyReportClient {
   excluded(id: string): Promise<ExcludedMail[]>;
   save(id: string, revision: number, sections: ReportSection[]): Promise<WeeklyReportDocument>;
 }
+
+export type WeeklyReportBridgeResult<T> = { ok: true; data: T } | {
+  ok: false; error: { code: string; message: string };
+};
+export interface WeeklyReportIPC {
+  options(): Promise<WeeklyReportBridgeResult<WeeklyReportOptions>>;
+  generate(request: GenerateReportRequest): Promise<WeeklyReportBridgeResult<WeeklyReportDocument>>;
+  get(id: string): Promise<WeeklyReportBridgeResult<WeeklyReportDocument>>;
+  excluded(id: string): Promise<WeeklyReportBridgeResult<ExcludedMail[]>>;
+  save(id: string, revision: number, sections: ReportSection[]): Promise<WeeklyReportBridgeResult<WeeklyReportDocument>>;
+}

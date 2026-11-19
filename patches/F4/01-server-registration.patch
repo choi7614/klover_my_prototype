@@ -1,0 +1,63 @@
+--- a/apps/server/app/main.py
++++ b/apps/server/app/main.py
+@@ -8,6 +8,7 @@
+ from app.api.mail_sync import register_mail_sync
+ from app.api.profile_draft import register_profile_draft
+ from app.api.search import register_search_api
++from app.api.weekly_report import register_weekly_report_api
+ from app.schemas.common import ErrorResponse
+ 
+ 
+@@ -26,6 +27,7 @@
+     register_mail_sync(application)
+     register_profile_draft(application)
+     register_search_api(application)
++    register_weekly_report_api(application)
+     return application
+ 
+ 
+--- a/apps/server/app/cli/run_mail_api.py
++++ b/apps/server/app/cli/run_mail_api.py
+@@ -18,6 +18,7 @@
+ from app.mail_api_config import MailAPIConfigurationError, read_api_token
+ from app.main import create_app
+ from app.services.search import SearchService
++from app.services.weekly_report_runtime import WeeklyReportRuntime
+ 
+ 
+ def main():
+@@ -46,6 +47,7 @@
+             SQLRecentSearchRepository(engine),
+         )
+         application.state.profile_draft = F2Context(F2Repository(engine))
++        application.state.weekly_reports = WeeklyReportRuntime(engine)
+         print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")
+         print("터미널을 켜두세요. 종료는 Control+C입니다.")
+         uvicorn.run(
+--- a/apps/server/tests/test_weekly_report.py
++++ b/apps/server/tests/test_weekly_report.py
+@@ -368,8 +368,9 @@
+         assert "SECRET_MAIL_CONTENT" not in response.text and TOKEN not in response.text
+ 
+ 
+-def test_production_main_routes_are_unchanged():
+-    assert all(not path.startswith("/reports/") for path in create_app().openapi()["paths"])
++def test_production_main_routes_register_f4():
++    paths = create_app().openapi()["paths"]
++    assert "/reports/weekly" in paths and "/reports/weekly/options" in paths
+ 
+ 
+ def test_concurrent_edit_wins_over_an_in_flight_regeneration(service):
+--- a/apps/server/tests/test_http_server.py
++++ b/apps/server/tests/test_http_server.py
+@@ -77,6 +77,10 @@
+         "/profile",
+         "/profile/preview",
+         "/profile/style",
++        "/reports/weekly",
++        "/reports/weekly/options",
++        "/reports/weekly/{report_id}",
++        "/reports/weekly/{report_id}/excluded",
+         "/search",
+         "/search/recent",
+     }

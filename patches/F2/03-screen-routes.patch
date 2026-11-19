@@ -1,0 +1,18 @@
+--- a/apps/desktop/src/renderer/app.tsx
++++ b/apps/desktop/src/renderer/app.tsx
+@@ -1,10 +1,14 @@
+ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+ import { OnboardingStartPage } from './features/onboarding/onboarding-start-page';
+ 
+-export function App() {
++import { F2ProfileRoute, F2ReplyRoute, unavailableF2Client, type F2Client } from './features/profile-draft';
++
++export function App({ f2Client = unavailableF2Client, mailboxPath = '/onboarding/1' }: { f2Client?: F2Client; mailboxPath?: string } = {}) {
+   return (
+     <HashRouter>
+       <Routes>
++        <Route path="/settings/profile" element={<F2ProfileRoute client={f2Client} mailboxPath={mailboxPath} />} />
++        <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2Client} mailboxPath={mailboxPath} />} />
+         <Route path="/onboarding/1" element={<OnboardingStartPage />} />
+         <Route path="*" element={<Navigate to="/onboarding/1" replace />} />
+       </Routes>

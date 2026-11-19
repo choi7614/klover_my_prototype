@@ -143,6 +143,8 @@ def test_analysis_port_rejects_owner_unknown_and_duplicate_results(database, inv
 
 def test_postgresql_report_payload_round_trip_and_owner_filter(database):
     engine, _ = database
+    with Session(engine) as session, session.begin():
+        session.add(User(user_id=ACTOR.user_id))
     report_metadata.create_all(engine)  # 이 테스트만의 임시 스키마. 운영 등록이 아니다.
     service = WeeklyReportService(
         mails=InMemoryReportMailRepository(load_fixture_mails(FIXTURE)),

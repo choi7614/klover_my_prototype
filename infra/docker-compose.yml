@@ -1,0 +1,21 @@
+name: klover
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: klover
+      POSTGRES_USER: klover
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?먼저 개발용 .env를 생성하세요}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U klover -d klover"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres_data:

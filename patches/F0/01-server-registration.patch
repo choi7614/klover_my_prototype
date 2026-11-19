@@ -1,0 +1,60 @@
+diff --git a/apps/server/app/cli/run_mail_api.py b/apps/server/app/cli/run_mail_api.py
+index 30bfdcf..d32b7e5 100644
+--- a/apps/server/app/cli/run_mail_api.py
++++ b/apps/server/app/cli/run_mail_api.py
+@@ -5,8 +5,11 @@ import argparse
+ import uvicorn
+ 
+ from app.api.mail_read import MailAPIContext
++from app.api.mail_sync import MailSyncContext
+ from app.api.profile_draft import F2Context
++from app.connectors.gmail_mail import GmailMailClient
+ from app.db.config import DatabaseConfigurationError, database_engine
++from app.db.repositories.gmail_sync import GmailSyncRepository
+ from app.db.repositories.mail_query import MailQueryRepository
+ from app.db.repositories.profile_draft import F2Repository
+ from app.db.repositories.search import SQLSearchRepository
+@@ -33,6 +36,11 @@ def main():
+             token,
+             MailQueryRepository(engine, settings.expected_email),
+         )
++        # 앱 새로고침의 Gmail 새 메일 가져오기. CLI gmail_mail sync와 같은 저장소·수신 기능이다.
++        application.state.mail_sync = MailSyncContext(
++            GmailSyncRepository(engine, settings),
++            lambda: GmailMailClient(settings),
++        )
+         application.state.search_service = SearchService(
+             SQLSearchRepository(engine),
+             SQLRecentSearchRepository(engine),
+diff --git a/apps/server/app/main.py b/apps/server/app/main.py
+index 5080ab2..371464e 100644
+--- a/apps/server/app/main.py
++++ b/apps/server/app/main.py
+@@ -5,6 +5,7 @@ from fastapi import FastAPI
+ from app.api.errors import register_error_handlers
+ from app.api.health import router as health_router
+ from app.api.mail_read import register_mail_api
++from app.api.mail_sync import register_mail_sync
+ from app.api.profile_draft import register_profile_draft
+ from app.api.search import register_search_api
+ from app.schemas.common import ErrorResponse
+@@ -22,6 +23,7 @@ def create_app() -> FastAPI:
+     register_error_handlers(application)
+     application.include_router(health_router)
+     register_mail_api(application)
++    register_mail_sync(application)
+     register_profile_draft(application)
+     register_search_api(application)
+     return application
+diff --git a/apps/server/tests/test_http_server.py b/apps/server/tests/test_http_server.py
+index 0fdd26a..da04e50 100644
+--- a/apps/server/tests/test_http_server.py
++++ b/apps/server/tests/test_http_server.py
+@@ -72,6 +72,7 @@ def test_openapi_describes_only_implemented_api_and_its_response():
+         "/drafts/{draft_id}/revise",
+         "/health",
+         "/mails",
++        "/mails/sync",
+         "/mails/{mail_id}",
+         "/profile",
+         "/profile/preview",

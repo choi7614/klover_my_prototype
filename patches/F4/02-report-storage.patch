@@ -1,0 +1,60 @@
+--- a/apps/server/app/db/models.py
++++ b/apps/server/app/db/models.py
+@@ -9,6 +9,7 @@
+     ForeignKey,
+     ForeignKeyConstraint,
+     Index,
++    Integer,
+     String,
+     Text,
+     UniqueConstraint,
+@@ -92,3 +93,18 @@
+     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+     is_read: Mapped[bool] = mapped_column(Boolean, server_default="false")
+     analysis_status: Mapped[str] = mapped_column(String(20), server_default="pending")
++
++
++class WeeklyReportRow(Base):
++    """F4 보고서. 소유 계정은 검증된 payload와 선택 키에 함께 저장한다."""
++
++    __tablename__ = "weekly_reports"
++    __table_args__ = (
++        UniqueConstraint("user_id", "selection_key", name="uq_weekly_report_owner_selection"),
++    )
++
++    report_id: Mapped[str] = mapped_column(Text, primary_key=True)
++    user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), nullable=False)
++    selection_key: Mapped[str] = mapped_column(Text, nullable=False)
++    revision: Mapped[int] = mapped_column(Integer, nullable=False)
++    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+--- /dev/null
++++ b/apps/server/migrations/versions/0006_weekly_reports.py
+@@ -0,0 +1,28 @@
++"""F4 보고서 스냅샷. 기존 메일·계정·키는 변경하지 않는다."""
++
++import sqlalchemy as sa
++from alembic import op
++from sqlalchemy.dialects import postgresql
++
++revision = "0006_f4"
++down_revision = "0004_f2"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table(
++        "weekly_reports",
++        sa.Column("report_id", sa.Text(), nullable=False),
++        sa.Column("user_id", sa.Text(), nullable=False),
++        sa.Column("selection_key", sa.Text(), nullable=False),
++        sa.Column("revision", sa.Integer(), nullable=False),
++        sa.Column("payload", postgresql.JSONB(), nullable=False),
++        sa.ForeignKeyConstraint(["user_id"], ["users.user_id"]),
++        sa.PrimaryKeyConstraint("report_id"),
++        sa.UniqueConstraint("user_id", "selection_key", name="uq_weekly_report_owner_selection"),
++    )
++
++
++def downgrade():
++    op.drop_table("weekly_reports")

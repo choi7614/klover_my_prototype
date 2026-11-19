@@ -24,9 +24,9 @@ class ReportProfile(ReportModel):
     user_id: Identifier
     name: ReportText
     title: str = ""
-    org: ReportText
+    org: Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] = ""
     report_sections: tuple[SectionName, ...] = Field(min_length=1, max_length=20)
-    report_recipient: ReportText
+    report_recipient: Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] = ""
     report_style: Literal["bullet", "prose"]
 
     @model_validator(mode="after")
@@ -39,6 +39,7 @@ class ReportProfile(ReportModel):
 class ReportActor(ReportModel):
     user_id: Identifier
     sync_started_at: AwareDatetime
+    account_id: Identifier | None = None
 
 
 class GenerateWeeklyReport(ReportModel):
@@ -111,6 +112,7 @@ class WeeklyReportDocument(ReportModel):
 
 class StoredWeeklyReport(ReportModel):
     user_id: Identifier
+    account_id: Identifier | None = None
     selection_key: str
     profile: ReportProfile
     source: WeeklyReportInput

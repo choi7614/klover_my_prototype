@@ -16,7 +16,7 @@
 | F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | develop 병합 (#11) | `34ebcbc` 2026-11-18 | 실제 LLM·임베딩 어댑터 연결, 저장 SQL·라우터 운영 반영(통합 채팅) | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치(#16)·IPC 연결([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `c7bfb65` 2026-11-19 | 맥북 실제 앱 확인, 실제 DB 0004 적용 확인, 실제 AI 어댑터 연결 | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 (#12), F0 진입(#17)·IPC 연결([#19](https://github.com/choi7614/klover_my_prototype/pull/19)) | `deeda1c` 2026-11-19 | 실제 모델 어댑터(의미 검색·답변), 보낸 메일 열기 계약, 맥북 실제 앱 확인 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
-| F4 주간 보고 | `feat/F4-weekly-report` | 없음 | WIP 저장 (후속 검토 코드 긴급 보관, develop 미병합) | 이번 `[F4][WIP]` 저장 커밋 (`git log` 확인) | 최신 공통 F1/F2/AI 계약과 저장 패치를 맞춘 뒤 통합 검증 — 아직 승인 전 | [F4-weekly-report-status.md](F4-weekly-report-status.md) | 2026-11-19 |
+| F4 주간 보고 | `feat/F4-weekly-report` | Codex | 진행 중 (WIP 보존·최신 develop 로컬 통합) | `c061a46` | F1/F2·공통 AI 연결부 수정, 공통 변경은 patches/F4/로 준비·재검사 | [F4-weekly-report-status.md](F4-weekly-report-status.md) | 2026-11-19 |
 | F5 AI 스캔 | 없음 | 없음 | 미착수 | — | 요청 시 최신 develop에서 `feat/F5-ai-scan` 생성 | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-19 |
 
 ## 공통·통합 작업
@@ -41,6 +41,7 @@
 | 0003 | 최근 검색 기록 | F3 | 적용(develop) | `.../0003_search_runs.py` |
 | 0004 | 프로필·초안 저장 | F2 | 적용(develop, #16) | `.../0004_profile_draft.py` (revision `0004_f2`) |
 | 0005 | (다음 빈 번호) | — | 예약 가능 | F1 저장 SQL(`integration/F1-mail-analysis/001_storage.sql`)을 Alembic으로 옮길 때 후보 |
+| 0006 | 주간 보고 스냅샷 | F4 | 제안 예약·미적용 (`0006_f4`, 현재 parent `0004_f2`; 실제 적용 전 최신 head 확인) | `patches/F4/files/0006_weekly_reports.py.pending` |
 
 ## 이 표를 갱신하는 때
 
@@ -48,11 +49,3 @@
 - 이어받은 직후(작업 도구 → 자신)
 - `[WIP] 인수인계` 커밋 직후(상태 → `WIP 저장`)
 - PR 생성·병합 직후(상태·마지막 커밋)
-
-## F4 긴급 저장 메모 (2026-11-19)
-
-- Codex 검토 폴더의 미커밋 F4 후속 코드 32개를 기존 F4 브랜치에 WIP로 보존했다.
-- 사용자 명시 승인에 따른 보관이며 최신 develop 실제 병합·공통 패치 적용·새 PR 생성은 하지 않았다.
-- 원래 F4 작업 폴더와 검토 폴더는 변경하지 않았다. 현재 원격 develop 확인값은 `b147cfd`다.
-- 이전 `0f68ad1` 기준 대역 검사 결과와 최신 develop 통합 검사 결과를 구분해야 한다.
-- 오래된 0003 저장 패치는 현재 마이그레이션과 충돌하므로 적용하지 않는다.

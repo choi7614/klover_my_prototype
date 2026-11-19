@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.ai.interfaces import ProvidersNotConfigured
 from app.api.errors import error_response
 from app.api.mail_read import authorize
 from app.db.repositories.mail_query import MailAccountUnavailable
@@ -20,11 +21,15 @@ from app.schemas.weekly_report import (
 )
 from app.services.report import ReportInputNotReadyError
 from app.services.weekly_report import WeeklyReportError
+from app.services.weekly_report_runtime import WeeklyReportRuntime
 
 
 def register_weekly_report_api(application, service=None):
     if service is not None:
         application.state.weekly_reports = service
+    if getattr(application.state, "f4_registered", False):
+        return
+    application.state.f4_registered = True
 
     router = APIRouter(
         prefix="/reports/weekly",
@@ -33,6 +38,8 @@ def register_weekly_report_api(application, service=None):
     )
 
     def context(request: Request, repository: Annotated[object, Depends(authorize)]):
+        if request.query_params:
+            raise WeeklyReportError("validation_error", "요청 형식을 확인해 주세요.", 422)
         service = getattr(request.app.state, "weekly_reports", None)
         if service is None:
             raise WeeklyReportError(
@@ -44,9 +51,19 @@ def register_weekly_report_api(application, service=None):
             raise WeeklyReportError(
                 "session_unavailable", "연결된 계정을 확인해 주세요.", 503
             ) from None
-        return service, ReportActor(
-            user_id=session.user_id, sync_started_at=session.sync_started_at
+        actor = ReportActor(
+            user_id=session.user_id,
+            account_id=session.account_id,
+            sync_started_at=session.sync_started_at,
         )
+        if isinstance(service, WeeklyReportRuntime):
+            try:
+                service = service.for_actor(actor)
+            except ProvidersNotConfigured:
+                raise WeeklyReportError(
+                    "ai_unavailable", "보고서 AI가 아직 연결되지 않았습니다.", 503
+                ) from None
+        return service, actor
 
     Context = Annotated[tuple, Depends(context)]
     ReportID = Annotated[str, Path(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")]

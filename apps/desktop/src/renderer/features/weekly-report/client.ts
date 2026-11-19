@@ -11,8 +11,11 @@ export type WeeklyReportTransport = (request: {
 }) => Promise<{ status: number; body: unknown }>;
 
 const messages: Record<string, string> = {
+  report_unavailable: '주간 보고 연결이 아직 준비되지 않았습니다.',
+  session_unavailable: '연결된 메일 계정을 확인해 주세요.',
   analysis_not_ready: '분석 대기·실패 메일을 먼저 확인해 주세요. 기존 내용은 보존됩니다.',
   profile_missing: '주간 보고 프로필과 양식을 먼저 연결해 주세요.',
+  profile_incomplete: '보고 대상을 입력해 주세요.',
   ai_unavailable: '보고서 AI가 아직 연결되지 않았습니다.',
   ai_failed: '보고서를 만들지 못했어요. 기존 내용은 보존됩니다.',
   invalid_report: '생성 결과의 섹션과 항목을 확인하지 못했습니다. 기존 내용은 보존됩니다.',
