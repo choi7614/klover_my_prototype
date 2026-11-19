@@ -116,6 +116,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/mails/analysis/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 메일 목록용 분석 결과 묶음 조회 */
+        get: operations["analysis_batch_mails_analysis_batch_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/mails/sync": {
         parameters: {
             query?: never;
@@ -150,6 +167,40 @@ export interface paths {
         get: operations["read_mail_mails__mail_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mails/{mail_id}/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 메일 한 건의 분석 결과 */
+        get: operations["analysis_detail_mails__mail_id__analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mails/{mail_id}/analysis/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 분석 다시 시도 */
+        post: operations["retry_analysis_mails__mail_id__analysis_retry_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -487,6 +538,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActionItem */
+        ActionItem: {
+            /** Due */
+            due: string | null;
+            /** Text */
+            text: string;
+        };
+        /** AnalysisRetryResult */
+        AnalysisRetryResult: {
+            /**
+             * Analysis Status
+             * @constant
+             */
+            analysis_status: "pending";
+            /** Mail Id */
+            mail_id: string;
+        };
         /** ApproveRequest */
         ApproveRequest: {
             /** Payload */
@@ -787,6 +855,114 @@ export interface components {
             /** User Id */
             user_id: string;
         };
+        /**
+         * MailAnalysisBatch
+         * @description 목록 표시용 묶음 조회 결과. auto_analysis는 지금 자동 분석이 돌 수 있는지 알려 준다.
+         *
+         *     ready=분석 가능, not_configured=AI 미설정, external_blocked=외부 AI라 실제 메일 분석 안 함,
+         *     not_connected=서버에 자동 분석이 아직 조립되지 않음.
+         */
+        MailAnalysisBatch: {
+            /**
+             * Auto Analysis
+             * @enum {string}
+             */
+            auto_analysis: "ready" | "not_configured" | "external_blocked" | "not_connected";
+            /** Items */
+            items: components["schemas"]["MailAnalysisView"][];
+        };
+        /** MailAnalysisDetail */
+        MailAnalysisDetail: {
+            /**
+             * Action Items
+             * @default []
+             */
+            action_items: components["schemas"]["ActionItem"][];
+            /** Ai Category */
+            ai_category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Analysis Status
+             * @enum {string}
+             */
+            analysis_status: "pending" | "done" | "failed";
+            /**
+             * Auto Analysis
+             * @enum {string}
+             */
+            auto_analysis: "ready" | "not_configured" | "external_blocked" | "not_connected";
+            /** Category */
+            category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Evidence Spans
+             * @default []
+             */
+            evidence_spans: components["schemas"]["MailEvidenceSpan"][];
+            /** Failure Code */
+            failure_code?: string | null;
+            /**
+             * Has Events
+             * @default false
+             */
+            has_events: boolean;
+            /** Mail Id */
+            mail_id: string;
+            /** Needs Reply */
+            needs_reply?: boolean | null;
+            /** Priority */
+            priority?: ("high" | "normal" | "low") | null;
+            /** Priority Reason */
+            priority_reason?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** User Label */
+            user_label?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+        };
+        /**
+         * MailAnalysisView
+         * @description 앱 받은편지함 표시용. 근거 메일은 mail_id로 연결한다. 원문·벡터·모델 정보는 넣지 않는다.
+         *
+         *     category는 화면에 보일 분류(user_label 우선). pending·failed이면 AI 결과 필드는 비어 있다.
+         */
+        MailAnalysisView: {
+            /**
+             * Action Items
+             * @default []
+             */
+            action_items: components["schemas"]["ActionItem"][];
+            /** Ai Category */
+            ai_category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Analysis Status
+             * @enum {string}
+             */
+            analysis_status: "pending" | "done" | "failed";
+            /** Category */
+            category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Evidence Spans
+             * @default []
+             */
+            evidence_spans: components["schemas"]["MailEvidenceSpan"][];
+            /** Failure Code */
+            failure_code?: string | null;
+            /**
+             * Has Events
+             * @default false
+             */
+            has_events: boolean;
+            /** Mail Id */
+            mail_id: string;
+            /** Needs Reply */
+            needs_reply?: boolean | null;
+            /** Priority */
+            priority?: ("high" | "normal" | "low") | null;
+            /** Priority Reason */
+            priority_reason?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** User Label */
+            user_label?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+        };
         /** MailDetail */
         MailDetail: {
             /**
@@ -835,6 +1011,21 @@ export interface components {
              * @default []
              */
             projects: string[];
+        };
+        /**
+         * MailEvidenceSpan
+         * @description 표시용 근거 위치(본문 인덱스 [start,end)). F5의 EvidenceSpan과 이름이 겹치지 않게 둔다.
+         */
+        MailEvidenceSpan: {
+            /** End */
+            end: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "action" | "due" | "event";
+            /** Start */
+            start: number;
         };
         /** MailPage */
         MailPage: {
@@ -2160,6 +2351,73 @@ export interface operations {
             };
         };
     };
+    analysis_batch_mails_analysis_batch_get: {
+        parameters: {
+            query: {
+                ids: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailAnalysisBatch"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     sync_mails_mails_sync_post: {
         parameters: {
             query?: never;
@@ -2309,6 +2567,167 @@ export interface operations {
                 };
             };
             /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    analysis_detail_mails__mail_id__analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mail_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailAnalysisDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    retry_analysis_mails__mail_id__analysis_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mail_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisRetryResult"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 이미 분석 완료 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AI 미연결 */
             503: {
                 headers: {
                     [name: string]: unknown;

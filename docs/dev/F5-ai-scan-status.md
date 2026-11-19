@@ -8,13 +8,19 @@
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
 | 작업 도구 | 없음 |
-| 상태 | PR 대기 — F1 결과→F5 제안 변환·생성 단위 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32)) |
+| 상태 | develop 병합 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32), `d9257c0`), F1 분석 완료 지점 연결(F1 패치 05, `integrate/F1-auto-analysis`) — 맥북 실기 확인 남음 |
 | 마지막 구현 커밋 | `06e41f6` — F1 분석 결과로 제안 만들기 |
-| 기준 develop | `2b4cf25` (#31까지 로컬 통합) |
+| 기준 develop | `905398b` |
 | 미커밋 변경 | 없음 (이 현황 갱신도 커밋·Push) |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
+
+### F1 분석 완료 지점 연결 (2026-11-19, Claude, `integrate/F1-auto-analysis`)
+
+- F1 패치 05로 `run_mail_api.py`가 자동 분석 작업자가 ready(로컬 AI)일 때 `AnalysisScanHook`을 분석 완료 지점에 등록한다.
+  새 메일이 분석되면 제안이 자동으로 저장된다(pending, 실행 없음). Claude(외부) 설정이면 분석·제안 모두 하지 않는다.
+- 미실행: 실제 로컬 AI로 새 메일→제안 생성·S04 표시. 맥북에서 확인한다.
 
 ### 이번 단위 (2026-11-19, Claude): F1 분석 결과로 F5 제안 만들기
 

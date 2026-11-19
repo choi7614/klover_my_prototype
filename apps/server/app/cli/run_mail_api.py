@@ -23,7 +23,8 @@ from app.db.repositories.search_recent import SQLRecentSearchRepository
 from app.google_config import GoogleConnectionError, load_settings
 from app.mail_api_config import MailAPIConfigurationError, read_api_token
 from app.main import create_app
-from app.services.f5 import F5Service
+from app.pipeline.auto_analysis import build_auto_analysis
+from app.services.f5 import AnalysisScanHook, F5Service
 from app.services.search import SearchService
 from app.services.weekly_report_runtime import WeeklyReportRuntime
 
@@ -60,14 +61,27 @@ def main():
         application = create_app()
         # F1 분류 수정(PATCH /mails/{mail_id}/category). 소유자는 기존 인증 세션에서만 정한다.
         application.state.mail_analysis_engine = engine
-        application.state.mail_api = MailAPIContext(
-            token,
-            MailQueryRepository(engine, settings.expected_email),
-        )
+        mail_query = MailQueryRepository(engine, settings.expected_email)
+        application.state.mail_api = MailAPIContext(token, mail_query)
+        # F1 새 메일 자동 분석: 새로고침 저장 뒤 '분석 시작' 신호만 주고 응답은 기다리지 않는다.
+        # AI 미설정·외부 AI면 분석하지 않고 메일은 pending으로 남는다.
+        analysis_runner = build_auto_analysis(engine, mail_query.session)
+        application.state.mail_analysis_runner = analysis_runner
+        if analysis_runner.state == "ready":
+            # 분석 완료 알림 지점에 F5 제안 만들기를 잇는다(저장 확정 뒤 hook(mail, result)).
+            # 자동 분석은 로컬 AI일 때만 돌므로 F5도 같은 제공자·같은 Gmail 허용 범위를 쓴다.
+            # F5 훅은 스스로 실패를 삼키고 AI 호출 시간 제한을 두므로 알림 시간 제한은 두지 않는다.
+            analysis_runner.hooks.register(
+                AnalysisScanHook(
+                    F5Service(F5Repository(engine)), analysis_runner.providers[0], allow_gmail=True
+                ),
+                timeout=None,
+            )
         # 앱 새로고침의 Gmail 새 메일 가져오기. CLI gmail_mail sync와 같은 저장소·수신 기능이다.
         application.state.mail_sync = MailSyncContext(
             GmailSyncRepository(engine, settings),
             lambda: GmailMailClient(settings),
+            after_sync=analysis_runner.kick,
         )
         search_parser, search_answerer = search_ai()
         application.state.search_service = SearchService(

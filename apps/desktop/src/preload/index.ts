@@ -3,6 +3,7 @@ import type { MailReadBridge } from '../shared/mail-read';
 import type { F2Bridge } from '../shared/f2-bridge';
 import type { F4Bridge } from '../shared/f4-bridge';
 import type { F5Bridge } from '../shared/f5-bridge';
+import type { F1Bridge } from '../shared/f1-bridge';
 import type { SearchBridge, SearchMessage } from '../shared/search-bridge';
 
 // 화면에는 필요한 정보와 정해진 통로만 공개한다. Node·파일·임의 IPC 접근은 공개하지 않는다.
@@ -60,4 +61,9 @@ const suggestions = Object.freeze<F5Bridge>({
   createTodo: request => ipcRenderer.invoke('klover:suggestions:createTodo', request),
   updateTodo: (todoId, request) => ipcRenderer.invoke('klover:suggestions:updateTodo', todoId, request),
 });
-contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport, suggestions }));
+// F1 분류·요약 표시. 묶음 조회와 실패 다시 시도만 있다. 인수는 main에서 다시 검사한다.
+const analysis = Object.freeze<F1Bridge>({
+  batch: mailIds => ipcRenderer.invoke('klover:analysis:batch', mailIds),
+  retry: mailId => ipcRenderer.invoke('klover:analysis:retry', mailId),
+});
+contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport, suggestions, analysis }));
