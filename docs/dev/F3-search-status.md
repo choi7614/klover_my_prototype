@@ -8,41 +8,61 @@
 | --- | --- |
 | 브랜치 | `feat/F3-search` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 (#12) |
-| 마지막 커밋 | `deeda1c` 2026-11-19 — [F3] 검색 계약·격리 조회·S07 화면과 서버 경로 구현 |
-| 기준 develop | `4fef3fe` |
-| 미커밋 변경 | 없음 (원격 기준) |
+| 상태 | PR 생성 → develop 병합(사용자 승인) |
+| 마지막 커밋 | 이번 커밋 — [F3] 공통 AI 연결용 질문 해석기·답변기 추가 |
+| 기준 develop | `420078e` |
+| 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
 
-- 완료: 검색 계약·한국 날짜 해석, 격리 조회, 순위 결합·근거 검증, S07 전용 화면, 서버 경로 등록, 마이그레이션 0003, api-types 재생성.
-- 통합: F0 상단 검색창 진입·메일 열기·초안 열기(#17, #18), F3용 main/preload 통로(`integrate/F2-F3-ipc`: 검색 시작·단계 메시지·취소·최근 검색).
-  화면 `SearchClient`가 서버의 단계별 응답(해석 → 결과 → 답변)을 받는 대로 표시하고, 새 검색·화면 이탈 시 서버 요청까지 취소한다.
-- 부분 완료: 질문 해석기·답변기·의미 검색 모두 미연결(실제 모델 없음). **해석기가 없으면 새 검색은 전부
-  `503 parser_unavailable`**(`app/services/search.py`)이므로, 지금 앱에서 검색하면 '질문 해석 기능이 아직 연결되지
-  않았어요' 안내가 정상이다. (2026-11-19 정정: 이전에 '키워드·조건 검색으로 결과 목록은 동작'이라고 적은 것은 잘못이었다.)
-  보낸 메일 열기는 공통 상세 API가 받은편지함만 읽어 아직 불가.
-- 미구현: 실제 모델 정확도·5초 성능 확인, 실제 Gmail 데이터 앱 검색.
+- 완료(이번 단위, 2026-11-19): 공통 `TextGeneration`만 쓰는 질문 해석기·답변기.
+  - `app/ai/search_adapter.py`: `SharedQueryParser`, `SharedSearchAnswerer`. 제공자(Claude API·로컬 Qwen)를 직접 고르지 않는다.
+  - 프롬프트: `app/ai/prompts/search_parse.md`, `search_answer.md`.
+  - 로컬 모델 대비: 코드 블록 표시(```json)는 벗겨 내고, 형식·근거 인용 오류는 **응답 원문 없이 오류 안내만 붙여 1번 재시도**.
+    제공자 오류·시간 초과는 재시도하지 않는다. 전체 대기는 `SearchService.model_timeout`(기본 10초) 안.
+  - 실패 안내는 기존 코드만 사용: 해석 `parse_failed`(422)·`parse_unavailable`(503)·`parser_unavailable`(503),
+    답변 `invalid_answer`·`answer_failed`·`answer_unavailable`. 가짜 결과로 대체하지 않는다.
+  - `app/services/search.py`: 제공자 미연결(`ProvidersNotConfigured`)을 `parser_unavailable`/`answer_unavailable`로,
+    재시도 후 형식 실패(`ModelOutputInvalid`, `search_ports.py`)를 `invalid_answer`로 정확히 안내.
+- **아직 운영 서버에 연결 안 됨**: 실행 명령 조립(`run_mail_api.py`)은 공통 영역이라 `patches/F3/01-search-ai-wiring.patch`로만 남겼다.
+  패치 적용 전, 그리고 적용 후에도 실제 제공자가 없으면 새 검색은 지금처럼 `503 parser_unavailable`이다.
+- 이전 완료: 검색 계약·한국 날짜 해석, 격리 조회, 순위 결합·근거 검증, S07 화면, 서버 경로, 0003, F0 진입·IPC 통로.
+- 미구현: 의미 검색(벡터) 어댑터, 보낸 메일 열기, 실제 모델 정확도·5초 성능 확인.
 
 ## 검사 결과
 
-아래 '상세 기록'의 표 참조 (통합 후 서버 pytest 249 통과, 데스크톱 19 통과).
+| 검사 | 결과 |
+| --- | --- |
+| `uv run pytest tests/test_search_ai_adapter.py` (가짜 제공자, 신규 20개) | 20 통과 |
+| `uv run pytest` (서버 전체) | 298 통과, 129 skip(실제 DB 필요) |
+| `uv run ruff check .` / `ruff format --check .` | 통과 |
+| 패치 01 임시 적용 후 `ruff check`·`search_ai()` 호출 | 통과, 제공자 없음 → `(None, None)` |
+| `git apply --check patches/F3/01-search-ai-wiring.patch` | 통과 |
+| 실제 Claude API·로컬 Qwen 호출 | **미실행** (맥북·API 키 없음) |
+| 데스크톱 검사 | 미실행 (앱 코드 변경 없음) |
+
+신규 검사 범위: 공통 계약 사용·질문/날짜만 전송, 코드 블록 허용, 1회 재시도·잘못된 응답 미재전송, 2회 실패 시 중단,
+제공자 오류 무재시도, 시험용 제공자 운영 차단, 서비스 연결 전체 흐름, 해석 실패 코드 4종(형식·제공자 오류·미연결·시간 초과),
+지어낸 인용 → 재시도 → `invalid_answer`, 다른 메일 ID 재시도 복구, 답변 제공자 실패 코드, 결과 밖 메일 미전송.
 
 ## 공통 영역 요청
 
-- F0 main/preload IPC와 `SearchPage` 화면 슬롯 연결: 완료(`integrate/F2-F3-ipc`). `src/main/search-ipc.ts`, `src/shared/search-bridge.ts`, `src/renderer/bridges/search-ipc-client.ts`.
+- **새 요청**: `patches/F3/01-search-ai-wiring.patch` — `run_mail_api.py`에 해석기·답변기 주입(통합 채팅). [README](../../patches/F3/README.md)
+- F1 채팅과 겹치는 파일은 건드리지 않음: `app/ai/runtime.py`, `app/ai/interfaces.py`, `.env` 예시, `uv.lock`.
 - 남은 요청: 보낸 메일 상세 열기 계약(공통 서버).
 
 ## 다음 할 일
 
-1. F1 실제 어댑터 연결 후 의미 검색 활성화·정확도 확인
-2. 맥북 실제 앱에서 검색·메일 열기·초안 열기 확인
+1. F1 runtime(Claude/Qwen 선택) develop 반영 후 통합 채팅에서 패치 01 적용
+2. 맥북에서 실제 제공자로 질문 해석·답변 정확도·5초 성능 확인(특히 로컬 Qwen 형식 준수율)
+3. 의미 검색 어댑터 연결, 맥북 실제 앱 확인
 
 ## 인수인계 메모
 
-- 멈춘 지점: 없음 (단위 완료 후 병합)
-- 주의할 점: 합성 화면은 `vite.search.config.ts` 전용 설정으로 실행. `artifacts/`는 커밋 대상 아님.
+- 멈춘 지점: 없음 (단위 완료)
+- 주의할 점: 재시도는 1회뿐이다(`MAX_ATTEMPTS = 2`). 로컬 모델이 자주 실패하면 프롬프트를 먼저 조정한다.
+  합성 화면은 `vite.search.config.ts` 전용 설정으로 실행. `artifacts/`는 커밋 대상 아님.
 
 ---
 

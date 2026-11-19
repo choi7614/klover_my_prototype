@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { EvidenceBody, validEvidence } from './evidence-body';
 import { SuggestionCard } from './suggestion-card';
 import type { CalendarOption, Suggestion, SuggestionsClient } from './types';
 
 export function SuggestionReader({ mailId, body, suggestions, client, onChange,
-  calendarReady = false, replyReady = false, loading = false, calendars = [] }: {
+  calendarReady = false, replyReady = false, loading = false, calendars = [], header }: {
   mailId: string; body: string; suggestions: Suggestion[]; client: SuggestionsClient;
   onChange: (row: Suggestion) => void; calendarReady?: boolean; replyReady?: boolean; loading?: boolean;
   calendars?: CalendarOption[];
+  /** 메일 머리(제목·보낸 사람 등). 본문 위에 그대로 표시한다. */
+  header?: ReactNode;
 }) {
   const [activeId, setActiveId] = useState<string>();
   const order = { calendar: 0, todo: 1, reply: 2 };
@@ -15,6 +17,7 @@ export function SuggestionReader({ mailId, body, suggestions, client, onChange,
   const firstPending = rows.find(row => row.status === 'pending')?.suggestion_id;
   return <div className="flex min-w-0 flex-col min-[1281px]:flex-row" data-testid="suggestion-reader">
     <section aria-label="메일 본문" className="min-w-0 flex-1 p-6">
+      {header}
       <EvidenceBody mailId={mailId} body={body} suggestions={rows} activeId={activeId} />
     </section>
     {(loading || rows.length > 0) && <aside aria-label="AI 제안" className="order-first flex shrink-0 flex-col gap-3 border-b border-border bg-gray-25 p-4 min-[1281px]:order-last min-[1281px]:w-[340px] min-[1281px]:border-b-0 min-[1281px]:border-l">

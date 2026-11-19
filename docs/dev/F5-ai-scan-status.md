@@ -8,14 +8,28 @@
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 — [#20](https://github.com/choi7614/klover_my_prototype/pull/20) |
-| 마지막 구현 커밋 | `79cc6ff` — 최신 공통 DB와 F5 API·공유 타입 통합 |
+| 상태 | develop 병합 — 앱 연결 단위 [#25](https://github.com/choi7614/klover_my_prototype/pull/25) (`841f782`), 공통 패치 적용 전 |
+| 마지막 구현 커밋 | `7b96be1` — 앱 제안·할 일 화면 연결과 main/preload 공통 패치 (CI 통과) |
 | 병합 커밋 | `72fb8e4` — 승인된 PR #20 병합 |
-| 기준 develop | `72fb8e4` (통합 검사 기반은 b147cfd) |
+| 기준 develop | `420078e` (F4 공통 패치까지 포함, fast-forward 로컬 통합) |
 | 미커밋 변경 | 없음 (이 현황 갱신도 커밋·Push) |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
+
+### 이번 단위 (2026-11-19, Claude): 앱에서 F5 API 쓰기
+
+- 완료(F5 브랜치): `features/suggestions/ipc-client.ts`(통로 → `F5Client`, 통로 없으면 '준비 중'),
+  `mail-suggestions.tsx`(메일 ID로 제안 조회 → `SuggestionReader`, 없으면 S03 모양 유지),
+  `todo-list.tsx`(할 일 진행 중/완료 목록·완료 표시·직접 추가), `SuggestionReader`에 메일 머리 `header` 자리 추가, 테스트 3개 파일.
+- 적용 전 패치(`patches/F5/`): 01 main/preload 통로 8개(`klover:suggestions:*`)와 `shared/f5-bridge.ts` 인수 검사,
+  02 공통 App `/todos` 경로·F0 메일함 S04 패널·사이드바 '할 일' 메뉴. **통합 채팅 적용 전에는 앱에 보이지 않는다.**
+- 승인 경계: 캘린더·회신 승인 버튼은 꺼 둔 채(`calendarReady=false`, `replyReady=false`). 버튼을 누르기 전에는 아무 요청도 실행하지 않는다.
+- 이번 범위 아님(미구현): `/suggestion-events`·OS 알림·트레이·WebSocket·S10 놓친 제안, Calendar 실제 연결,
+  회신→F2 초안 실행, 사이드바 '할 일' 건수, **F1 결과→F5 입력 변환(F1 채팅의 AI 제공자 작업과 겹쳐 보류)**.
+- 할 일 목록은 전용 화면 명세·목업이 없어 디자인 시스템 기준의 단순 목록으로 만들었다(사용자 승인).
+
+### 이전 단위까지
 
 - 완료: 일정·할 일·회신 제안 입력 계약, 원본 mail_id·소유 계정·본문 해시·근거 위치 검증,
   영속 저장·목록·재조회·무시 이력, 중복 생성·중복/동시 승인 방지, 앱 할 일 CRUD.
@@ -34,6 +48,17 @@ Calendar 기본 실행기는 차단된다. 테스트 결과는 pending/simulated
 F1과 F5 계약 사이에는 행동 키·근거 인용·본문 해시 등의 변환이 남아 있다. 다른 채팅의 완료를 가정하지 않는다.
 
 ## 검사 결과
+
+이번 단위(앱 연결):
+
+| 검사 | 결과 | 비고 |
+| --- | --- | --- |
+| 데스크톱 lint·typecheck·Vitest (브랜치만) | 통과 / **143개 통과** | 패치 미적용 상태 |
+| 데스크톱 lint·typecheck·Vitest (패치 01·02 적용) | 통과 / **154개 통과** | 적용 후 되돌림, `git apply --check` 통과 |
+| Electron 빌드 (패치 적용) | 통과 | 실제 앱 창·실서버 연결 확인은 **미실행**(클라우드 환경, 실제 계정 없음) |
+| 서버 pytest | 미실행 | 서버 코드 변경 없음. PR CI에서 확인 |
+
+이전 단위(#20):
 
 | 검사 | 결과 | 비고 |
 | --- | --- | --- |
@@ -61,13 +86,15 @@ KLOVER_F5_TEST_DATABASE_URL을 모두 이 DB로 지정했다.
 
 ## 다음 할 일
 
+0. 통합 채팅에서 `patches/F5/` 01→02 적용, 맥북 실제 앱에서 메일 제안 패널·할 일 화면 확인.
 1. F1 결과 변환과 F0 화면·알림 연결을 별도 단위로 구현·검사한다.
 2. 운영 DB의 0005_f5 실제 적용은 사용자 환경에서 별도로 확인한다.
 3. 실제 권한과 실행 코드 확인 후에만 Calendar 동의/실제 실행을 별도로 검토한다. main 병합은 승인 범위가 아니다.
 
 ## 인수인계 메모
 
-- 멈춘 지점: 구현·로컬 통합 검사·GitHub CI 통과, PR #20 develop 병합 완료.
+- 멈춘 지점: 앱 연결 단위 PR #25 CI 통과·develop 병합 완료. 공통 패치 `patches/F5/`는 통합 채팅 적용 대기.
+- 이전: 구현·로컬 통합 검사·GitHub CI 통과, PR #20 develop 병합 완료.
 - 미실행: 실제 LLM·Google Calendar·메일 발송·OS 알림/트레이·운영 DB 마이그레이션.
 - 주의: F5 테스트 성공은 실제 Calendar 등록 성공이 아니다. 실행 중 프로세스 종료는 담당자 조정 대상이다.
 - 상세: [계약](F5-ai-scan-contract.md), [최초 분리 개발 기록](F5-ai-scan-report.md),
