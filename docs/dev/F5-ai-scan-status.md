@@ -8,7 +8,7 @@
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 — 앱 연결 단위 [#25](https://github.com/choi7614/klover_my_prototype/pull/25) (`841f782`), 공통 패치 01~02 적용 (통합 채팅 `integrate/F5-patches`) |
+| 상태 | develop 병합 — 앱 연결 단위 [#25](https://github.com/choi7614/klover_my_prototype/pull/25) (`841f782`), 공통 패치 01~02 적용 ([#28](https://github.com/choi7614/klover_my_prototype/pull/28), `integrate/F5-patches`) |
 | 마지막 구현 커밋 | `7b96be1` — 앱 제안·할 일 화면 연결과 main/preload 공통 패치 (CI 통과) |
 | 병합 커밋 | `72fb8e4` — 승인된 PR #20 병합 |
 | 기준 develop | `420078e` (F4 공통 패치까지 포함, fast-forward 로컬 통합) |
