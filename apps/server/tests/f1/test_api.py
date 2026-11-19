@@ -91,9 +91,9 @@ def test_owner_injection_and_custom_categories_are_rejected(client):
         assert client.patch("/mails/f1-001/category", json=payload).status_code == 422
 
 
-def test_operational_app_does_not_register_f1_routes():
+def test_operational_app_registers_f1_category_route():
     schema = create_app().openapi()
-    assert "/mails/{mail_id}/category" not in schema["paths"]
+    assert list(schema["paths"]["/mails/{mail_id}/category"]) == ["patch"]
 
 
 def registered_client(engine=None):

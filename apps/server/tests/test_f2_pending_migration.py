@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 from test_postgresql_storage import database as database
 from test_postgresql_storage import seed_account, store
 
+from app.db.f1_models import F1Base
 from app.db.f2_models import F2Base
 from app.db.models import Mail
-from app.db.repositories.f5_schema import F5Base
 from app.db.repositories.search_recent import search_metadata
 
 
@@ -31,7 +31,7 @@ def test_pending_migration_preserves_existing_mail_and_matches_feature_models(da
             namespace["downgrade"]()
             namespace["upgrade"]()
             assert (
-                compare_metadata(context, [F5Base.metadata, search_metadata, F2Base.metadata]) == []
+                compare_metadata(context, [F1Base.metadata, search_metadata, F2Base.metadata]) == []
             )
             namespace["downgrade"]()
             assert not {"profiles", "drafts", "style_learnings"} & set(
@@ -40,7 +40,7 @@ def test_pending_migration_preserves_existing_mail_and_matches_feature_models(da
             assert connection.scalar(select(Mail.mail_id)) == "mail-a"
             namespace["upgrade"]()
             assert (
-                compare_metadata(context, [F5Base.metadata, search_metadata, F2Base.metadata]) == []
+                compare_metadata(context, [F1Base.metadata, search_metadata, F2Base.metadata]) == []
             )
     with Session(engine) as session:
         mail = session.get(Mail, "mail-a")

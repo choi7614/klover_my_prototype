@@ -8,13 +8,33 @@
 | --- | --- |
 | 브랜치 | `feat/F1-mail-analysis` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 ([#27](https://github.com/choi7614/klover_my_prototype/pull/27), `d93c3b2`), 공통 패치 01~04 미적용 |
+| 상태 | develop 병합 ([#27](https://github.com/choi7614/klover_my_prototype/pull/27), `d93c3b2`), 공통 패치 01~04 적용 (통합 채팅 `integrate/F1-F3-patches`) |
 | 마지막 커밋 | `7a5d049` 2026-11-19 — [F1] develop 반영과 F3 패치와 겹치지 않도록 02 등록 패치 위치 조정 |
 | 기준 develop | `5971346` (병합 후 `d93c3b2`) |
 | 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
+
+### 공통 패치 적용 (2026-11-19, 통합 채팅, `integrate/F1-F3-patches`)
+
+- `patches/F1/` 01~04와 `patches/F3/01`을 develop `4725284` 위에 적용했다: 0007(`0007_f1`, F1 분석·청크·피드백 표, pgvector),
+  `PATCH /mails/{mail_id}/category` 운영 등록, `anthropic` 의존성·`uv.lock`, `.env.example` AI 항목(값 없음), 공유 타입.
+- 패치만으로 AI는 켜지지 않는다. 맥북 `.env`에 `AI_PROVIDER` 등을 설정해야 한다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 패치 적용 | F1 01→02→03→04, F3 01 순서로 충돌 없음. 0007은 `.pending`과 동일 |
+| 의존성 | `anthropic 1.17.0`·`docstring-parser`·`jiter`·`sniffio` 추가만, 기존 버전 변경 없음 |
+| 서버 `ruff check`·`ruff format --check` | 통과 |
+| 서버 `pytest` | 352 통과, 132 skip (실제 PostgreSQL 필요 — 이 환경에 DB 없음. F1 채팅의 분리 DB 사본 확인은 460 통과·24 skip) |
+| `alembic heads` | `0007_f1` 하나 (부모 `0006_f4`) |
+| 공유 타입 | `pnpm gen:api-types` 재생성 결과가 패치 04와 동일 |
+| 데스크톱 `lint`·`typecheck`·`test` | 통과 (22개 파일 154개) |
+| AI 미설정 동작 | `search_ai()` → `(None, None)`, 검색은 503 안내 유지 |
+
+미실행: 실제 DB에 0007 설치(pgvector 필요), 실제 Claude·Ollama 호출.
+
 
 - 완료(가짜 통신·자동 검사로 확인):
   - `.env`의 `AI_PROVIDER`로 제공자 선택(`app/ai/config.py`, `runtime.py`). 비우면 미연결, 가짜 결과 대체 없음.

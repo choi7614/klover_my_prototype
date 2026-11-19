@@ -226,3 +226,26 @@ idle/executing/failed/uncertain/blocked/simulated/succeeded다.
 다시 확인한다. 기존 사용자·메일·계정·키·수신 커서는 수정하지 않는다.
 신규 이력은 0006_f4, 현재 down_revision은 0005_f5다. 통합 직전 head가 바뀌면
 예약 번호와 down_revision을 다시 확인해야 한다. 기존 이력은 수정하지 않는다.
+
+## F1 분석·청크·분류 수정 저장소 (0007_f1, 공통 패치 적용 후)
+
+목표 표의 `mail_chunks`·`category_feedback`와 mails의 AI 열은 실제로 `f1_` 접두사의
+부속 테이블에 저장한다. mails의 기존 열·원문·수신 커서는 바꾸지 않는다.
+
+- `f1_mail_analysis`: mail_id PK, 소유 (mail_id,user_id,account_id) → mails 복합 FK
+  (기존 `uq_mail_f5_owner` 재사용, ON DELETE CASCADE). category/user_label(영문 7종),
+  summary, action_items·entities·events·evidence_spans(JSONB), needs_reply, priority(+이유),
+  failure_code, attempts(0~2), LLM·임베딩의 provider/model/mode(live/test)/dimensions, updated_at.
+  유효 분류는 `user_label ?? category`다.
+- `f1_mail_chunks`: chunk_id PK, kind(body/summary)·seq (mail_id,kind,seq 유일),
+  text, embedding(pgvector `vector`, 차원 미고정 + `vector_dims(embedding)=embedding_dimensions`
+  검사), 임베딩 provider/model/mode, 필터용 received_at·category. 인덱스
+  `ix_f1_chunks_scope(user_id,account_id,received_at,category)`. 검색은 사용자·계정과 임베딩
+  provider/model/dimensions를 반드시 제한한다. 기본 임베딩은 로컬 Ollama bge-m3(1024차원).
+- `f1_category_feedback`: feedback_id PK, 소유 복합 FK, from_addr·subject·user_label·created_at.
+  인덱스 `ix_f1_feedback_sender(user_id,account_id,from_addr,feedback_id DESC)`.
+
+신규 이력은 0007_f1, down_revision은 0006_f4다. `CREATE EXTENSION IF NOT EXISTS vector`를
+포함하므로 pgvector가 있는 DB(infra의 pgvector/pgvector:pg16)에서 실행한다. downgrade는
+F1 테이블만 지우고 확장·메일은 남긴다. ORM 비교용 정의는 `app/db/f1_models.py`이며,
+env.py·비교 검사는 F5 metadata 대신 이를 쓴다(공통·F5 테이블 포함).

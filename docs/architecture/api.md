@@ -115,7 +115,6 @@
 | F0 | POST | `/mails/{mail_id}/spam` | 스팸 처리 |
 | F0 | DELETE | `/mails/{mail_id}` | 삭제 |
 | F0 | GET·PUT | `/settings/notifications` | 알림·시작 프로그램 설정 |
-| F1 | PATCH | `/mails/{mail_id}/category` | 사용자 분류 수정 |
 | F1 | GET | `/mails/counts` | 스마트 보기·카테고리별 건수 |
 | F2 | GET·PUT | `/profile` | 프로필 조회·저장 |
 | F2 | GET·DELETE | `/profile/style` | 문체 학습 결과 조회·삭제 |
@@ -183,3 +182,12 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 503으로 종료하며 대역으로 대체하지 않는다. 운영 서비스는 run_mail_api에서 조립한다.
 사용자·계정은 요청 본문에서 받지 않고, 편집은 expected_revision과 근거를 검증한다.
 일정 예약·내보내기·발송 경로는 추가하지 않는다.
+
+## F1 분류 수정 (공통 패치 적용 후)
+
+`PATCH /mails/{mail_id}/category`를 등록한다. 기존 로컬 Bearer·Origin·연결 계정 검사를 그대로
+쓰고, 본문은 `{category: 영문 분류 키 7종}`만 받는다(user_id/account_id를 받지 않는다).
+응답은 `{mail_id, user_label, effective_category}`, 다른 사용자·없는 메일은 같은 404,
+저장소 미연결은 503이다. 수정은 `f1_mail_analysis.user_label`과 `f1_category_feedback`에
+기록되고 청크의 필터 분류도 갱신한다. 엔진은 run_mail_api가 `app.state.mail_analysis_engine`에
+넣는다. 목록·상세 GET의 AI 필드 확장, `/mails/counts`, 재분석 API는 후속이다.
