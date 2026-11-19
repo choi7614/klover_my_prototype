@@ -5,8 +5,11 @@ import argparse
 import uvicorn
 
 from app.api.mail_read import MailAPIContext
+from app.api.mail_sync import MailSyncContext
 from app.api.profile_draft import F2Context
+from app.connectors.gmail_mail import GmailMailClient
 from app.db.config import DatabaseConfigurationError, database_engine
+from app.db.repositories.gmail_sync import GmailSyncRepository
 from app.db.repositories.mail_query import MailQueryRepository
 from app.db.repositories.profile_draft import F2Repository
 from app.db.repositories.search import SQLSearchRepository
@@ -32,6 +35,11 @@ def main():
         application.state.mail_api = MailAPIContext(
             token,
             MailQueryRepository(engine, settings.expected_email),
+        )
+        # 앱 새로고침의 Gmail 새 메일 가져오기. CLI gmail_mail sync와 같은 저장소·수신 기능이다.
+        application.state.mail_sync = MailSyncContext(
+            GmailSyncRepository(engine, settings),
+            lambda: GmailMailClient(settings),
         )
         application.state.search_service = SearchService(
             SQLSearchRepository(engine),

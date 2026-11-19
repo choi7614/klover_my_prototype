@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { OnboardingStartPage } from './features/onboarding/onboarding-start-page';
-import { MailboxPage } from './features/mailbox/mailbox-page';
+import { MailboxRoute, SearchRoute, unavailableSearchClient } from './features/mailbox/routes';
 import { Button } from './components/ui/button';
 import { mailFailure, type MailError, type MailSession } from '../shared/mail-read';
 import { F2ProfileRoute, F2ReplyRoute, unavailableF2Client, type F2Client } from './features/profile-draft';
+import type { SearchClient } from './features/search/contracts';
 
-// F2 서버 연결 통로(main/preload IPC)는 아직 없다. 기본값은 '준비 부족' 클라이언트다.
-export function App({ f2Client = unavailableF2Client }: { f2Client?: F2Client } = {}) {
+// F2·F3 서버 연결 통로(main/preload IPC)는 아직 없다. 기본값은 '준비 부족' 클라이언트다.
+export function App({ f2Client = unavailableF2Client, searchClient = unavailableSearchClient }: { f2Client?: F2Client; searchClient?: SearchClient } = {}) {
   const api = window.klover?.mail;
   const [session, setSession] = useState<MailSession | null>(null);
   const [error, setError] = useState<MailError | null>(null);
@@ -38,7 +39,8 @@ export function App({ f2Client = unavailableF2Client }: { f2Client?: F2Client } 
     <HashRouter>
       <Routes>
         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
-        {session && api && <Route path="/mail/inbox" element={<MailboxPage api={api} session={session} onDisconnected={disconnected} />} />}
+        {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} />} />}
+        {session && <Route path="/search" element={<SearchRoute client={searchClient} session={session} />} />}
         <Route path="/settings/profile" element={<F2ProfileRoute client={f2Client} mailboxPath={mailboxPath} />} />
         <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2Client} mailboxPath={mailboxPath} />} />
         <Route path="*" element={<Navigate to={session ? '/mail/inbox' : '/onboarding/1'} replace />} />

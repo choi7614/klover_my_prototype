@@ -116,6 +116,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/mails/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Mails
+         * @description 사용 시작 이후 도착한 받은편지함 메일만 저장한다. 이미 저장한 메일은 건너뛴다.
+         */
+        post: operations["sync_mails_mails_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/mails/{mail_id}": {
         parameters: {
             query?: never;
@@ -444,6 +464,23 @@ export interface components {
             received_at: string;
             /** Subject */
             subject: string;
+        };
+        /**
+         * MailSyncResult
+         * @description Gmail 새 받은 메일 가져오기 결과. 메일 내용·토큰은 포함하지 않는다.
+         */
+        MailSyncResult: {
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "initial" | "history" | "rescan";
+            /** Saved */
+            saved: number;
+            /** Skipped */
+            skipped: number;
+            /** Token Refreshed */
+            token_refreshed: boolean;
         };
         /** ParsedQuery */
         ParsedQuery: {
@@ -1342,6 +1379,89 @@ export interface operations {
             };
             /** @description 서버 내부 오류 */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    sync_mails_mails_sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailSyncResult"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 이미 새 메일을 가져오는 중 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Gmail에서 가져오지 못함 */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -2,9 +2,9 @@ import { open } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { isAbsolute } from 'node:path';
 import {
-  mailFailure, validInboxQuery, validMailId,
+  mailFailure, validInboxQuery, validMailId, validSyncResult,
   type InboxQuery, type MailDetail, type MailPage, type MailReadBridge,
-  type MailResult, type MailSession, type MailSummary,
+  type MailResult, type MailSession, type MailSummary, type MailSyncResult,
 } from '../shared/mail-read';
 
 type Configuration = { baseURL?: string; tokenFile?: string };
@@ -50,7 +50,8 @@ function contacts(value: unknown): MailDetail['to'] {
 export class MailAPIClient implements MailReadBridge {
   constructor(private readonly configuration: Configuration, private readonly fetcher: typeof fetch = fetch) {}
 
-  private async request<T>(path: string, parse: (value: unknown) => T): Promise<MailResult<T>> {
+  // 새 메일 가져오기는 Gmail 수신을 기다리므로 조회보다 길게 기다린다.
+  private async request<T>(path: string, parse: (value: unknown) => T, method: 'GET' | 'POST' = 'GET', timeout = 10000): Promise<MailResult<T>> {
     let base: URL;
     let token: string;
     try {
@@ -70,14 +71,16 @@ export class MailAPIClient implements MailReadBridge {
 
     try {
       const response = await this.fetcher(new URL(path, base), {
-        method: 'GET', headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(10000),
+        method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(timeout),
       });
       if (!response.ok) {
         switch (response.status) {
           case 401: return mailFailure('unauthorized');
           case 403: return mailFailure('forbidden');
           case 404: return mailFailure('not_found');
+          case 409: return mailFailure('sync_in_progress');
+          case 502: return mailFailure('gmail_unavailable');
           case 422: return mailFailure('invalid_request');
           default: return mailFailure('unavailable');
         }
@@ -105,6 +108,13 @@ export class MailAPIClient implements MailReadBridge {
           (query?.cursor && page.next_cursor === query.cursor)) throw new Error('response');
       return { items: page.items.map(summary), next_cursor: page.next_cursor as string | null };
     });
+  }
+
+  sync(): Promise<MailResult<MailSyncResult>> {
+    return this.request('/mails/sync', value => {
+      if (!validSyncResult(value)) throw new Error('response');
+      return { saved: value.saved, skipped: value.skipped, mode: value.mode, token_refreshed: value.token_refreshed };
+    }, 'POST', 120000);
   }
 
   detail(mailId: string): Promise<MailResult<MailDetail>> {
