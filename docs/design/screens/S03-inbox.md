@@ -1,6 +1,6 @@
 # S03. 받은편지함 (AI 분류) — 기준 화면
 
-> 기능 F0·F1 · 담당 A(틀·목록) · C(AI 표시) · 라우트 `/mail/:box/:mailId?` · 목업 [S03-inbox.png](mockups/png/S03-inbox.png)
+> 기능 F0·F1 · 라우트 `/mail/:box/:mailId?` · 목업 [S03-inbox.png](mockups/png/S03-inbox.png)
 
 **이 화면을 가장 먼저 완성한다.** 나머지 화면은 "S03과 같은 스타일로"를 기준으로 만든다.
 

@@ -6,7 +6,7 @@
 
 | 문서 | 내용 |
 | --- | --- |
-| [overview.md](product/overview.md) | 서비스 개요, 기능 목록·담당, 기능 간 연결, 원칙 |
+| [overview.md](product/overview.md) | 서비스 개요, 기능 목록, 기능 간 연결, 원칙 |
 | [decisions.md](product/decisions.md) | 결정 사항 로그 |
 | [open-questions.md](product/open-questions.md) | 남은 확인 포인트와 데모 동안의 임시 가정 |
 | [features/F0-onboarding-mailbox.md](product/features/F0-onboarding-mailbox.md) | 첫 실행 설정과 기본 메일함 |
@@ -39,14 +39,24 @@
 
 | 문서 | 내용 |
 | --- | --- |
+| [progress.md](dev/progress.md) | **개발 현황판** — 기능별 브랜치·작업 도구·상태, 마이그레이션 번호 예약 |
+| [handoff-prompts.md](dev/handoff-prompts.md) | Codex ↔ Claude 도구 전환용 프롬프트 모음 |
+| [status-template.md](dev/status-template.md) | 기능별 status 문서 양식 |
 | [setup.md](dev/setup.md) | 개발 환경 준비·실행 |
 | [local-database.md](dev/local-database.md) | 맥북 DB 실행·마이그레이션·데이터 유지 확인 |
 | [google-connection.md](dev/google-connection.md) | 맥북 전용 Google 로그인·계정 확인·암호화 저장 |
 | [gmail-mail-sync.md](dev/gmail-mail-sync.md) | 새 받은 메일 수신·중복 방지 저장·조회·토큰 갱신 |
 | [mail-read-api.md](dev/mail-read-api.md) | 인증된 메일 조회 API·맥북 확인·F0 연결 후 앱 실행 |
 | [F0-mail-api-handoff.md](dev/F0-mail-api-handoff.md) | F0 채팅에 그대로 보낼 서버 연결 요청 |
-| [workflow.md](dev/workflow.md) | 역할 분담, Git 규칙, Claude Code 사용 요령 |
+| [workflow.md](dev/workflow.md) | 1인 개발 채팅 운영, Git 규칙, Codex·Claude 전환 요령 |
 | [F4-weekly-report-plan.md](dev/F4-weekly-report-plan.md) | F4 기반 점검, 작은 작업 단위, 수용 기준 진행 상태 |
+| [F0-mailbox-status.md](dev/F0-mailbox-status.md) | F0 현재 상태·PR #10 대기·다음 할 일 |
+| [F1-analysis-status.md](dev/F1-analysis-status.md) | F1 구현·검사 결과와 남은 연결 |
+| [F2-profile-draft-status.md](dev/F2-profile-draft-status.md) | F2 현재 상태·공통 패치 적용 대기 |
+| [F4-weekly-report-status.md](dev/F4-weekly-report-status.md) | F4 현재 상태·다음 단위 |
+| [F5-ai-scan-status.md](dev/F5-ai-scan-status.md) | F5 미착수 |
+| [F3-search-status.md](dev/F3-search-status.md) | F3 구현·서버 등록·검사 결과와 남은 연결 |
+| [F3-search-handoff.md](dev/F3-search-handoff.md) | F0/F1/F2·공통 서버 연결 계약과 확인 방법 |
 
 ## 기능 정의서 템플릿
 

@@ -26,7 +26,7 @@ klover/
 ├─ apps/server/   서버 (Python FastAPI)
 ├─ packages/      공유 타입
 ├─ fixtures/      데모용 가짜 메일
-└─ infra/         Docker Compose (PostgreSQL + pgvector, Redis)
+└─ infra/         Docker Compose (PostgreSQL + pgvector)
 ```
 
 - 데스크톱: Windows 10 이상, 트레이 상주, 시작 프로그램 등록
@@ -35,10 +35,12 @@ klover/
 ## 시작하기
 
 개발 환경 준비와 실행 방법은 [docs/dev/setup.md](docs/dev/setup.md),
-작업 방식(역할 분담, 브랜치, Claude Code 사용법)은 [docs/dev/workflow.md](docs/dev/workflow.md)를 보세요.
+작업 방식(채팅 운영, 브랜치, Codex·Claude 전환)은 [docs/dev/workflow.md](docs/dev/workflow.md)를 보세요.
+현재 진행 상황은 [docs/dev/progress.md](docs/dev/progress.md) 현황판에 있습니다.
 
-Claude Code로 작업할 때는 루트의 [CLAUDE.md](CLAUDE.md)가 자동으로 적용됩니다.
+작업 규칙은 루트의 [AGENTS.md](AGENTS.md) 하나로 관리합니다. GPT Codex는 AGENTS.md를,
+Claude Code는 이를 불러오는 [CLAUDE.md](CLAUDE.md)를 자동으로 읽습니다.
 
 ## 팀
 
-Koscom CoP — 4명 (A: 앱·F0 / B: 서버·Gmail·DB / C: F1·F5 / D: F2·F3·F4)
+Koscom CoP — 1인 개발 (GPT Codex·Claude Code를 기능별·공통·통합 채팅으로 나눠 사용)

@@ -1,6 +1,6 @@
 # S02. 빈 받은편지함
 
-> 기능 F0 · 담당 A · 라우트 `/mail/inbox` (메일 0건일 때) · 목업 [S02-inbox-empty.png](mockups/png/S02-inbox-empty.png)
+> 기능 F0 · 라우트 `/mail/inbox` (메일 0건일 때) · 목업 [S02-inbox-empty.png](mockups/png/S02-inbox-empty.png)
 
 ## 1. 목적
 

@@ -1,6 +1,6 @@
 # S05. 새 메일 작성 · 답장
 
-> 기능 F0 · 담당 A · 라우트 `/compose`, `/compose/:draftId` · 목업 [S05-compose.png](mockups/png/S05-compose.png)
+> 기능 F0 · 라우트 `/compose`, `/compose/:draftId` · 목업 [S05-compose.png](mockups/png/S05-compose.png)
 
 ## 1. 목적
 

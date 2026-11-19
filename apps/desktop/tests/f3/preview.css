@@ -1,0 +1,3 @@
+/* 독립 Vite 루트 밖의 실제 화면/공통 버튼에도 기준 토큰 유틸리티를 생성한다. */
+@import "../../src/renderer/styles/globals.css";
+@source "../../src/renderer";

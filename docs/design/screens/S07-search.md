@@ -1,6 +1,6 @@
 # S07. 자연어 검색 (F3)
 
-> 기능 F3 · 담당 D · 라우트 `/search?q=` · 목업 [S07-search.png](mockups/png/S07-search.png)
+> 기능 F3 · 라우트 `/search?q=` · 목업 [S07-search.png](mockups/png/S07-search.png)
 
 ## 1. 목적
 

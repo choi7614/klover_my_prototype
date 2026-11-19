@@ -1,6 +1,6 @@
 # S10. Windows 알림 · 트레이 · 놓친 제안 (F0·F5)
 
-> 기능 F0·F5 · 담당 A(트레이·알림 틀) · C(제안 내용) · 목업 [S10-notifications-tray.png](mockups/png/S10-notifications-tray.png)
+> 기능 F0·F5 · 목업 [S10-notifications-tray.png](mockups/png/S10-notifications-tray.png)
 
 앱 창 밖에서 보이는 세 가지를 정의한다. **A. 놓친 제안 대화상자 / B. Windows 알림 / C. 트레이 메뉴**
 
