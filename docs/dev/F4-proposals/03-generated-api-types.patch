@@ -1,0 +1,2179 @@
+--- a/packages/api-types/openapi.json
++++ b/packages/api-types/openapi.json
+@@ -1,6 +1,31 @@
+ {
+   "components": {
+     "schemas": {
++      "EditWeeklyReport": {
++        "additionalProperties": false,
++        "properties": {
++          "expected_revision": {
++            "minimum": 1.0,
++            "title": "Expected Revision",
++            "type": "integer"
++          },
++          "sections": {
++            "items": {
++              "$ref": "#/components/schemas/ReportSection"
++            },
++            "maxItems": 20,
++            "minItems": 1,
++            "title": "Sections",
++            "type": "array"
++          }
++        },
++        "required": [
++          "expected_revision",
++          "sections"
++        ],
++        "title": "EditWeeklyReport",
++        "type": "object"
++      },
+       "ErrorDetail": {
+         "properties": {
+           "code": {
+@@ -29,6 +54,99 @@
+           "error"
+         ],
+         "title": "ErrorResponse",
++        "type": "object"
++      },
++      "ExcludedReportMail": {
++        "additionalProperties": false,
++        "properties": {
++          "mail": {
++            "$ref": "#/components/schemas/ReportMail"
++          },
++          "reason": {
++            "enum": [
++              "notice",
++              "newsletter"
++            ],
++            "title": "Reason",
++            "type": "string"
++          }
++        },
++        "required": [
++          "mail",
++          "reason"
++        ],
++        "title": "ExcludedReportMail",
++        "type": "object"
++      },
++      "GenerateWeeklyReport": {
++        "additionalProperties": false,
++        "properties": {
++          "end": {
++            "anyOf": [
++              {
++                "format": "date",
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "End"
++          },
++          "expected_revision": {
++            "anyOf": [
++              {
++                "minimum": 1.0,
++                "type": "integer"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Expected Revision"
++          },
++          "recipient": {
++            "anyOf": [
++              {
++                "maxLength": 10000,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Recipient"
++          },
++          "regenerate": {
++            "default": false,
++            "title": "Regenerate",
++            "type": "boolean"
++          },
++          "start": {
++            "anyOf": [
++              {
++                "format": "date",
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Start"
++          },
++          "template": {
++            "default": "profile",
++            "enum": [
++              "profile",
++              "bullet",
++              "prose"
++            ],
++            "title": "Template",
++            "type": "string"
++          }
++        },
++        "title": "GenerateWeeklyReport",
+         "type": "object"
+       },
+       "HealthResponse": {
+@@ -74,24 +192,6 @@
+         "title": "LocalSession",
+         "type": "object"
+       },
+-      "MailContact": {
+-        "properties": {
+-          "addr": {
+-            "title": "Addr",
+-            "type": "string"
+-          },
+-          "name": {
+-            "default": "",
+-            "title": "Name",
+-            "type": "string"
+-          }
+-        },
+-        "required": [
+-          "addr"
+-        ],
+-        "title": "MailContact",
+-        "type": "object"
+-      },
+       "MailDetail": {
+         "properties": {
+           "analysis_status": {
+@@ -109,7 +209,7 @@
+           },
+           "cc": {
+             "items": {
+-              "$ref": "#/components/schemas/MailContact"
++              "$ref": "#/components/schemas/app__schemas__mail_api__MailContact"
+             },
+             "title": "Cc",
+             "type": "array"
+@@ -145,7 +245,7 @@
+           },
+           "to": {
+             "items": {
+-              "$ref": "#/components/schemas/MailContact"
++              "$ref": "#/components/schemas/app__schemas__mail_api__MailContact"
+             },
+             "title": "To",
+             "type": "array"
+@@ -167,6 +267,37 @@
+         "title": "MailDetail",
+         "type": "object"
+       },
++      "MailEntities": {
++        "additionalProperties": false,
++        "properties": {
++          "orgs": {
++            "default": [],
++            "items": {
++              "type": "string"
++            },
++            "title": "Orgs",
++            "type": "array"
++          },
++          "people": {
++            "default": [],
++            "items": {
++              "type": "string"
++            },
++            "title": "People",
++            "type": "array"
++          },
++          "projects": {
++            "default": [],
++            "items": {
++              "type": "string"
++            },
++            "title": "Projects",
++            "type": "array"
++          }
++        },
++        "title": "MailEntities",
++        "type": "object"
++      },
+       "MailPage": {
+         "properties": {
+           "items": {
+@@ -247,6 +378,503 @@
+           "analysis_status"
+         ],
+         "title": "MailSummary",
++        "type": "object"
++      },
++      "ReportItem": {
++        "additionalProperties": false,
++        "properties": {
++          "evidence": {
++            "items": {
++              "minLength": 1,
++              "type": "string"
++            },
++            "maxItems": 1000,
++            "minItems": 1,
++            "title": "Evidence",
++            "type": "array"
++          },
++          "item_id": {
++            "minLength": 1,
++            "title": "Item Id",
++            "type": "string"
++          },
++          "text": {
++            "maxLength": 10000,
++            "minLength": 1,
++            "title": "Text",
++            "type": "string"
++          }
++        },
++        "required": [
++          "text",
++          "evidence",
++          "item_id"
++        ],
++        "title": "ReportItem",
++        "type": "object"
++      },
++      "ReportMail": {
++        "additionalProperties": false,
++        "properties": {
++          "analysis_status": {
++            "enum": [
++              "pending",
++              "done",
++              "failed"
++            ],
++            "title": "Analysis Status",
++            "type": "string"
++          },
++          "body_text": {
++            "title": "Body Text",
++            "type": "string"
++          },
++          "category": {
++            "anyOf": [
++              {
++                "enum": [
++                  "work_request",
++                  "meeting",
++                  "approval",
++                  "report_share",
++                  "notice",
++                  "external",
++                  "newsletter"
++                ],
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Category"
++          },
++          "direction": {
++            "enum": [
++              "received",
++              "sent"
++            ],
++            "title": "Direction",
++            "type": "string"
++          },
++          "entities": {
++            "$ref": "#/components/schemas/MailEntities"
++          },
++          "from_addr": {
++            "title": "From Addr",
++            "type": "string"
++          },
++          "from_name": {
++            "default": "",
++            "title": "From Name",
++            "type": "string"
++          },
++          "mail_id": {
++            "minLength": 1,
++            "title": "Mail Id",
++            "type": "string"
++          },
++          "received_at": {
++            "format": "date-time",
++            "title": "Received At",
++            "type": "string"
++          },
++          "subject": {
++            "title": "Subject",
++            "type": "string"
++          },
++          "summary": {
++            "anyOf": [
++              {
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Summary"
++          },
++          "thread_id": {
++            "anyOf": [
++              {
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Thread Id"
++          },
++          "to": {
++            "items": {
++              "$ref": "#/components/schemas/app__schemas__report__MailContact"
++            },
++            "title": "To",
++            "type": "array"
++          },
++          "user_id": {
++            "minLength": 1,
++            "title": "User Id",
++            "type": "string"
++          },
++          "user_label": {
++            "anyOf": [
++              {
++                "enum": [
++                  "work_request",
++                  "meeting",
++                  "approval",
++                  "report_share",
++                  "notice",
++                  "external",
++                  "newsletter"
++                ],
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "User Label"
++          }
++        },
++        "required": [
++          "mail_id",
++          "user_id",
++          "direction",
++          "received_at",
++          "from_addr",
++          "to",
++          "subject",
++          "body_text",
++          "analysis_status"
++        ],
++        "title": "ReportMail",
++        "type": "object"
++      },
++      "ReportPeriod": {
++        "additionalProperties": false,
++        "properties": {
++          "end": {
++            "format": "date",
++            "title": "End",
++            "type": "string"
++          },
++          "start": {
++            "format": "date",
++            "title": "Start",
++            "type": "string"
++          }
++        },
++        "required": [
++          "start",
++          "end"
++        ],
++        "title": "ReportPeriod",
++        "type": "object"
++      },
++      "ReportProfile": {
++        "additionalProperties": false,
++        "properties": {
++          "name": {
++            "maxLength": 10000,
++            "minLength": 1,
++            "title": "Name",
++            "type": "string"
++          },
++          "org": {
++            "maxLength": 10000,
++            "minLength": 1,
++            "title": "Org",
++            "type": "string"
++          },
++          "report_recipient": {
++            "maxLength": 10000,
++            "minLength": 1,
++            "title": "Report Recipient",
++            "type": "string"
++          },
++          "report_sections": {
++            "items": {
++              "maxLength": 120,
++              "minLength": 1,
++              "type": "string"
++            },
++            "maxItems": 20,
++            "minItems": 1,
++            "title": "Report Sections",
++            "type": "array"
++          },
++          "report_style": {
++            "enum": [
++              "bullet",
++              "prose"
++            ],
++            "title": "Report Style",
++            "type": "string"
++          },
++          "title": {
++            "default": "",
++            "title": "Title",
++            "type": "string"
++          },
++          "user_id": {
++            "minLength": 1,
++            "title": "User Id",
++            "type": "string"
++          }
++        },
++        "required": [
++          "user_id",
++          "name",
++          "org",
++          "report_sections",
++          "report_recipient",
++          "report_style"
++        ],
++        "title": "ReportProfile",
++        "type": "object"
++      },
++      "ReportScope": {
++        "additionalProperties": false,
++        "properties": {
++          "excluded": {
++            "title": "Excluded",
++            "type": "integer"
++          },
++          "grouped": {
++            "title": "Grouped",
++            "type": "integer"
++          },
++          "groups": {
++            "title": "Groups",
++            "type": "integer"
++          },
++          "total": {
++            "title": "Total",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "total",
++          "grouped",
++          "groups",
++          "excluded"
++        ],
++        "title": "ReportScope",
++        "type": "object"
++      },
++      "ReportSection": {
++        "additionalProperties": false,
++        "properties": {
++          "items": {
++            "items": {
++              "$ref": "#/components/schemas/ReportItem"
++            },
++            "maxItems": 1000,
++            "title": "Items",
++            "type": "array"
++          },
++          "name": {
++            "maxLength": 120,
++            "minLength": 1,
++            "title": "Name",
++            "type": "string"
++          }
++        },
++        "required": [
++          "name",
++          "items"
++        ],
++        "title": "ReportSection",
++        "type": "object"
++      },
++      "WeeklyReportDocument": {
++        "additionalProperties": false,
++        "properties": {
++          "created_at": {
++            "format": "date-time",
++            "title": "Created At",
++            "type": "string"
++          },
++          "evidence_mails": {
++            "items": {
++              "$ref": "#/components/schemas/ReportMail"
++            },
++            "title": "Evidence Mails",
++            "type": "array"
++          },
++          "generation": {
++            "enum": [
++              "test_double",
++              "ai",
++              "none"
++            ],
++            "title": "Generation",
++            "type": "string"
++          },
++          "period": {
++            "$ref": "#/components/schemas/ReportPeriod"
++          },
++          "recipient": {
++            "title": "Recipient",
++            "type": "string"
++          },
++          "report_id": {
++            "minLength": 1,
++            "title": "Report Id",
++            "type": "string"
++          },
++          "revision": {
++            "minimum": 1.0,
++            "title": "Revision",
++            "type": "integer"
++          },
++          "scope": {
++            "$ref": "#/components/schemas/ReportScope"
++          },
++          "sections": {
++            "items": {
++              "$ref": "#/components/schemas/ReportSection"
++            },
++            "title": "Sections",
++            "type": "array"
++          },
++          "status": {
++            "enum": [
++              "ready",
++              "empty"
++            ],
++            "title": "Status",
++            "type": "string"
++          },
++          "style": {
++            "enum": [
++              "bullet",
++              "prose"
++            ],
++            "title": "Style",
++            "type": "string"
++          },
++          "subtitle": {
++            "title": "Subtitle",
++            "type": "string"
++          },
++          "title": {
++            "title": "Title",
++            "type": "string"
++          },
++          "updated_at": {
++            "format": "date-time",
++            "title": "Updated At",
++            "type": "string"
++          }
++        },
++        "required": [
++          "report_id",
++          "revision",
++          "period",
++          "title",
++          "subtitle",
++          "recipient",
++          "style",
++          "sections",
++          "scope",
++          "evidence_mails",
++          "status",
++          "generation",
++          "created_at",
++          "updated_at"
++        ],
++        "title": "WeeklyReportDocument",
++        "type": "object"
++      },
++      "WeeklyReportOptions": {
++        "additionalProperties": false,
++        "properties": {
++          "available_on": {
++            "format": "date",
++            "title": "Available On",
++            "type": "string"
++          },
++          "default_period": {
++            "$ref": "#/components/schemas/ReportPeriod"
++          },
++          "generation": {
++            "enum": [
++              "test_double",
++              "ai",
++              "unavailable"
++            ],
++            "title": "Generation",
++            "type": "string"
++          },
++          "profile": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/ReportProfile"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "remaining_days": {
++            "minimum": 0.0,
++            "title": "Remaining Days",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "default_period",
++          "profile",
++          "remaining_days",
++          "available_on",
++          "generation"
++        ],
++        "title": "WeeklyReportOptions",
++        "type": "object"
++      },
++      "app__schemas__mail_api__MailContact": {
++        "properties": {
++          "addr": {
++            "title": "Addr",
++            "type": "string"
++          },
++          "name": {
++            "default": "",
++            "title": "Name",
++            "type": "string"
++          }
++        },
++        "required": [
++          "addr"
++        ],
++        "title": "MailContact",
++        "type": "object"
++      },
++      "app__schemas__report__MailContact": {
++        "additionalProperties": false,
++        "properties": {
++          "addr": {
++            "title": "Addr",
++            "type": "string"
++          },
++          "name": {
++            "default": "",
++            "title": "Name",
++            "type": "string"
++          },
++          "org": {
++            "default": "",
++            "title": "Org",
++            "type": "string"
++          }
++        },
++        "required": [
++          "addr"
++        ],
++        "title": "MailContact",
+         "type": "object"
+       }
+     },
+@@ -621,6 +1249,600 @@
+           "메일 조회"
+         ]
+       }
++    },
++    "/reports/weekly": {
++      "post": {
++        "operationId": "generate_reports_weekly_post",
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/GenerateWeeklyReport"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/WeeklyReportDocument"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Generate",
++        "tags": [
++          "주간 보고"
++        ]
++      }
++    },
++    "/reports/weekly/options": {
++      "get": {
++        "operationId": "options_reports_weekly_options_get",
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/WeeklyReportOptions"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Options",
++        "tags": [
++          "주간 보고"
++        ]
++      }
++    },
++    "/reports/weekly/{report_id}": {
++      "get": {
++        "operationId": "get_reports_weekly__report_id__get",
++        "parameters": [
++          {
++            "in": "path",
++            "name": "report_id",
++            "required": true,
++            "schema": {
++              "maxLength": 128,
++              "minLength": 1,
++              "pattern": "^[A-Za-z0-9_-]+$",
++              "title": "Report Id",
++              "type": "string"
++            }
++          }
++        ],
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/WeeklyReportDocument"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Get",
++        "tags": [
++          "주간 보고"
++        ]
++      },
++      "patch": {
++        "operationId": "edit_reports_weekly__report_id__patch",
++        "parameters": [
++          {
++            "in": "path",
++            "name": "report_id",
++            "required": true,
++            "schema": {
++              "maxLength": 128,
++              "minLength": 1,
++              "pattern": "^[A-Za-z0-9_-]+$",
++              "title": "Report Id",
++              "type": "string"
++            }
++          }
++        ],
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/EditWeeklyReport"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/WeeklyReportDocument"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Edit",
++        "tags": [
++          "주간 보고"
++        ]
++      }
++    },
++    "/reports/weekly/{report_id}/excluded": {
++      "get": {
++        "operationId": "excluded_reports_weekly__report_id__excluded_get",
++        "parameters": [
++          {
++            "in": "path",
++            "name": "report_id",
++            "required": true,
++            "schema": {
++              "maxLength": 128,
++              "minLength": 1,
++              "pattern": "^[A-Za-z0-9_-]+$",
++              "title": "Report Id",
++              "type": "string"
++            }
++          }
++        ],
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "items": {
++                    "$ref": "#/components/schemas/ExcludedReportMail"
++                  },
++                  "title": "Response Excluded Reports Weekly  Report Id  Excluded Get",
++                  "type": "array"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Excluded",
++        "tags": [
++          "주간 보고"
++        ]
++      }
+     }
+   }
+ }
+--- a/packages/api-types/src/schema.d.ts
++++ b/packages/api-types/src/schema.d.ts
+@@ -84,10 +84,86 @@
+         patch?: never;
+         trace?: never;
+     };
++    "/reports/weekly": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        /** Generate */
++        post: operations["generate_reports_weekly_post"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/reports/weekly/options": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Options */
++        get: operations["options_reports_weekly_options_get"];
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/reports/weekly/{report_id}": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Get */
++        get: operations["get_reports_weekly__report_id__get"];
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        /** Edit */
++        patch: operations["edit_reports_weekly__report_id__patch"];
++        trace?: never;
++    };
++    "/reports/weekly/{report_id}/excluded": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Excluded */
++        get: operations["excluded_reports_weekly__report_id__excluded_get"];
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+ }
+ export type webhooks = Record<string, never>;
+ export interface components {
+     schemas: {
++        /** EditWeeklyReport */
++        EditWeeklyReport: {
++            /** Expected Revision */
++            expected_revision: number;
++            /** Sections */
++            sections: components["schemas"]["ReportSection"][];
++        };
+         /** ErrorDetail */
+         ErrorDetail: {
+             /** Code */
+@@ -99,6 +175,37 @@
+         ErrorResponse: {
+             error: components["schemas"]["ErrorDetail"];
+         };
++        /** ExcludedReportMail */
++        ExcludedReportMail: {
++            mail: components["schemas"]["ReportMail"];
++            /**
++             * Reason
++             * @enum {string}
++             */
++            reason: "notice" | "newsletter";
++        };
++        /** GenerateWeeklyReport */
++        GenerateWeeklyReport: {
++            /** End */
++            end?: string | null;
++            /** Expected Revision */
++            expected_revision?: number | null;
++            /** Recipient */
++            recipient?: string | null;
++            /**
++             * Regenerate
++             * @default false
++             */
++            regenerate: boolean;
++            /** Start */
++            start?: string | null;
++            /**
++             * Template
++             * @default profile
++             * @enum {string}
++             */
++            template: "profile" | "bullet" | "prose";
++        };
+         /** HealthResponse */
+         HealthResponse: {
+             /**
+@@ -121,16 +228,6 @@
+             /** User Id */
+             user_id: string;
+         };
+-        /** MailContact */
+-        MailContact: {
+-            /** Addr */
+-            addr: string;
+-            /**
+-             * Name
+-             * @default
+-             */
+-            name: string;
+-        };
+         /** MailDetail */
+         MailDetail: {
+             /**
+@@ -141,7 +238,7 @@
+             /** Body Text */
+             body_text: string;
+             /** Cc */
+-            cc: components["schemas"]["MailContact"][];
++            cc: components["schemas"]["app__schemas__mail_api__MailContact"][];
+             /** From Addr */
+             from_addr: string;
+             /** From Name */
+@@ -160,7 +257,25 @@
+             /** Subject */
+             subject: string;
+             /** To */
+-            to: components["schemas"]["MailContact"][];
++            to: components["schemas"]["app__schemas__mail_api__MailContact"][];
++        };
++        /** MailEntities */
++        MailEntities: {
++            /**
++             * Orgs
++             * @default []
++             */
++            orgs: string[];
++            /**
++             * People
++             * @default []
++             */
++            people: string[];
++            /**
++             * Projects
++             * @default []
++             */
++            projects: string[];
+         };
+         /** MailPage */
+         MailPage: {
+@@ -194,6 +309,199 @@
+             /** Subject */
+             subject: string;
+         };
++        /** ReportItem */
++        ReportItem: {
++            /** Evidence */
++            evidence: string[];
++            /** Item Id */
++            item_id: string;
++            /** Text */
++            text: string;
++        };
++        /** ReportMail */
++        ReportMail: {
++            /**
++             * Analysis Status
++             * @enum {string}
++             */
++            analysis_status: "pending" | "done" | "failed";
++            /** Body Text */
++            body_text: string;
++            /** Category */
++            category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
++            /**
++             * Direction
++             * @enum {string}
++             */
++            direction: "received" | "sent";
++            entities?: components["schemas"]["MailEntities"];
++            /** From Addr */
++            from_addr: string;
++            /**
++             * From Name
++             * @default
++             */
++            from_name: string;
++            /** Mail Id */
++            mail_id: string;
++            /**
++             * Received At
++             * Format: date-time
++             */
++            received_at: string;
++            /** Subject */
++            subject: string;
++            /** Summary */
++            summary?: string | null;
++            /** Thread Id */
++            thread_id?: string | null;
++            /** To */
++            to: components["schemas"]["app__schemas__report__MailContact"][];
++            /** User Id */
++            user_id: string;
++            /** User Label */
++            user_label?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
++        };
++        /** ReportPeriod */
++        ReportPeriod: {
++            /**
++             * End
++             * Format: date
++             */
++            end: string;
++            /**
++             * Start
++             * Format: date
++             */
++            start: string;
++        };
++        /** ReportProfile */
++        ReportProfile: {
++            /** Name */
++            name: string;
++            /** Org */
++            org: string;
++            /** Report Recipient */
++            report_recipient: string;
++            /** Report Sections */
++            report_sections: string[];
++            /**
++             * Report Style
++             * @enum {string}
++             */
++            report_style: "bullet" | "prose";
++            /**
++             * Title
++             * @default
++             */
++            title: string;
++            /** User Id */
++            user_id: string;
++        };
++        /** ReportScope */
++        ReportScope: {
++            /** Excluded */
++            excluded: number;
++            /** Grouped */
++            grouped: number;
++            /** Groups */
++            groups: number;
++            /** Total */
++            total: number;
++        };
++        /** ReportSection */
++        ReportSection: {
++            /** Items */
++            items: components["schemas"]["ReportItem"][];
++            /** Name */
++            name: string;
++        };
++        /** WeeklyReportDocument */
++        WeeklyReportDocument: {
++            /**
++             * Created At
++             * Format: date-time
++             */
++            created_at: string;
++            /** Evidence Mails */
++            evidence_mails: components["schemas"]["ReportMail"][];
++            /**
++             * Generation
++             * @enum {string}
++             */
++            generation: "test_double" | "ai" | "none";
++            period: components["schemas"]["ReportPeriod"];
++            /** Recipient */
++            recipient: string;
++            /** Report Id */
++            report_id: string;
++            /** Revision */
++            revision: number;
++            scope: components["schemas"]["ReportScope"];
++            /** Sections */
++            sections: components["schemas"]["ReportSection"][];
++            /**
++             * Status
++             * @enum {string}
++             */
++            status: "ready" | "empty";
++            /**
++             * Style
++             * @enum {string}
++             */
++            style: "bullet" | "prose";
++            /** Subtitle */
++            subtitle: string;
++            /** Title */
++            title: string;
++            /**
++             * Updated At
++             * Format: date-time
++             */
++            updated_at: string;
++        };
++        /** WeeklyReportOptions */
++        WeeklyReportOptions: {
++            /**
++             * Available On
++             * Format: date
++             */
++            available_on: string;
++            default_period: components["schemas"]["ReportPeriod"];
++            /**
++             * Generation
++             * @enum {string}
++             */
++            generation: "test_double" | "ai" | "unavailable";
++            profile: components["schemas"]["ReportProfile"] | null;
++            /** Remaining Days */
++            remaining_days: number;
++        };
++        /** MailContact */
++        app__schemas__mail_api__MailContact: {
++            /** Addr */
++            addr: string;
++            /**
++             * Name
++             * @default
++             */
++            name: string;
++        };
++        /** MailContact */
++        app__schemas__report__MailContact: {
++            /** Addr */
++            addr: string;
++            /**
++             * Name
++             * @default
++             */
++            name: string;
++            /**
++             * Org
++             * @default
++             */
++            org: string;
++        };
+     };
+     responses: never;
+     parameters: never;
+@@ -469,4 +777,478 @@
+             };
+         };
+     };
++    generate_reports_weekly_post: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["GenerateWeeklyReport"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["WeeklyReportDocument"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    options_reports_weekly_options_get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["WeeklyReportOptions"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    get_reports_weekly__report_id__get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path: {
++                report_id: string;
++            };
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["WeeklyReportDocument"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    edit_reports_weekly__report_id__patch: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path: {
++                report_id: string;
++            };
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["EditWeeklyReport"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["WeeklyReportDocument"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    excluded_reports_weekly__report_id__excluded_get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path: {
++                report_id: string;
++            };
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ExcludedReportMail"][];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
+ }
