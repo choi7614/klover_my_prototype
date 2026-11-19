@@ -212,3 +212,15 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 `priority_reason`, `has_events`, `evidence_spans[{kind,start,end}]`, `failure_code`(failed일 때).
 원문·벡터·모델 정보는 넣지 않는다. 운영에서 테스트 대역(mode=test) 결과는 pending으로 보인다.
 `auto_analysis`: `ready` / `not_configured` / `external_blocked` / `not_connected`(작업자 미조립).
+
+## 기능별 AI 설정·요청 (2026-11-20)
+
+- `GET /settings/ai`: 기능별 기본값, 외부 전송 허용 여부, 키 등록 여부, 로컬 모델 설정 여부, Claude 모델 ID. 키 값은 반환하지 않음.
+- `PUT /settings/ai`: `defaults`(draft/search/weekly_report 각각 ollama/claude), `external_consent`, 선택 `api_key`·`claude_model`·`clear_key`. 키 생략/빈 UI 입력은 유지. `clear_key`는 암호화 파일에 저장한 키만 삭제하며 환경 변수 키는 보존.
+- `POST /settings/ai/check`: `{provider: ollama|claude}`. 메일 없는 고정 합성 요청으로 연결 검사(Claude 소량 과금). 실제 기능 품질 검사가 아님.
+- 모두 기존 loopback·Bearer·Origin 차단 경계와 비공개 응답 정책을 사용한다. 기존 연결 계정의 로컬 운영자 설정이다.
+- `POST /drafts`, `/drafts/{id}/revise`, `/profile/preview`, `/search`, `/reports/weekly`에 선택 `ai_provider: default|ollama|claude|null` 추가. 생략/null/default는 저장 기본값(최초에는 기존 AI_PROVIDER, 없으면 로컬).
+- F3는 해석과 답변이 같은 설정 스냅샷을 사용한다. 요청 간 변경은 다음 요청부터 적용한다.
+- F4는 제공자별 생성 저장 키를 분리해 전환 시 기존 보고서·편집본을 덮어쓰지 않는다. 기존 ID 조회·편집은 유지한다.
+- 첫 주 options는 remaining_days=0, 기본 기간=사용 시작일~오늘. 보고서에 partial_period·collection_started_at 추가(기존 저장본은 기본값으로 호환).
+- 서버 타임아웃: 초안/보고서 120초, 미리보기 30초, 운영 검색 각 AI 단계 120초. 앱 초안/보고서/연결 검사는 150초까지 기다림. 실제 성능 보장과 구분한다.

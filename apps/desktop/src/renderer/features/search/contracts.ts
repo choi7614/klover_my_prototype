@@ -13,7 +13,7 @@ export type Filters = {
 };
 export type ParsedQuery = { filters: Filters; topic: string | null; expansions: string[] };
 export type Overrides = Filters & { topic?: string | null };
-export type SearchRequest = { query: string; overrides?: Overrides; search_id?: string };
+export type SearchRequest = { ai_provider?: import('../../../shared/ai-bridge').AIChoice; query: string; overrides?: Overrides; search_id?: string };
 export type SearchResult = {
   mail_id: string;
   number: number;

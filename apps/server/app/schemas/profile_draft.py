@@ -94,6 +94,7 @@ class StyleState(F2Model):
 
 
 class PreviewRequest(F2Model):
+    ai_provider: Literal["default", "ollama", "claude"] | None = None
     profile: Profile
 
 
@@ -126,6 +127,7 @@ class GeneratedDraft(F2Model):
 
 
 class DraftCreate(F2Model):
+    ai_provider: Literal["default", "ollama", "claude"] | None = None
     mail_id: Identifier
     direction: Direction | None = None
 
@@ -136,6 +138,7 @@ class DraftSave(F2Model):
 
 
 class DraftRevise(DraftSave):
+    ai_provider: Literal["default", "ollama", "claude"] | None = None
     action: Action
     direction: Direction | None = None
 

@@ -1,3 +1,4 @@
+import type { AIBridge } from '../shared/ai-bridge';
 import { contextBridge, ipcRenderer } from 'electron';
 import type { MailReadBridge } from '../shared/mail-read';
 import type { F2Bridge } from '../shared/f2-bridge';
@@ -66,4 +67,9 @@ const analysis = Object.freeze<F1Bridge>({
   batch: mailIds => ipcRenderer.invoke('klover:analysis:batch', mailIds),
   retry: mailId => ipcRenderer.invoke('klover:analysis:retry', mailId),
 });
-contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport, suggestions, analysis }));
+const ai = Object.freeze<AIBridge>({
+  get: () => ipcRenderer.invoke('klover:ai:get'),
+  save: update => ipcRenderer.invoke('klover:ai:save', update),
+  check: provider => ipcRenderer.invoke('klover:ai:check', provider),
+});
+contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, ai, mail, f2, search, weeklyReport, suggestions, analysis }));

@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
 
+from app.api.ai_scope import ai_scope
 from app.api.errors import error_response
 from app.api.mail_read import authorize
 from app.db.repositories.mail_query import MailAccountUnavailable
@@ -49,8 +50,9 @@ async def search(body: SearchRequest, request: Request, dependency: Context):
 
         async def stream():
             try:
-                async for event in service.events(body, scope):
-                    yield json.dumps(event, ensure_ascii=False) + "\n"
+                with ai_scope(request, body.ai_provider):
+                    async for event in service.events(body, scope):
+                        yield json.dumps(event, ensure_ascii=False) + "\n"
             except SearchError as error:
                 yield (
                     json.dumps(
@@ -82,7 +84,8 @@ async def search(body: SearchRequest, request: Request, dependency: Context):
 
         return StreamingResponse(stream(), media_type="application/x-ndjson")
     try:
-        return await service.search(body, scope)
+        with ai_scope(request, body.ai_provider):
+            return await service.search(body, scope)
     except SearchError as error:
         return error_response(error.status, error.code, error.message)
 

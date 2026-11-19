@@ -10,7 +10,7 @@ const options = fixture.options as WeeklyReportOptions;
 function client() {
   return {
     options: vi.fn(async () => structuredClone(options)),
-    generate: vi.fn(async () => structuredClone(document)),
+    generate: vi.fn(async (request: import('./types').GenerateReportRequest) => { void request; return structuredClone(document); }),
     get: vi.fn(async () => structuredClone(document)),
     excluded: vi.fn(async () => structuredClone(fixture.excluded) as ExcludedMail[]),
     save: vi.fn(async (_id: string, revision: number, sections: ReportSection[]) => ({
@@ -138,11 +138,12 @@ describe('S08 기능 화면', () => {
     expect(api.generate).toHaveBeenCalledWith(expect.objectContaining({ recipient: '직접 입력한 팀장' }));
   });
 
-  it('사용 일주일 전에는 생성하지 않는다', async () => {
+  it('기간 대기 표시로 첫 주 사용을 막지 않고 생성 버튼을 제공한다', async () => {
     const api = client(); api.options.mockResolvedValue({ ...options, remaining_days: 3 });
-    render(<WeeklyReportPage client={api} />);
-    await screen.findByText('사용 1주 후부터 만들 수 있어요 (3일 남음)');
-    expect(api.generate).not.toHaveBeenCalled();
+    render(<WeeklyReportPage client={api} autoGenerate={false} />);
+    await screen.findByText('보고서를 만들 준비가 됐어요');
+    expect(screen.queryByText(/사용 1주 후부터/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '보고서 열기' })).toBeEnabled();
   });
 
   it('빈 메일 상태에서도 포함 범위를 표시한다', async () => {
@@ -189,4 +190,28 @@ it('잘못된 근거와 비어 있는 본문은 클라이언트에서도 저장�
   expect(draftIsValid(document, sections)).toBe(false);
   sections[0].items[0].evidence = ['f4-01']; sections[0].items[0].text = ' ';
   expect(draftIsValid(document, sections)).toBe(false);
+});
+
+
+it('첫 주 일부 기간 안내와 선택한 보고서 AI를 전달한다', async () => {
+  const api = client();
+  api.generate.mockResolvedValue({ ...structuredClone(document), partial_period: true });
+  render(<WeeklyReportPage client={api} />);
+  await ready();
+  expect(screen.getByText(/일부 기간 자료 ·/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('이번 요청의 AI'), { target: { value: 'claude' } });
+  fireEvent.click(screen.getByRole('button', { name: '보고서 열기' }));
+  await waitFor(() => expect(api.generate).toHaveBeenCalledTimes(2));
+  expect(api.generate.mock.calls[1][0]).toMatchObject({ ai_provider: 'claude' });
+});
+
+
+it('앱에서는 보고서 화면 진입만으로 외부 AI를 호출하지 않는다', async () => {
+  const api = client();
+  render(<WeeklyReportPage client={api} autoGenerate={false} />);
+  await screen.findByText('보고서를 만들 준비가 됐어요');
+  expect(api.generate).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText('이번 요청의 AI'), { target: { value: 'claude' } });
+  fireEvent.click(screen.getByRole('button', { name: '보고서 열기' }));
+  await waitFor(() => expect(api.generate).toHaveBeenCalledWith(expect.objectContaining({ ai_provider: 'claude' })));
 });

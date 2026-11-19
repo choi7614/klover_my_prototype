@@ -32,7 +32,8 @@ export function validSearchRequestId(value: unknown): value is string {
 export function validSearchRequest(value: unknown): value is { query: string; overrides?: Record<string, unknown>; search_id?: string } {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const row = value as Record<string, unknown>;
-  if (Object.keys(row).some(key => !['query', 'overrides', 'search_id'].includes(key))) return false;
+  if (Object.keys(row).some(key => !['query', 'overrides', 'search_id', 'ai_provider'].includes(key))) return false;
+  if (row.ai_provider !== undefined && !['default', 'ollama', 'claude'].includes(row.ai_provider as string)) return false;
   if (typeof row.query !== 'string' || row.query.length > 500) return false;
   if (row.search_id !== undefined && (typeof row.search_id !== 'string' || !/^[a-f0-9]{32}$/.test(row.search_id))) return false;
   if (row.overrides !== undefined && (!row.overrides || typeof row.overrides !== 'object' || Array.isArray(row.overrides))) return false;

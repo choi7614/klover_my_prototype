@@ -1,4 +1,4 @@
-import type { components } from './api-schema.generated';
+import type { components } from '@klover/api-types';
 
 type Schemas = components['schemas'];
 export type Profile = Schemas['Profile'];

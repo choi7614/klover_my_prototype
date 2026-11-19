@@ -3,7 +3,6 @@
 import asyncio
 import hashlib
 import json
-import math
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -69,7 +68,7 @@ class WeeklyReportService:
         reports: WeeklyReportRepository,
         generator: WeeklyReportGenerator | None = None,
         now=None,
-        timeout: float = 30,
+        timeout: float = 120,
         allow_test_results: bool | None = None,
     ):
         self.mails, self.profiles, self.reports, self.generator = (
@@ -95,12 +94,15 @@ class WeeklyReportService:
         profile = await self.profiles.get_report_profile(user_id=actor.user_id)
         if profile is not None and profile.user_id != actor.user_id:
             raise WeeklyReportError("profile_unavailable", "보고 프로필을 확인해 주세요.", 503)
-        available = actor.sync_started_at + timedelta(days=7)
+        today = self.now().astimezone(REPORT_TIMEZONE).date()
+        start = actor.sync_started_at.astimezone(REPORT_TIMEZONE).date()
+        first_week = self.now() < actor.sync_started_at + timedelta(days=7)
+        default = ReportPeriod(start=min(start, today), end=today) if first_week else self._period()
         return WeeklyReportOptions(
-            default_period=self._period(),
+            default_period=default,
             profile=profile,
-            remaining_days=max(0, math.ceil((available - self.now()).total_seconds() / 86400)),
-            available_on=available.astimezone(REPORT_TIMEZONE).date(),
+            remaining_days=0,
+            available_on=start,
             generation=self.generator.mode if self.generator is not None else "unavailable",
         )
 
@@ -144,8 +146,6 @@ class WeeklyReportService:
 
     async def generate(self, actor: ReportActor, request: GenerateWeeklyReport):
         options = await self.options(actor)
-        if options.remaining_days:
-            raise WeeklyReportError("report_not_ready", "사용 1주 후부터 만들 수 있어요.")
         profile = options.profile
         if profile is None:
             raise WeeklyReportError(
@@ -168,6 +168,9 @@ class WeeklyReportService:
                     profile=profile.model_dump(mode="json"),
                     style=style,
                     recipient=recipient,
+                    ai_provider=self.generator.cache_key()
+                    if hasattr(self.generator, "cache_key")
+                    else "legacy",
                 ),
                 sort_keys=True,
                 ensure_ascii=False,
@@ -251,6 +254,9 @@ class WeeklyReportService:
             evidence_mails=tuple(mail for group in source.groups for mail in group.mails),
             status="ready" if source.groups else "empty",
             generation=generation,
+            partial_period=period.start_at < actor.sync_started_at
+            or stamp < actor.sync_started_at + timedelta(days=7),
+            collection_started_at=actor.sync_started_at,
             created_at=existing.document.created_at if existing else stamp,
             updated_at=stamp,
         )

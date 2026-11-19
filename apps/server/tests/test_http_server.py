@@ -67,6 +67,8 @@ def test_openapi_describes_only_implemented_api_and_its_response():
     schema = response.json()
     assert set(schema["paths"]) == {
         "/auth/session",
+        "/settings/ai",
+        "/settings/ai/check",
         "/drafts",
         "/drafts/{draft_id}",
         "/drafts/{draft_id}/revise",

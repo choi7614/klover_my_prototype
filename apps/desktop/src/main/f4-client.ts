@@ -12,7 +12,7 @@ export class F4APIClient {
         method: route.method,
         headers: { Authorization: `Bearer ${local.token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
         body: body ? JSON.stringify(body) : undefined,
-        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(operation === 'generate' ? 90000 : 15000),
+        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(operation === 'generate' ? 150000 : 15000),
       });
       const text = await response.text();
       if (text.length > 2000000) return f4Failure('invalid_response');

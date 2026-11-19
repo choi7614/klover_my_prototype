@@ -31,7 +31,9 @@ function validAnswer(answer: SearchAnswer, results: SearchResult[]): boolean {
     && (results.length === 0 ? answer.sentences.length === 0 : answer.sentences.length > 0);
 }
 
-export function useSearch(client: SearchClient, identityKey: string) {
+export function useSearch(client: SearchClient, identityKey: string, provider: import('../../../shared/ai-bridge').AIChoice = 'default') {
+  const providerRef = useRef(provider);
+  providerRef.current = provider;
   const [state, setState] = useState<SearchState>(emptyState);
   const [recent, setRecent] = useState<RecentSearch[]>([]);
   const [recentError, setRecentError] = useState(false);
@@ -39,7 +41,7 @@ export function useSearch(client: SearchClient, identityKey: string) {
   const recentSequence = useRef(0);
   const controller = useRef<AbortController | null>(null);
   const recentController = useRef<AbortController | null>(null);
-  const current = useRef<{ query: string; search_id?: string; overrides: Overrides }>({
+  const current = useRef<{ ai_provider?: import('../../../shared/ai-bridge').AIChoice; query: string; search_id?: string; overrides: Overrides }>({
     query: '', overrides: {},
   });
 
@@ -123,17 +125,21 @@ export function useSearch(client: SearchClient, identityKey: string) {
   }, [client, refreshRecent]);
 
   const search = useCallback((query: string) => {
-    current.current = { query, overrides: {} };
-    return execute({ query }, false);
+    current.current = { query, overrides: {}, ai_provider: providerRef.current };
+    return execute({ query, ai_provider: providerRef.current }, false);
   }, [execute]);
 
   const reSearch = useCallback((changes: Overrides) => {
     if (!current.current.search_id) return;
     current.current.overrides = { ...current.current.overrides, ...changes };
+    current.current.ai_provider = providerRef.current;
     return execute({ ...current.current }, true);
   }, [execute]);
 
-  const retry = useCallback(() => execute({ ...current.current }, true), [execute]);
+  const retry = useCallback(() => {
+    current.current.ai_provider = providerRef.current;
+    return execute({ ...current.current }, true);
+  }, [execute]);
   const openRecent = useCallback((row: RecentSearch) => {
     // 최근 검색의 상대 날짜는 다시 누르는 날의 한국 날짜로 해석한다.
     return search(row.query);

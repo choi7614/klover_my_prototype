@@ -1,5 +1,18 @@
 # F0 첫 실행·기본 메일함 — 상태
 
+## 최신 통합 작업 (2026-11-20, Codex)
+
+- 기준 develop `e5f7efd`(PR #36 포함), 작업 `integrate/ai-provider-selection`.
+- 이 아래의 이전 기능 브랜치·검사·미연결 설명은 당시 기록이다. 이번 구현과 검증은
+  [AI 선택 안내](ai-provider-selection.md)를 우선한다.
+- AI 설정/서버 실행/공유 타입/main·preload와 세 기능의 제공자 선택을 함께 연결한다.
+  자동 분석·임베딩·제안은 로컬, 수동 초안·검색·보고서는 저장 기본값/요청 선택을 사용한다.
+- 첫 주 보고 생성, 본문 인용 기반 답장 근거 검증도 포함한다. DB 마이그레이션은 없다.
+- 검사: 분리 DB 포함 서버 575 통과/skip 0, 앱 182·Chromium 합성 화면 3 통과, lint·typecheck·Ruff·빌드 통과. 실제 Claude/맥북 검사는 미실행.
+- 현재 미커밋 작업이 이 통합 브랜치에 있다. 커밋·Push·PR 생성은 묶음 승인 대기이며,
+  기존 기능 브랜치는 변경하지 않는다. 맥북·실제 Claude 검사는 별도로 남는다.
+
+
 ## 양식 요약
 
 > 양식: [status-template.md](status-template.md) · 현황판: [progress.md](progress.md)
