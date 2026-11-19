@@ -1,0 +1,189 @@
+diff --git a/apps/desktop/src/renderer/app.tsx b/apps/desktop/src/renderer/app.tsx
+index dca8e1b..9fb33a5 100644
+--- a/apps/desktop/src/renderer/app.tsx
++++ b/apps/desktop/src/renderer/app.tsx
+@@ -10,6 +10,8 @@ import { createF2IPCClient } from './bridges/f2-ipc-client';
+ import { createSearchIPCClient } from './bridges/search-ipc-client';
+ import { WeeklyReportPage } from './features/weekly-report/weekly-report-page';
+ import { createWeeklyReportIPCClient, unavailableWeeklyReportClient } from './features/weekly-report/ipc-client';
++import { createSuggestionsIPCClient, unavailableSuggestionsClient } from './features/suggestions/ipc-client';
++import { TodoListPage } from './features/suggestions/todo-list';
+ 
+ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchClient?: SearchClient } = {}) {
+   const api = window.klover?.mail;
+@@ -17,6 +19,9 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
+   const f2Bridge = window.klover?.f2;
+   const searchBridge = window.klover?.search;
+   const weeklyReportBridge = window.klover?.weeklyReport;
++  const suggestionsBridge = window.klover?.suggestions;
++  // F5 통로가 없으면 메일 읽기는 S03 모양 그대로, 할 일 화면은 '준비 중'을 보여 준다.
++  const suggestions = useMemo(() => suggestionsBridge ? createSuggestionsIPCClient(suggestionsBridge) : undefined, [suggestionsBridge]);
+   const weeklyReport = useMemo(() => weeklyReportBridge ? createWeeklyReportIPCClient(weeklyReportBridge) : unavailableWeeklyReportClient, [weeklyReportBridge]);
+   const f2 = useMemo(() => f2Client ?? (f2Bridge ? createF2IPCClient(f2Bridge) : unavailableF2Client), [f2Client, f2Bridge]);
+   const search = useMemo(() => searchClient ?? (searchBridge ? createSearchIPCClient(searchBridge) : unavailableSearchClient), [searchClient, searchBridge]);
+@@ -49,8 +54,9 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
+     <HashRouter>
+       <Routes>
+         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
+-        {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} />} />}
++        {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} />} />}
+         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
++        {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
+         {session && <Route path="/report/weekly" element={<WeeklyReportPage key={session.account_id} client={weeklyReport} />} />}
+         <Route path="/settings/profile" element={<F2ProfileRoute client={f2} mailboxPath={mailboxPath} />} />
+         <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2} mailboxPath={mailboxPath} />} />
+diff --git a/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx b/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx
+index cf12cec..85f4b7c 100644
+--- a/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx
++++ b/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx
+@@ -1,9 +1,11 @@
+ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+-import { Archive, File, Inbox, PenLine, RefreshCw, Send, Settings, Trash2 } from 'lucide-react';
++import { Archive, File, Inbox, PenLine, RefreshCw, Send, Settings, SquareCheck, Trash2 } from 'lucide-react';
+ import logo from '@brand/klover-logo.svg';
+ import mark from '@brand/klover-mark.svg';
+ import { Button } from '@/components/ui/button';
+ import { cn } from '@/lib/utils';
++import { MailSuggestions } from '../suggestions/mail-suggestions';
++import type { F5Client } from '../suggestions/types';
+ import { mailFailure, type MailDetail, type MailError, type MailReadBridge, type MailSession, type MailSummary } from '../../../shared/mail-read';
+ 
+ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
+@@ -16,8 +18,10 @@ const isAuthenticationError = (error: MailError) => ['unauthorized', 'forbidden'
+ // 다른 화면(F2·F3)으로의 이동은 해시 경로만 바꾼다. 실제 화면 등록은 공통 App이 맡는다.
+ const go = (path: string) => { window.location.hash = path; };
+ 
+-export function MailboxPage({ api, session, onDisconnected, initialMailId = null }: {
++export function MailboxPage({ api, session, onDisconnected, initialMailId = null, suggestions }: {
+   api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void;
++  /** F5 제안·할 일 통로. 없으면 제안 패널 없이 S03 모양만 보여 준다. */
++  suggestions?: F5Client;
+   /** 검색 결과 등에서 특정 메일을 열고 들어올 때 처음 선택할 메일 */
+   initialMailId?: string | null;
+ }) {
+@@ -155,7 +159,8 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
+             const Component = Icon as typeof Send;
+             return <button key={String(label)} disabled className="flex h-[34px] items-center gap-2 px-3 text-body text-muted-foreground opacity-40"><Component className="size-4" aria-hidden="true" />{String(label)}</button>;
+           })}
+-          <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능 · 준비 중</p>
++          <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능</p>
++          <a href="#/todos" className="mt-1 flex h-[34px] items-center gap-2 rounded-md px-3 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><SquareCheck className="size-4" aria-hidden="true" />할 일</a>
+           <a href="#/report/weekly" className="mt-auto rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring">주간 보고</a>
+           <a href="#/settings/profile" className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
+         </aside>
+@@ -194,18 +199,32 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
+               className="inline-flex h-8 items-center gap-1.5 rounded-md bg-ai px-3 text-body font-semibold text-ai-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+               <span aria-hidden="true">◆</span>답장 초안 만들기</a>
+           </div>}
+-          {detail && <article className="mx-auto max-w-[816px] px-7 py-5">
+-            <h2 className="break-words text-heading font-bold">{subject(detail.subject)}</h2>
+-            <div className="my-4 space-y-1 border-b pb-4 text-body">
+-              <p><strong>{detail.from_name || detail.from_addr}</strong> <span className="text-muted-foreground">&lt;{detail.from_addr}&gt;</span></p>
+-              <p className="break-words text-caption text-muted-foreground">받는 사람: {detail.to.map(contact => contact.name ? `${contact.name} <${contact.addr}>` : contact.addr).join(', ') || '—'}</p>
+-              {detail.cc.length > 0 && <p className="break-words text-caption text-muted-foreground">참조: {detail.cc.map(contact => contact.addr).join(', ')}</p>}
+-              <time className="block text-caption text-muted-foreground" dateTime={detail.received_at}>{timestamp(detail.received_at)} (한국 시간)</time>
+-            </div>
+-            <div className="whitespace-pre-wrap break-words text-body leading-7" data-testid="mail-text-body">{detail.body_text || '텍스트 본문이 없습니다.'}</div>
+-          </article>}
++          {detail && (suggestions
++            // F5: 제안이 있는 메일만 S04(본문 + 제안 패널)로, 없으면 아래 S03 모양 그대로 보여 준다.
++            ? <MailSuggestions key={detail.mail_id} mailId={detail.mail_id} body={detail.body_text} client={suggestions}
++              header={<MailHead detail={detail} />} fallback={<MailArticle detail={detail} />} />
++            : <MailArticle detail={detail} />)}
+         </section>
+       </div>
+     </main>
+   );
+ }
++
++function MailHead({ detail }: { detail: MailDetail }) {
++  return <>
++    <h2 className="break-words text-heading font-bold">{subject(detail.subject)}</h2>
++    <div className="my-4 space-y-1 border-b pb-4 text-body">
++      <p><strong>{detail.from_name || detail.from_addr}</strong> <span className="text-muted-foreground">&lt;{detail.from_addr}&gt;</span></p>
++      <p className="break-words text-caption text-muted-foreground">받는 사람: {detail.to.map(contact => contact.name ? `${contact.name} <${contact.addr}>` : contact.addr).join(', ') || '—'}</p>
++      {detail.cc.length > 0 && <p className="break-words text-caption text-muted-foreground">참조: {detail.cc.map(contact => contact.addr).join(', ')}</p>}
++      <time className="block text-caption text-muted-foreground" dateTime={detail.received_at}>{timestamp(detail.received_at)} (한국 시간)</time>
++    </div>
++  </>;
++}
++
++function MailArticle({ detail }: { detail: MailDetail }) {
++  return <article className="mx-auto max-w-[816px] px-7 py-5">
++    <MailHead detail={detail} />
++    <div className="whitespace-pre-wrap break-words text-body leading-7" data-testid="mail-text-body">{detail.body_text || '텍스트 본문이 없습니다.'}</div>
++  </article>;
++}
+diff --git a/apps/desktop/src/renderer/features/mailbox/mailbox-suggestions.test.tsx b/apps/desktop/src/renderer/features/mailbox/mailbox-suggestions.test.tsx
+new file mode 100644
+index 0000000..c09088d
+--- /dev/null
++++ b/apps/desktop/src/renderer/features/mailbox/mailbox-suggestions.test.tsx
+@@ -0,0 +1,51 @@
++import { fireEvent, render, screen } from '@testing-library/react';
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { MailboxPage } from './mailbox-page';
++import { App } from '@/app';
++import { syntheticBody, syntheticSuggestions } from '../suggestions/testing/synthetic-client';
++import type { F5Client } from '../suggestions/types';
++import type { MailReadBridge, MailSummary } from '../../../shared/mail-read';
++
++const session = { email: 'demo@example.invalid', user_id: 'user-test', account_id: 'account-test', sync_started_at: '2026-11-19T00:00:00+09:00' };
++const summary: MailSummary = { mail_id: 'synthetic-mail', subject: '합성 결산 회의', from_addr: 'sender@example.invalid', from_name: '합성 발신자', received_at: '2026-11-19T01:00:00+09:00', is_read: false, analysis_status: 'done', preview: '합성 미리보기' };
++function api() {
++  return {
++    session: vi.fn().mockResolvedValue({ ok: true, data: session }),
++    inbox: vi.fn().mockResolvedValue({ ok: true, data: { items: [summary], next_cursor: null } }),
++    detail: vi.fn().mockResolvedValue({ ok: true, data: { ...summary, to: [], cc: [], body_text: syntheticBody } }),
++  } satisfies MailReadBridge;
++}
++function f5(items = syntheticSuggestions()): F5Client {
++  return {
++    list: vi.fn(async () => ({ items, next_cursor: null })), get: vi.fn(), approve: vi.fn(), dismiss: vi.fn(), conflicts: vi.fn(),
++    todos: vi.fn(async () => ({ items: [], next_cursor: null })), createTodo: vi.fn(), updateTodo: vi.fn(),
++  } as unknown as F5Client;
++}
++afterEach(() => { Reflect.deleteProperty(window, 'klover'); window.location.hash = ''; });
++
++describe('F5 메일 읽기·할 일 진입 (합성 응답)', () => {
++  it('제안이 있는 메일은 메일 머리와 제안 패널을 함께 보여 주고 자동 실행하지 않는다', async () => {
++    const client = f5();
++    render(<MailboxPage api={api()} session={session} onDisconnected={vi.fn()} suggestions={client} />);
++    fireEvent.click(await screen.findByRole('button', { name: /합성 결산 회의/ }));
++    expect(await screen.findByRole('complementary', { name: 'AI 제안' })).toBeInTheDocument();
++    expect(screen.getByRole('heading', { name: '합성 결산 회의' })).toBeInTheDocument();
++    expect(client.list).toHaveBeenCalledWith({ mail_id: 'synthetic-mail', limit: 50 });
++    expect(client.approve).not.toHaveBeenCalled();
++    expect(client.dismiss).not.toHaveBeenCalled();
++    expect(screen.getByRole('link', { name: '할 일' })).toHaveAttribute('href', '#/todos');
++  });
++  it('제안이 없으면 기존 S03 본문 모양을 유지한다', async () => {
++    render(<MailboxPage api={api()} session={session} onDisconnected={vi.fn()} suggestions={f5([])} />);
++    fireEvent.click(await screen.findByRole('button', { name: /합성 결산 회의/ }));
++    expect(await screen.findByTestId('mail-text-body')).toBeInTheDocument();
++    expect(screen.queryByRole('complementary', { name: 'AI 제안' })).not.toBeInTheDocument();
++  });
++  it('F5 통로가 없어도 할 일 경로는 준비 중 안내를 보여 준다', async () => {
++    Object.defineProperty(window, 'klover', { configurable: true, value: { platform: 'test', mail: api() } });
++    window.location.hash = '#/todos';
++    render(<App />);
++    expect(await screen.findByRole('heading', { name: '할 일' })).toBeInTheDocument();
++    expect(await screen.findByRole('alert')).toHaveTextContent('할 일 서버 연결을 준비 중이에요.');
++  });
++});
+diff --git a/apps/desktop/src/renderer/features/mailbox/routes.tsx b/apps/desktop/src/renderer/features/mailbox/routes.tsx
+index ab15d43..c8e534b 100644
+--- a/apps/desktop/src/renderer/features/mailbox/routes.tsx
++++ b/apps/desktop/src/renderer/features/mailbox/routes.tsx
+@@ -4,9 +4,10 @@ import { MailboxPage } from './mailbox-page';
+ import { SearchPage } from '../search/search-page';
+ import { SearchClientError, type SearchClient, type SearchNavigation } from '../search/contracts';
+ import { validMailId, type MailError, type MailReadBridge, type MailSession } from '../../../shared/mail-read';
++import type { F5Client } from '../suggestions/types';
+ 
+ /** `/mail/inbox/:mailId?` — 검색 결과 등에서 특정 메일을 선택한 채로 연다. 공통 App이 등록한다. */
+-export function MailboxRoute(props: { api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void }) {
++export function MailboxRoute(props: { api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void; suggestions?: F5Client }) {
+   const { mailId } = useParams();
+   const initial = mailId && validMailId(mailId) ? mailId : null;
+   return <MailboxPage key={initial ?? 'inbox'} {...props} initialMailId={initial} />;
