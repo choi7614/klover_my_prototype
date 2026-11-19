@@ -1,0 +1,62 @@
+--- a/apps/server/app/main.py
++++ b/apps/server/app/main.py
+@@ -5,6 +5,7 @@
+ from app.api.errors import register_error_handlers
+ from app.api.health import router as health_router
+ from app.api.mail_read import register_mail_api
++from app.api.search import register_search_api
+ from app.schemas.common import ErrorResponse
+ 
+ 
+@@ -20,6 +21,7 @@
+     register_error_handlers(application)
+     application.include_router(health_router)
+     register_mail_api(application)
++    register_search_api(application)
+     return application
+ 
+ 
+--- a/apps/server/app/cli/run_mail_api.py
++++ b/apps/server/app/cli/run_mail_api.py
+@@ -7,9 +7,12 @@
+ from app.api.mail_read import MailAPIContext
+ from app.db.config import DatabaseConfigurationError, database_engine
+ from app.db.repositories.mail_query import MailQueryRepository
++from app.db.repositories.search import SQLSearchRepository
++from app.db.repositories.search_recent import SQLRecentSearchRepository
+ from app.google_config import GoogleConnectionError, load_settings
+ from app.mail_api_config import MailAPIConfigurationError, read_api_token
+ from app.main import create_app
++from app.services.search import SearchService
+ 
+ 
+ def main():
+@@ -27,6 +30,10 @@
+         application.state.mail_api = MailAPIContext(
+             token,
+             MailQueryRepository(engine, settings.expected_email),
++        )
++        application.state.search_service = SearchService(
++            SQLSearchRepository(engine),
++            SQLRecentSearchRepository(engine),
+         )
+         print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")
+         print("터미널을 켜두세요. 종료는 Control+C입니다.")
+--- a/apps/server/tests/test_http_server.py
++++ b/apps/server/tests/test_http_server.py
+@@ -65,7 +65,14 @@
+         response = client.get("/openapi.json")
+     assert response.status_code == 200
+     schema = response.json()
+-    assert set(schema["paths"]) == {"/health", "/auth/session", "/mails", "/mails/{mail_id}"}
++    assert set(schema["paths"]) == {
++        "/health",
++        "/auth/session",
++        "/mails",
++        "/mails/{mail_id}",
++        "/search",
++        "/search/recent",
++    }
+     assert schema["paths"]["/health"]["get"]["responses"]["200"]["content"]["application/json"][
+         "schema"
+     ] == {"$ref": "#/components/schemas/HealthResponse"}

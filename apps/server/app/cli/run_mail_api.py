@@ -7,9 +7,12 @@ import uvicorn
 from app.api.mail_read import MailAPIContext
 from app.db.config import DatabaseConfigurationError, database_engine
 from app.db.repositories.mail_query import MailQueryRepository
+from app.db.repositories.search import SQLSearchRepository
+from app.db.repositories.search_recent import SQLRecentSearchRepository
 from app.google_config import GoogleConnectionError, load_settings
 from app.mail_api_config import MailAPIConfigurationError, read_api_token
 from app.main import create_app
+from app.services.search import SearchService
 
 
 def main():
@@ -27,6 +30,10 @@ def main():
         application.state.mail_api = MailAPIContext(
             token,
             MailQueryRepository(engine, settings.expected_email),
+        )
+        application.state.search_service = SearchService(
+            SQLSearchRepository(engine),
+            SQLRecentSearchRepository(engine),
         )
         print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")
         print("터미널을 켜두세요. 종료는 Control+C입니다.")

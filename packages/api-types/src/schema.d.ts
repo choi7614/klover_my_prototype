@@ -84,10 +84,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search */
+        post: operations["search_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent */
+        get: operations["recent_search_recent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Citation */
+        Citation: {
+            /** Mail Id */
+            mail_id: string;
+            /** Number */
+            number: number;
+        };
+        /** Counterparty */
+        Counterparty: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "name" | "address" | "organization";
+            /** Value */
+            value: string;
+        };
+        /** DateRange */
+        DateRange: {
+            /**
+             * End Before
+             * Format: date
+             */
+            end_before: string;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+        };
         /** ErrorDetail */
         ErrorDetail: {
             /** Code */
@@ -98,6 +162,13 @@ export interface components {
         /** ErrorResponse */
         ErrorResponse: {
             error: components["schemas"]["ErrorDetail"];
+        };
+        /** EvidenceSentence */
+        EvidenceSentence: {
+            /** Mail Id */
+            mail_id: string;
+            /** Quote */
+            quote: string;
         };
         /** HealthResponse */
         HealthResponse: {
@@ -191,6 +262,138 @@ export interface components {
              * Format: date-time
              */
             received_at: string;
+            /** Subject */
+            subject: string;
+        };
+        /** ParsedQuery */
+        ParsedQuery: {
+            /** Expansions */
+            expansions?: string[];
+            filters?: components["schemas"]["SearchFilters"];
+            /** Topic */
+            topic?: string | null;
+        };
+        /** RecentSearch */
+        RecentSearch: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Query */
+            query: string;
+            /** Search Id */
+            search_id: string;
+        };
+        /** SearchAnswer */
+        SearchAnswer: {
+            /** Citations */
+            citations: components["schemas"]["Citation"][];
+            /** Sentences */
+            sentences: components["schemas"]["EvidenceSentence"][];
+            /** Text */
+            text: string;
+        };
+        /** SearchFailure */
+        SearchFailure: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
+        /** SearchFilters */
+        SearchFilters: {
+            /** Category */
+            category?: string | null;
+            counterparty?: components["schemas"]["Counterparty"] | null;
+            /** Directions */
+            directions?: ("received" | "sent")[] | null;
+            /** Has Attachment */
+            has_attachment?: boolean | null;
+            /** Needs Reply */
+            needs_reply?: boolean | null;
+            period?: components["schemas"]["DateRange"] | null;
+            /** Replied */
+            replied?: boolean | null;
+        };
+        /** SearchOverrides */
+        SearchOverrides: {
+            /** Category */
+            category?: string | null;
+            counterparty?: components["schemas"]["Counterparty"] | null;
+            /** Directions */
+            directions?: ("received" | "sent")[] | null;
+            /** Has Attachment */
+            has_attachment?: boolean | null;
+            /** Needs Reply */
+            needs_reply?: boolean | null;
+            period?: components["schemas"]["DateRange"] | null;
+            /** Replied */
+            replied?: boolean | null;
+            /** Topic */
+            topic?: string | null;
+        };
+        /** SearchRequest */
+        SearchRequest: {
+            overrides?: components["schemas"]["SearchOverrides"];
+            /** Query */
+            query: string;
+            /** Search Id */
+            search_id?: string | null;
+        };
+        /** SearchResponse */
+        SearchResponse: {
+            answer?: components["schemas"]["SearchAnswer"] | null;
+            answer_error?: components["schemas"]["SearchFailure"] | null;
+            parsed: components["schemas"]["ParsedQuery"];
+            /** Partial */
+            partial: components["schemas"]["SearchResult"][];
+            /**
+             * Reference Date
+             * Format: date
+             */
+            reference_date: string;
+            /** Results */
+            results: components["schemas"]["SearchResult"][];
+            /** Search Id */
+            search_id: string;
+            /** Semantic Enabled */
+            semantic_enabled: boolean;
+            /** Truncated */
+            truncated: boolean;
+        };
+        /** SearchResult */
+        SearchResult: {
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "received" | "sent";
+            /** From Addr */
+            from_addr: string;
+            /** From Name */
+            from_name: string;
+            /** Mail Id */
+            mail_id: string;
+            /** Match Terms */
+            match_terms: string[];
+            /** Missing Conditions */
+            missing_conditions: string[];
+            /** Number */
+            number: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Score */
+            score: number;
+            /** Snippet */
+            snippet: string;
+            /** Sources */
+            sources: ("keyword" | "metadata" | "vector")[];
             /** Subject */
             subject: string;
         };
@@ -450,6 +653,158 @@ export interface operations {
                 };
             };
             /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    search_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recent_search_recent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecentSearch"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal Server Error */
             500: {
                 headers: {
                     [name: string]: unknown;

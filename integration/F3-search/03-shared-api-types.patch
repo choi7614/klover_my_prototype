@@ -1,0 +1,1193 @@
+--- a/packages/api-types/openapi.json
++++ b/packages/api-types/openapi.json
+@@ -1,6 +1,73 @@
+ {
+   "components": {
+     "schemas": {
++      "Citation": {
++        "additionalProperties": false,
++        "properties": {
++          "mail_id": {
++            "pattern": "^[A-Za-z0-9_-]{1,128}$",
++            "title": "Mail Id",
++            "type": "string"
++          },
++          "number": {
++            "title": "Number",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "number",
++          "mail_id"
++        ],
++        "title": "Citation",
++        "type": "object"
++      },
++      "Counterparty": {
++        "additionalProperties": false,
++        "properties": {
++          "kind": {
++            "enum": [
++              "name",
++              "address",
++              "organization"
++            ],
++            "title": "Kind",
++            "type": "string"
++          },
++          "value": {
++            "maxLength": 200,
++            "minLength": 1,
++            "title": "Value",
++            "type": "string"
++          }
++        },
++        "required": [
++          "kind",
++          "value"
++        ],
++        "title": "Counterparty",
++        "type": "object"
++      },
++      "DateRange": {
++        "additionalProperties": false,
++        "properties": {
++          "end_before": {
++            "format": "date",
++            "title": "End Before",
++            "type": "string"
++          },
++          "start": {
++            "format": "date",
++            "title": "Start",
++            "type": "string"
++          }
++        },
++        "required": [
++          "start",
++          "end_before"
++        ],
++        "title": "DateRange",
++        "type": "object"
++      },
+       "ErrorDetail": {
+         "properties": {
+           "code": {
+@@ -29,6 +96,28 @@
+           "error"
+         ],
+         "title": "ErrorResponse",
++        "type": "object"
++      },
++      "EvidenceSentence": {
++        "additionalProperties": false,
++        "properties": {
++          "mail_id": {
++            "pattern": "^[A-Za-z0-9_-]{1,128}$",
++            "title": "Mail Id",
++            "type": "string"
++          },
++          "quote": {
++            "maxLength": 1200,
++            "minLength": 1,
++            "title": "Quote",
++            "type": "string"
++          }
++        },
++        "required": [
++          "mail_id",
++          "quote"
++        ],
++        "title": "EvidenceSentence",
+         "type": "object"
+       },
+       "HealthResponse": {
+@@ -247,6 +336,507 @@
+           "analysis_status"
+         ],
+         "title": "MailSummary",
++        "type": "object"
++      },
++      "ParsedQuery": {
++        "additionalProperties": false,
++        "properties": {
++          "expansions": {
++            "items": {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            "maxItems": 8,
++            "title": "Expansions",
++            "type": "array"
++          },
++          "filters": {
++            "$ref": "#/components/schemas/SearchFilters"
++          },
++          "topic": {
++            "anyOf": [
++              {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Topic"
++          }
++        },
++        "title": "ParsedQuery",
++        "type": "object"
++      },
++      "RecentSearch": {
++        "additionalProperties": false,
++        "properties": {
++          "created_at": {
++            "format": "date-time",
++            "title": "Created At",
++            "type": "string"
++          },
++          "query": {
++            "title": "Query",
++            "type": "string"
++          },
++          "search_id": {
++            "title": "Search Id",
++            "type": "string"
++          }
++        },
++        "required": [
++          "search_id",
++          "query",
++          "created_at"
++        ],
++        "title": "RecentSearch",
++        "type": "object"
++      },
++      "SearchAnswer": {
++        "additionalProperties": false,
++        "properties": {
++          "citations": {
++            "items": {
++              "$ref": "#/components/schemas/Citation"
++            },
++            "title": "Citations",
++            "type": "array"
++          },
++          "sentences": {
++            "items": {
++              "$ref": "#/components/schemas/EvidenceSentence"
++            },
++            "title": "Sentences",
++            "type": "array"
++          },
++          "text": {
++            "title": "Text",
++            "type": "string"
++          }
++        },
++        "required": [
++          "text",
++          "sentences",
++          "citations"
++        ],
++        "title": "SearchAnswer",
++        "type": "object"
++      },
++      "SearchFailure": {
++        "additionalProperties": false,
++        "properties": {
++          "code": {
++            "title": "Code",
++            "type": "string"
++          },
++          "message": {
++            "title": "Message",
++            "type": "string"
++          }
++        },
++        "required": [
++          "code",
++          "message"
++        ],
++        "title": "SearchFailure",
++        "type": "object"
++      },
++      "SearchFilters": {
++        "additionalProperties": false,
++        "properties": {
++          "category": {
++            "anyOf": [
++              {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Category"
++          },
++          "counterparty": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/Counterparty"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "directions": {
++            "anyOf": [
++              {
++                "items": {
++                  "enum": [
++                    "received",
++                    "sent"
++                  ],
++                  "type": "string"
++                },
++                "maxItems": 2,
++                "minItems": 1,
++                "type": "array"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Directions"
++          },
++          "has_attachment": {
++            "anyOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Has Attachment"
++          },
++          "needs_reply": {
++            "anyOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Needs Reply"
++          },
++          "period": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/DateRange"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "replied": {
++            "anyOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Replied"
++          }
++        },
++        "title": "SearchFilters",
++        "type": "object"
++      },
++      "SearchOverrides": {
++        "additionalProperties": false,
++        "properties": {
++          "category": {
++            "anyOf": [
++              {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Category"
++          },
++          "counterparty": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/Counterparty"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "directions": {
++            "anyOf": [
++              {
++                "items": {
++                  "enum": [
++                    "received",
++                    "sent"
++                  ],
++                  "type": "string"
++                },
++                "maxItems": 2,
++                "minItems": 1,
++                "type": "array"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Directions"
++          },
++          "has_attachment": {
++            "anyOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Has Attachment"
++          },
++          "needs_reply": {
++            "anyOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Needs Reply"
++          },
++          "period": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/DateRange"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "replied": {
++            "anyOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Replied"
++          },
++          "topic": {
++            "anyOf": [
++              {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Topic"
++          }
++        },
++        "title": "SearchOverrides",
++        "type": "object"
++      },
++      "SearchRequest": {
++        "additionalProperties": false,
++        "properties": {
++          "overrides": {
++            "$ref": "#/components/schemas/SearchOverrides"
++          },
++          "query": {
++            "maxLength": 2000,
++            "minLength": 1,
++            "title": "Query",
++            "type": "string"
++          },
++          "search_id": {
++            "anyOf": [
++              {
++                "pattern": "^[a-f0-9]{32}$",
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Search Id"
++          }
++        },
++        "required": [
++          "query"
++        ],
++        "title": "SearchRequest",
++        "type": "object"
++      },
++      "SearchResponse": {
++        "additionalProperties": false,
++        "properties": {
++          "answer": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/SearchAnswer"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "answer_error": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/SearchFailure"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "parsed": {
++            "$ref": "#/components/schemas/ParsedQuery"
++          },
++          "partial": {
++            "items": {
++              "$ref": "#/components/schemas/SearchResult"
++            },
++            "title": "Partial",
++            "type": "array"
++          },
++          "reference_date": {
++            "format": "date",
++            "title": "Reference Date",
++            "type": "string"
++          },
++          "results": {
++            "items": {
++              "$ref": "#/components/schemas/SearchResult"
++            },
++            "title": "Results",
++            "type": "array"
++          },
++          "search_id": {
++            "title": "Search Id",
++            "type": "string"
++          },
++          "semantic_enabled": {
++            "title": "Semantic Enabled",
++            "type": "boolean"
++          },
++          "truncated": {
++            "title": "Truncated",
++            "type": "boolean"
++          }
++        },
++        "required": [
++          "search_id",
++          "parsed",
++          "reference_date",
++          "results",
++          "partial",
++          "semantic_enabled",
++          "truncated"
++        ],
++        "title": "SearchResponse",
++        "type": "object"
++      },
++      "SearchResult": {
++        "additionalProperties": false,
++        "properties": {
++          "direction": {
++            "enum": [
++              "received",
++              "sent"
++            ],
++            "title": "Direction",
++            "type": "string"
++          },
++          "from_addr": {
++            "title": "From Addr",
++            "type": "string"
++          },
++          "from_name": {
++            "title": "From Name",
++            "type": "string"
++          },
++          "mail_id": {
++            "pattern": "^[A-Za-z0-9_-]{1,128}$",
++            "title": "Mail Id",
++            "type": "string"
++          },
++          "match_terms": {
++            "items": {
++              "type": "string"
++            },
++            "title": "Match Terms",
++            "type": "array"
++          },
++          "missing_conditions": {
++            "items": {
++              "type": "string"
++            },
++            "title": "Missing Conditions",
++            "type": "array"
++          },
++          "number": {
++            "title": "Number",
++            "type": "integer"
++          },
++          "reason": {
++            "title": "Reason",
++            "type": "string"
++          },
++          "received_at": {
++            "format": "date-time",
++            "title": "Received At",
++            "type": "string"
++          },
++          "score": {
++            "title": "Score",
++            "type": "number"
++          },
++          "snippet": {
++            "title": "Snippet",
++            "type": "string"
++          },
++          "sources": {
++            "items": {
++              "enum": [
++                "keyword",
++                "metadata",
++                "vector"
++              ],
++              "type": "string"
++            },
++            "title": "Sources",
++            "type": "array"
++          },
++          "subject": {
++            "title": "Subject",
++            "type": "string"
++          }
++        },
++        "required": [
++          "mail_id",
++          "number",
++          "score",
++          "reason",
++          "snippet",
++          "match_terms",
++          "missing_conditions",
++          "sources",
++          "subject",
++          "from_name",
++          "from_addr",
++          "received_at",
++          "direction"
++        ],
++        "title": "SearchResult",
+         "type": "object"
+       }
+     },
+@@ -621,6 +1211,192 @@
+           "메일 조회"
+         ]
+       }
++    },
++    "/search": {
++      "post": {
++        "operationId": "search_search_post",
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/SearchRequest"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/SearchResponse"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Internal Server Error"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Search",
++        "tags": [
++          "F3 검색"
++        ]
++      }
++    },
++    "/search/recent": {
++      "get": {
++        "operationId": "recent_search_recent_get",
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "items": {
++                    "$ref": "#/components/schemas/RecentSearch"
++                  },
++                  "title": "Response Recent Search Recent Get",
++                  "type": "array"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Internal Server Error"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Recent",
++        "tags": [
++          "F3 검색"
++        ]
++      }
+     }
+   }
+ }
+--- a/packages/api-types/src/schema.d.ts
++++ b/packages/api-types/src/schema.d.ts
+@@ -84,10 +84,74 @@
+         patch?: never;
+         trace?: never;
+     };
++    "/search": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        /** Search */
++        post: operations["search_search_post"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/search/recent": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Recent */
++        get: operations["recent_search_recent_get"];
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+ }
+ export type webhooks = Record<string, never>;
+ export interface components {
+     schemas: {
++        /** Citation */
++        Citation: {
++            /** Mail Id */
++            mail_id: string;
++            /** Number */
++            number: number;
++        };
++        /** Counterparty */
++        Counterparty: {
++            /**
++             * Kind
++             * @enum {string}
++             */
++            kind: "name" | "address" | "organization";
++            /** Value */
++            value: string;
++        };
++        /** DateRange */
++        DateRange: {
++            /**
++             * End Before
++             * Format: date
++             */
++            end_before: string;
++            /**
++             * Start
++             * Format: date
++             */
++            start: string;
++        };
+         /** ErrorDetail */
+         ErrorDetail: {
+             /** Code */
+@@ -98,6 +162,13 @@
+         /** ErrorResponse */
+         ErrorResponse: {
+             error: components["schemas"]["ErrorDetail"];
++        };
++        /** EvidenceSentence */
++        EvidenceSentence: {
++            /** Mail Id */
++            mail_id: string;
++            /** Quote */
++            quote: string;
+         };
+         /** HealthResponse */
+         HealthResponse: {
+@@ -194,6 +265,138 @@
+             /** Subject */
+             subject: string;
+         };
++        /** ParsedQuery */
++        ParsedQuery: {
++            /** Expansions */
++            expansions?: string[];
++            filters?: components["schemas"]["SearchFilters"];
++            /** Topic */
++            topic?: string | null;
++        };
++        /** RecentSearch */
++        RecentSearch: {
++            /**
++             * Created At
++             * Format: date-time
++             */
++            created_at: string;
++            /** Query */
++            query: string;
++            /** Search Id */
++            search_id: string;
++        };
++        /** SearchAnswer */
++        SearchAnswer: {
++            /** Citations */
++            citations: components["schemas"]["Citation"][];
++            /** Sentences */
++            sentences: components["schemas"]["EvidenceSentence"][];
++            /** Text */
++            text: string;
++        };
++        /** SearchFailure */
++        SearchFailure: {
++            /** Code */
++            code: string;
++            /** Message */
++            message: string;
++        };
++        /** SearchFilters */
++        SearchFilters: {
++            /** Category */
++            category?: string | null;
++            counterparty?: components["schemas"]["Counterparty"] | null;
++            /** Directions */
++            directions?: ("received" | "sent")[] | null;
++            /** Has Attachment */
++            has_attachment?: boolean | null;
++            /** Needs Reply */
++            needs_reply?: boolean | null;
++            period?: components["schemas"]["DateRange"] | null;
++            /** Replied */
++            replied?: boolean | null;
++        };
++        /** SearchOverrides */
++        SearchOverrides: {
++            /** Category */
++            category?: string | null;
++            counterparty?: components["schemas"]["Counterparty"] | null;
++            /** Directions */
++            directions?: ("received" | "sent")[] | null;
++            /** Has Attachment */
++            has_attachment?: boolean | null;
++            /** Needs Reply */
++            needs_reply?: boolean | null;
++            period?: components["schemas"]["DateRange"] | null;
++            /** Replied */
++            replied?: boolean | null;
++            /** Topic */
++            topic?: string | null;
++        };
++        /** SearchRequest */
++        SearchRequest: {
++            overrides?: components["schemas"]["SearchOverrides"];
++            /** Query */
++            query: string;
++            /** Search Id */
++            search_id?: string | null;
++        };
++        /** SearchResponse */
++        SearchResponse: {
++            answer?: components["schemas"]["SearchAnswer"] | null;
++            answer_error?: components["schemas"]["SearchFailure"] | null;
++            parsed: components["schemas"]["ParsedQuery"];
++            /** Partial */
++            partial: components["schemas"]["SearchResult"][];
++            /**
++             * Reference Date
++             * Format: date
++             */
++            reference_date: string;
++            /** Results */
++            results: components["schemas"]["SearchResult"][];
++            /** Search Id */
++            search_id: string;
++            /** Semantic Enabled */
++            semantic_enabled: boolean;
++            /** Truncated */
++            truncated: boolean;
++        };
++        /** SearchResult */
++        SearchResult: {
++            /**
++             * Direction
++             * @enum {string}
++             */
++            direction: "received" | "sent";
++            /** From Addr */
++            from_addr: string;
++            /** From Name */
++            from_name: string;
++            /** Mail Id */
++            mail_id: string;
++            /** Match Terms */
++            match_terms: string[];
++            /** Missing Conditions */
++            missing_conditions: string[];
++            /** Number */
++            number: number;
++            /** Reason */
++            reason: string;
++            /**
++             * Received At
++             * Format: date-time
++             */
++            received_at: string;
++            /** Score */
++            score: number;
++            /** Snippet */
++            snippet: string;
++            /** Sources */
++            sources: ("keyword" | "metadata" | "vector")[];
++            /** Subject */
++            subject: string;
++        };
+     };
+     responses: never;
+     parameters: never;
+@@ -469,4 +672,156 @@
+             };
+         };
+     };
++    search_search_post: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["SearchRequest"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["SearchResponse"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Internal Server Error */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    recent_search_recent_get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["RecentSearch"][];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Internal Server Error */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
+ }

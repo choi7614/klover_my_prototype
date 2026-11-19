@@ -47,6 +47,8 @@
 | [F0-mail-api-handoff.md](dev/F0-mail-api-handoff.md) | F0 채팅에 그대로 보낼 서버 연결 요청 |
 | [workflow.md](dev/workflow.md) | 역할 분담, Git 규칙, Claude Code 사용 요령 |
 | [F4-weekly-report-plan.md](dev/F4-weekly-report-plan.md) | F4 기반 점검, 작은 작업 단위, 수용 기준 진행 상태 |
+| [F3-search-status.md](dev/F3-search-status.md) | F3 구현·서버 등록·검사 결과와 남은 연결 |
+| [F3-search-handoff.md](dev/F3-search-handoff.md) | F0/F1/F2·공통 서버 연결 계약과 확인 방법 |
 
 ## 기능 정의서 템플릿
 

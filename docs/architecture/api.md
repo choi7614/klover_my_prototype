@@ -8,6 +8,9 @@
 > 나머지 업무 API·WebSocket은 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
 > fixture CLI를 유지하며 보고서 HTTP API를 제공하지 않는다.
 > [서버 실행 안내](../../apps/server/README.md)와 [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
+>
+> F3의 `/search`, `/search/recent` 경로와 공유 타입은 등록했다. 실제 AI·벡터 제공자와
+> F0 화면 연결은 아직 없으며, 새 자연어 검색은 해석 미연결 503으로 알린다.
 
 ## 공통
 
@@ -57,6 +60,29 @@
 - 인증 실패 401, 외부 출처 403, DB·계정 준비 부족 503. 개인 응답은 `Cache-Control: no-store`다.
 - 조회는 저장된 DB를 읽으며 읽음 상태·메일·수신 커서를 바꾸거나 Gmail을 동기화하지 않는다.
 
+## F3 검색 API (서버 등록·모델 미연결)
+
+`app.main`에 경로와 OpenAPI를 등록했고, `run_mail_api`는 기존 로컬 인증과 F3 저장소를
+함께 조립한다. AI·벡터 포트는 기본 미연결이다. 준비 부족을 가짜 검색 성공으로 대체하지 않는다.
+
+| 메서드 | 경로 | 계약 |
+| --- | --- | --- |
+| POST | `/search` | `{query, search_id?, overrides?}` → 해석, 전체/일부 일치, 근거가 붙은 답변 또는 답변 실패 |
+| GET | `/search/recent` | 인증된 사용자·계정의 최근 질문 최대 3개 |
+
+- 소유자·계정은 요청에서 받지 않는다. 기존 Bearer·loopback·Host·Origin 거부 규칙과
+  `Cache-Control: no-store`를 유지한다. Renderer 직접 fetch 대신 main/IPC로 연결한다.
+- 재검색의 `null` 조건은 삭제하고, 주제를 바꾸거나 지우면 이전 확장어도 제거한다.
+- `Accept: application/x-ndjson`은 `parsed` → `results` → `answer`/`answer_error` 프레임을
+  전달한다. 스트림 도중 실패는 `error` 프레임이며 HTTP 200이어도 확인해야 한다.
+- `parser_unavailable`/`parse_unavailable`은 503, `parse_failed`/`unsupported_filter`는 422다.
+  결과가 있으면 답변 실패는 결과와 함께 `answer_error`로 구분한다.
+- 실제 메일의 외부 AI 전송은 연결하지 않았다. 조직·미회신·분류·첨부 조건은 미지원이다.
+- 최근 검색을 쓰려면 `0003_search_runs` 마이그레이션이 필요하다. 이번 작업에서는
+  합성 테스트 DB에서만 적용·검사했다. 실제 모델 정확도·5초 성능과 F0/F2 연결은 남아 있다.
+
+세부 계약·검사·연결 요청은 [F3 전달 문서](../dev/F3-search-handoff.md)를 따른다.
+
 ## 맥북 전용 Google 연결 경로 (2026-11-19)
 
 `python -m app.cli.run_google_connection`으로 실행하는 별도 로컬 앱에서만 제공한다.
@@ -90,8 +116,6 @@
 | F2 | POST | `/profile/preview` | 설정값으로 예시 답장 |
 | F2 | POST | `/drafts` | 답장 초안 생성 |
 | F2 | POST | `/drafts/{draft_id}/revise` | 더 짧게·더 정중하게·다시 쓰기 |
-| F3 | POST | `/search` | 자연어 검색 |
-| F3 | GET | `/search/recent` | 최근 검색 |
 | F4 | POST | `/reports/weekly` | 주간 보고 생성 |
 | F4 | GET | `/reports/weekly/{report_id}/excluded` | 제외된 메일 |
 | F4 | POST | `/reports/weekly/{report_id}/export` | Word 내보내기 |
