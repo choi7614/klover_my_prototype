@@ -8,21 +8,69 @@
 
 ## F1 담당에게
 
-1. 공통 AI 제공자·분석기는 F1 담당 코드를 사용한다. F5에는 AI 제공자·프롬프트·LLM 호출이 없다.
-2. 분석 완료 뒤 `F5Service.scan(Principal(user_id, account_id), ScanInput)`을 호출하는 어댑터가 필요하다.
-   소유자는 작업의 신뢰한 계정 컨텍스트에서 가져온다. 외부 HTTP 입력으로 소유자를 받지 않는다.
-3. `events`, `action_items`, `reply`를 F5 입력으로 바꿔 달라. 이는 **F5가 제안하는 v1 연결 계약**이며,
-   F1의 AnalysisResult는 현재 브랜치에 있다. 하지만 F5 실입력 어댑터·실제 분석 호출은 연결하지 않았다.
-   F1의 분석 결과가 바로 이 형식이라고 가정하지 않는다.
-4. 각 행동의 `action_key`는 재분석에도 유지한다. 근거 `mail_id`, 코드 포인트 위치 `[start,end)`,
-   정확한 `quote`, 저장된 원본 `body_text`의 UTF-8 SHA-256이 필요하다.
-   전처리 본문이 원문과 다르면 원문 위치로 매핑해야 한다. JavaScript UTF-16 위치를 보내면 안 된다.
-5. 일정에는 시간대가 있는 시작·종료가 모두 필요하다. 추정 불가한 종료·날짜를 임의로 만들지 않는다.
-   할 일의 마감은 날짜 또는 null이다. 같은 문장의 같은 유형 행동은 서로 다른 정확한 근거 범위를 쓴다.
-6. 같은 행동 재입력은 최초 저장값과 사용자 처리 상태를 유지하고, 이벤트를 다시 만들지 않는다.
+### 분석 완료 알림 지점(on_analyzed)에 F5 연결하기 (2026-11-19 추가)
+
+F1 결과 → F5 제안 변환·생성은 F5 브랜치에 구현했다(`app/pipeline/scan_analysis.py`, `F5Service.scan_from_analysis`).
+F1 파일은 고치지 않았고, 콜백 연결 코드도 만들지 않았다. **통합 채팅에서 아래 한 가지만 연결하면 된다.**
+
+```python
+from app.ai.runtime import load_generation
+from app.db.repositories.f5 import F5Repository
+from app.services.f5 import AnalysisScanHook, F5Service
+
+# 조립(예: pending 분석 실행 명령이나 서버 시작 시 한 번)
+on_analyzed = AnalysisScanHook(
+    F5Service(F5Repository(engine)),
+    llm,                       # F1이 쓰는 것과 같은 공통 TextGeneration (purpose=scan으로 호출됨)
+    allow_gmail=allow_gmail,   # F1의 --allow-gmail-content 값과 같게
+)
+
+# F1 분석 저장 트랜잭션이 '확정된 뒤'에 호출한다 (async)
+outcome = await on_analyzed(work.mail, result)   # AnalysisMail, AnalysisResult
+```
+
+- 콜백 모양: `async (mail: AnalysisMail, result: AnalysisResult) -> AnalysisScanOutcome`.
+  소유자는 `mail.user_id`·`mail.account_id`(F1이 DB에서 잠가 읽은 신뢰 컨텍스트)에서 가져온다.
+- **예외를 던지지 않는다.** 실패하면 `status="failed"`와 고정 코드(`provider_error`, `timeout`,
+  `invalid_response`, `external_transfer_blocked`, `provider_not_configured`, `not_found` 등)를 돌려준다.
+  F5 실패가 이미 저장된 F1 분석을 되돌리지 않게 하기 위해서다. 실패한 메일은 수동 명령으로 다시 만들 수 있다.
+- 반드시 F1 저장 트랜잭션 **밖에서(확정 후)** 부른다. F5는 별도 트랜잭션으로 저장하고, 같은 메일을 다시 넣어도
+  제안·알림 이벤트를 중복으로 만들지 않는다(근거 위치 기반 `action_key`). 그래서 재시도해도 안전하다.
+- 제안할 것(일정·할 일·회신 필요)이 없으면 AI를 부르지 않고 `nothing_to_suggest`를 돌려준다.
+- 실제 Gmail 본문은 `allow_gmail=True`이고 **외부 전송이 없는 제공자(로컬 Ollama)** 일 때만 AI에 보낸다
+  (open-questions 14). Claude 제공자로는 `external_transfer_blocked`.
+- 테스트 대역(mode=test) 제공자는 기본 거부한다(`allow_test_provider`는 검사 전용).
+- 수동 실행: `uv run python -m app.cli.f5_scan --user-id U --account-id A --mail-id M [--allow-gmail-content]`
+  — F1이 저장한 성공 분석(`f1_mail_analysis`, `analysis_status=done`)을 읽어 같은 경로로 제안을 만든다.
+  출력은 상태·건수·건너뛴 이유 개수뿐이며 본문·근거 문장·키를 출력하지 않는다.
+
+### 계약 차이와 처리 방식
+
+| F1 `AnalysisResult` | F5 `ScanInput` 요구 | 처리 |
+| --- | --- | --- |
+| 행동 키 없음 | 재분석에도 유지되는 `action_key` | 근거 위치로 만든다: `유형-sha256(start:end)[:32]`. 문구가 바뀌어도 같은 문장이면 같은 제안 |
+| `evidence_spans`가 종류(action/due/event)만 있고 어느 항목의 근거인지 연결 없음 | 제안마다 정확한 근거 | AI(`purpose=scan`, `ai/prompts/scan.md`)에게 항목별 근거 문장을 **원문 그대로 인용**하게 하고, F5가 원문에서 직접 찾아 위치를 정한다. F1 위치는 같은 문장이 여러 번 나올 때 우선순위 힌트로만 쓴다 |
+| 인용문 없음 | `quote == body_text[start:end]` | F5가 찾은 위치에서 잘라 넣는다 |
+| 본문 해시 없음 | `body_sha256` | 저장된 원본 `body_text`의 UTF-8 SHA-256 |
+| 위치 단위: Python 문자열 인덱스 | Unicode 코드 포인트 | 같은 단위(Python `str`), 변환 없음 |
+| 일정 `end` 없음 가능 | `end` 필수 | **지어내지 않고 건너뜀**(`event_end_unknown`) |
+| 일정 `location` null 가능 | 문자열 | 빈 문자열 |
+| `needs_reply`(참/거짓)만 | 회신 이유 + 근거 | `needs_reply=true`일 때만 AI가 이유 한 문장과 회신 요청 문장을 인용. false인데 회신을 주면 형식 위반 |
+| 제목 길이 제한 없음 | 300자 이하 | 넘으면 건너뜀(`title_too_long`) |
+
+- 제안 **내용**(일정 제목·시각·장소, 할 일 제목·마감)은 F1 결과를 그대로 쓴다. AI는 내용을 바꾸지 못한다.
+- 형식 위반(JSON 아님, 다른 mail_id, 없는 index, 중복 index, 추가 키)이나 원문에 없는 인용·빠진 근거가 있으면
+  **한 번 다시 묻는다**(`retry_reason` 고정 코드만 전달). 두 번째에도 형식 위반이면 아무 제안도 만들지 않고
+  `invalid_response`, 형식은 맞지만 일부 근거가 원문에 없으면 그 항목만 버리고 이유를 기록한다.
+- 로컬 모델이 붙이는 `<think>` 블록·코드 블록 표시는 공통 `clean_json_text`로 걷어낸다.
+- 같은 유형의 두 항목이 같은 문장을 가리키면 다음 같은 문장 위치를 쓰고, 없으면 뒤 항목을 건너뛴다(`duplicate_evidence`).
+
+### 이전 요청(유지)
+
+1. 공통 AI 제공자·분석기는 F1 담당 코드를 사용한다. F5는 공통 `TextGeneration`만 쓰며 자체 SDK·가짜 기본 제공자가 없다.
+2. 일정에는 시간대가 있는 시작·종료가 모두 필요하다. 추정 불가한 종료·날짜를 임의로 만들지 않는다.
+3. 같은 행동 재입력은 최초 저장값과 사용자 처리 상태를 유지하고, 이벤트를 다시 만들지 않는다.
    본문 변경·행동 철회·이미 만든 제안의 교체 정책은 후속 합의 대상이다.
-7. 연결 확인은 합성 메일 → F1 결과 → F5 저장·재조회·동일 작업 재시도 순서로 별도 검사한다.
-   F1 분석 완료 이벤트와 F5 생성의 트랜잭션/재시도 책임도 정해야 한다.
 
 ## F0 담당에게
 
