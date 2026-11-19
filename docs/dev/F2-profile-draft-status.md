@@ -20,7 +20,11 @@
 - 통합(#16): 마이그레이션 `0004_f2`, `app.main` 라우터 등록, 로컬 실행 명령의 F2 저장소 조립, App 화면 경로(`/settings/profile`, `/reply/:mailId`, 돌아가기 `/mail/inbox`), 공유 API 타입 재생성, api·data-model 문서.
 - 통합(`integrate/F2-F3-ipc`): F2용 main/preload 통로 10개(`klover:f2:*`, 발송 없음) → 서버 경로 1:1 연결. 화면 `F2Client`가 실제 서버를 부른다.
   메일함 [설정]·[답장 초안 만들기] 진입은 F0 #17에서 연결됨.
-- 부분 완료: 초안 생성은 AI 미연결이라 503 `ai_unavailable` 안내가 뜬다. 프로필 저장·불러오기·학습 기록 삭제는 실제로 동작(실제 앱 확인은 미실행).
+- AI 연결(통합 채팅, `integrate/F2-ai`): 서버 실행 명령(`run_mail_api.py`의 `draft_ai()`)이 공통 AI 제공자(`load_providers()`)를
+  `SharedDraftAI`로 감싸 `F2Context.ai`에 넣는다. `.env`에 `AI_PROVIDER`(claude 또는 ollama)를 설정하면 초안 생성이 켜지고,
+  설정이 없거나 검사용 제공자이면 지금처럼 503 `ai_unavailable`이다(`tests/test_run_mail_api_ai.py`).
+  관련 메일 검색(`related`)은 아직 연결하지 않았다(F1 의미 검색 후속).
+- 프로필 저장·불러오기·학습 기록 삭제는 실제로 동작(실제 앱 확인은 미실행).
 - 미구현: 실제 AI 초안 품질.
 
 상세 구현·검사 기록: [F2-verification.md](F2-verification.md) · 설계: [F2-profile-draft.md](F2-profile-draft.md) · 연결 요청: [F2-handoff.md](F2-handoff.md)
