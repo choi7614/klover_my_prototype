@@ -100,4 +100,31 @@ describe('main 전용 메일 API', () => {
     expect(await new MailAPIClient({ baseURL, tokenFile: file }).session()).toMatchObject({ ok: false, error: { code: 'connection' } });
     expect(leaked).toBe(false);
   });
+  it('새 메일 가져오기는 POST로 요청하고 건수만 반환하며 409·502를 구분한다', async () => {
+    const requests: { path?: string; method?: string; origin?: string }[] = [];
+    let status = 200;
+    const baseURL = await listen((request, response) => {
+      requests.push({ path: request.url, method: request.method, origin: request.headers.origin });
+      response.statusCode = status;
+      response.setHeader('Content-Type', 'application/json');
+      response.end(JSON.stringify(status === 200
+        ? { saved: 2, skipped: 1, mode: 'history', token_refreshed: false, token, subject: '숨김' }
+        : { error: { code: 'x', message: '서버 문구' } }));
+    });
+    const client = new MailAPIClient({ baseURL, tokenFile: file });
+    const result = await client.sync();
+    expect(result).toEqual({ ok: true, data: { saved: 2, skipped: 1, mode: 'history', token_refreshed: false } });
+    expect(JSON.stringify(result)).not.toContain(token);
+    expect(requests).toEqual([{ path: '/mails/sync', method: 'POST', origin: undefined }]);
+    status = 409;
+    expect(await client.sync()).toMatchObject({ ok: false, error: { code: 'sync_in_progress' } });
+    status = 502;
+    expect(await client.sync()).toMatchObject({ ok: false, error: { code: 'gmail_unavailable' } });
+    status = 503;
+    expect(await client.sync()).toMatchObject({ ok: false, error: { code: 'unavailable' } });
+  });
+  it('새 메일 가져오기 응답 형식이 다르면 일반 오류로 전달한다', async () => {
+    const baseURL = await listen((_request, response) => { response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify({ saved: '2' })); });
+    expect(await new MailAPIClient({ baseURL, tokenFile: file }).sync()).toMatchObject({ ok: false, error: { code: 'invalid_response' } });
+  });
 });

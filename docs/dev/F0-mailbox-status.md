@@ -7,10 +7,10 @@
 | 항목 | 내용 |
 | --- | --- |
 | 브랜치 | `feat/F0-mailbox` |
-| 작업 도구 | 없음 (Claude 작업 후 인수인계) |
-| 상태 | PR 대기 → develop 병합 승인됨 (새로고침 Gmail 가져오기·F2/F3 진입 단위) |
-| 마지막 커밋 | 이번 커밋 — [F0] 새로고침을 Gmail 새 메일 가져오기로 바꾸고 F2·F3 화면 진입 연결 |
-| 기준 develop | `c8951a1` (F2 공통 패치 #16 포함, 빨리감기 통합·충돌 없음) |
+| 작업 도구 | 없음 |
+| 상태 | develop 병합 (#17), 공통 패치 `patches/F0` 01~05 적용 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18), `integrate/F0-patches`) |
+| 마지막 커밋 | `438b29d` 2026-11-19 — [F0] 새로고침을 Gmail 새 메일 가져오기로 바꾸고 F2·F3 화면 진입 연결 |
+| 기준 develop | `4b24378` (#17 병합, 공통 패치는 이 위에 적용) |
 | 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
 
@@ -27,7 +27,10 @@
   - F2·F3 진입(S03): 사이드바 [설정] → `/settings/profile`, 메일 읽기 도구 줄 [◆ 답장 초안 만들기] → `/reply/:mailId`,
     상단 자연어 검색창(`Ctrl K` 포커스) Enter → `/search?q=`. F0 쪽 경로 부품 `features/mailbox/routes.tsx`
     (`MailboxRoute` = `/mail/inbox/:mailId?`, `SearchRoute`, `unavailableSearchClient`).
-- 공통 영역은 `patches/F0/01~05`로만 남김(미적용). `/search` 경로는 패치 03 적용 전에는 받은편지함으로 돌아간다.
+- 공통 패치 적용(통합 채팅, `integrate/F0-patches`): 서버 `POST /mails/sync` 등록·로컬 실행 명령 조립(01),
+  main/preload `mail.sync` IPC(02), App 경로 `/mail/inbox/:mailId?`·`/search`(03), 공유 타입 재생성(04), api 문서(05).
+  이제 앱 새로고침이 서버를 거쳐 실제로 Gmail 새 메일을 가져온다(실제 Gmail 확인은 미실행).
+  `/search`는 F3 IPC가 없어 '준비 부족' 클라이언트로 열린다.
 - S04 제안 패널(F5)은 F5 미착수라 만들지 않았다. S04의 회신 초안 진입은 S03 도구 줄 버튼과 같은 경로다.
 - 미구현: 작성·발송, 보관·삭제·스팸, 트레이·알림, F1 AI 표시, F2·F3 서버 통로(IPC), 주기 자동 수신.
 
@@ -47,9 +50,24 @@
 
 미실행: 실제 Gmail로 새로고침 수신, Electron 실제 창 확인, 화면 목업 대조(스크린샷), 실제 DB 검사.
 
+공통 패치 01~05 적용 후 (2026-11-19, 통합 채팅, `integrate/F0-patches`, 기준 `4b24378`):
+
+| 검사 | 결과 |
+| --- | --- |
+| 패치 `git apply --check` | 01~05 모두 통과, 충돌 없음 |
+| 04 공유 타입 | `pnpm gen:api-types` 재생성 결과가 패치 04와 동일 |
+| 서버 `ruff check`·`ruff format --check` | 통과 |
+| 서버 `pytest` | 221 통과, 90 skip (실제 PostgreSQL 필요 — 이 환경에 DB 없음, 미실행) |
+| 데스크톱 `lint`·`typecheck` | 통과 |
+| 데스크톱 `test` | 7개 파일 80개 통과 |
+| `packages/api-types` typecheck | 통과 |
+| `alembic heads` | `0004_f2` 하나 (DB 변경 없음) |
+
+미실행: 실제 Gmail 새로고침 수신, Electron 실제 창, 실제 DB.
+
 ## 공통 영역 요청
 
-`patches/F0/README.md` 참고. 통합 채팅에서 적용한다.
+`patches/F0/` 01~05 적용 완료(통합 채팅, `integrate/F0-patches`). 기록: `patches/F0/README.md`
 
 1. 01 서버 등록: `main.py`에 `register_mail_sync`, `run_mail_api.py`에 `MailSyncContext(GmailSyncRepository, GmailMailClient)` 조립.
 2. 02 main/preload: `MailAPIClient.sync()`, `klover:mail:sync` IPC, preload `mail.sync`.
@@ -59,11 +77,11 @@
 
 ## 다음 할 일
 
-1. 통합 채팅에서 `patches/F0` 적용 후 맥북에서 새로고침으로 실제 Gmail 새 메일 수신 확인 (`docs/dev/F0-mailbox-run.md`)
-2. F2·F3 서버 통로(IPC) 연결
+1. 맥북에서 새로고침으로 실제 Gmail 새 메일 수신 확인 (`docs/dev/F0-mailbox-run.md`)
+2. F2·F3 서버 통로(IPC) 연결 (통합 채팅). 선택: `shared/mail-read.ts`의 수동 `MailSyncResult`를 생성 타입으로 교체
 3. 작성·보관·삭제 단위 진행
 
 ## 인수인계 메모
 
-- 멈춘 지점: 이번 단위 구현·검사·커밋 완료. PR → develop 병합(사용자 승인).
-- 주의할 점: 패치는 `c8951a1` 기준이다. develop이 바뀌면 `git apply --check`부터 다시 한다.
+- 멈춘 지점: 공통 패치 01~05 적용·검사 완료.
+- 주의할 점: 이후 F2·F3 IPC는 F0의 `mail-ipc.ts`와 같은 방식(신뢰한 화면만, 인증 값은 main에서만)으로 만든다.

@@ -45,6 +45,7 @@
 | GET | `/auth/session` | `LocalSession`: 연결된 `user_id`, `account_id`, `email`, `sync_started_at` |
 | GET | `/mails?box=inbox&limit=20&cursor=...` | `MailPage`: `items`와 `next_cursor`(마지막은 null). limit 1~100, 기본 20 |
 | GET | `/mails/{mail_id}` | `MailDetail`: 해당 계정의 받은 메일 일반 텍스트 본문 |
+| POST | `/mails/sync` | `MailSyncResult`: `saved`, `skipped`, `mode`(`initial`/`history`/`rescan`), `token_refreshed`. 앱 새로고침용 Gmail 새 받은 메일 가져오기 |
 
 - `MailSummary`: `mail_id`, `subject`, `from_addr`, `from_name`, `preview`(본문 앞 160자),
   `received_at`, `is_read`, `analysis_status`(`pending`/`done`/`failed`).
@@ -58,7 +59,12 @@
 - 로컬 접속과 허용 Host만 받으며 모든 Origin 헤더를 거부한다. Renderer 직접 fetch 대신
   Electron main의 Node fetch + 제한된 IPC를 사용한다. CORS를 추가해 우회하지 않는다.
 - 인증 실패 401, 외부 출처 403, DB·계정 준비 부족 503. 개인 응답은 `Cache-Control: no-store`다.
-- 조회는 저장된 DB를 읽으며 읽음 상태·메일·수신 커서를 바꾸거나 Gmail을 동기화하지 않는다.
+- 조회(GET)는 저장된 DB를 읽으며 읽음 상태·메일·수신 커서를 바꾸거나 Gmail을 동기화하지 않는다.
+- Gmail 수신은 `POST /mails/sync`만 한다(2026-11-19, F0). CLI `gmail_mail sync`와 같은 수신 기능을 써서
+  사용 시작 시점 이후 받은편지함 메일만 저장하고 이미 저장한 메일은 건너뛴다. 실패한 배치와 커서는 되돌린다.
+  인증·loopback·Host·Origin 규칙과 `Cache-Control: no-store`는 조회와 같다. 같은 서버에서 이미 가져오는 중이면
+  409 `sync_in_progress`, Gmail·토큰 갱신 실패는 502 `gmail_unavailable`(외부 응답 상세 미포함), DB·계정 준비 부족은 503.
+  응답에는 건수만 있고 메일 내용·토큰은 없다. 주기적 자동 수신(WebSocket·작업 큐)은 후속이다.
 
 ## F3 검색 API (서버 등록·모델 미연결)
 

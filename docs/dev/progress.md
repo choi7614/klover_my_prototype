@@ -1,6 +1,6 @@
 # 개발 현황판
 
-> 갱신: 2026-11-19 · 기준: `origin/develop@7a9d4dd` (+ F2 공통 패치 #16) · 갱신 도구: Claude
+> 갱신: 2026-11-19 · 기준: `origin/develop@4b24378` (+ F0 공통 패치 `integrate/F0-patches`) · 갱신 도구: Claude
 
 **도구를 바꾸기 전·이어받은 직후 이 표부터 갱신한다.** 규칙은 [AGENTS.md](../../AGENTS.md)의 '도구 전환과 인수인계'.
 도구 전환용 프롬프트 모음: **[handoff-prompts.md](handoff-prompts.md)** · status 문서 양식: [status-template.md](status-template.md)
@@ -12,7 +12,7 @@
 
 | 기능 | 브랜치 | 작업 도구 | 상태 | 마지막 커밋 | 다음 할 일 | status 문서 | 갱신일 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | PR → develop 병합 승인 (새로고침 Gmail 가져오기·F2/F3 진입) | 이번 커밋 2026-11-19 | 통합 채팅에서 `patches/F0` 01~05 적용, 맥북 실제 수신 확인, F2·F3 IPC 연결 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
+| F0 첫 실행·메일함 | `feat/F0-mailbox` | 없음 | develop 병합 (#17), 공통 패치 01~05 적용 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18)) | `438b29d` 2026-11-19 | 맥북 실제 Gmail 새로고침 수신 확인, F2·F3 IPC 연결(통합 채팅), 작성·보관·삭제 | [F0-mailbox-status.md](F0-mailbox-status.md) | 2026-11-19 |
 | F1 분류·저장 | `feat/F1-mail-analysis` | 없음 | develop 병합 (#11) | `34ebcbc` 2026-11-18 | 실제 LLM·임베딩 어댑터 연결, 저장 SQL·라우터 운영 반영(통합 채팅) | [F1-analysis-status.md](F1-analysis-status.md) | 2026-11-19 |
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치 적용 ([#16](https://github.com/choi7614/klover_my_prototype/pull/16), `integrate/F2-patches`) | `c7bfb65` 2026-11-19 | F2용 main/preload IPC 클라이언트 연결(현재 '준비 부족' 기본값), 실제 DB에서 0004 적용 확인 | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 (#12) | `deeda1c` 2026-11-19 | 실제 모델 어댑터, F0 화면 진입·메일 열기, F2 초안 열기 연결 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
@@ -25,6 +25,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | 규칙 단일화·인수인계·CI | `chore/agent-guidelines` | 없음 | develop 병합 ([#14](https://github.com/choi7614/klover_my_prototype/pull/14), `f282640`) | `ae4d00b` 2026-11-19 | 후속: 문서 담당 표기 정리(1인 개발) PR | 2026-11-19 |
 | F0 PR 갱신·F2 공통 패치 적용 | `integrate/F2-patches` | 없음 | develop 병합 ([#16](https://github.com/choi7614/klover_my_prototype/pull/16)) | `d726783` 2026-11-19 | F1 저장 SQL을 0005로 옮기기(요청 시) | 2026-11-19 |
+| F0 공통 패치 적용 | `integrate/F0-patches` | 없음 | develop 병합 ([#18](https://github.com/choi7614/klover_my_prototype/pull/18)) | `57256d8` 2026-11-19 | F2·F3 main/preload IPC 연결 | 2026-11-19 |
 | 공통 서버·DB·Gmail 기반 | `feat/server-foundation` 외 4개 | 없음 | develop 병합 (#4~#9) | `b24f9d6` 2026-11-18 | 추가 작업 없음 | 2026-11-19 |
 
 ## 마이그레이션 번호 예약

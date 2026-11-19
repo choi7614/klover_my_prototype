@@ -556,6 +556,40 @@
         "title": "MailSummary",
         "type": "object"
       },
+      "MailSyncResult": {
+        "description": "Gmail 새 받은 메일 가져오기 결과. 메일 내용·토큰은 포함하지 않는다.",
+        "properties": {
+          "mode": {
+            "enum": [
+              "initial",
+              "history",
+              "rescan"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "integer"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "token_refreshed": {
+            "title": "Token Refreshed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "saved",
+          "skipped",
+          "mode",
+          "token_refreshed"
+        ],
+        "title": "MailSyncResult",
+        "type": "object"
+      },
       "ParsedQuery": {
         "additionalProperties": false,
         "properties": {
@@ -2130,6 +2164,103 @@
           }
         ],
         "summary": "List Mails",
+        "tags": [
+          "메일 조회"
+        ]
+      }
+    },
+    "/mails/sync": {
+      "post": {
+        "description": "사용 시작 이후 도착한 받은편지함 메일만 저장한다. 이미 저장한 메일은 건너뛴다.",
+        "operationId": "sync_mails_mails_sync_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailSyncResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "이미 새 메일을 가져오는 중"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gmail에서 가져오지 못함"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Sync Mails",
         "tags": [
           "메일 조회"
         ]

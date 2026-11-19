@@ -107,8 +107,9 @@ cd ~/Projects/klover-taeho-dev
 uv run --locked --directory apps/server python -m app.cli.gmail_mail sync
 ```
 
-그다음 앱의 새로고침으로 DB 목록을 다시 읽는다. 앱 새로고침 자체가 Gmail 동기화를
-실행하는 것은 아니다. 과거 메일 수집·발송·보관·삭제·읽음 변경은 이번 조회 API 범위 밖이다.
+2026-11-19부터 앱의 새로고침은 `POST /mails/sync`로 같은 수신을 실행한 뒤 목록을 다시 읽는다
+(F0 공통 패치 01·02 적용 후). 위 명령은 터미널에서 직접 확인할 때 계속 쓸 수 있다.
+과거 메일 수집·발송·보관·삭제·읽음 변경은 이번 범위 밖이다.
 
 ## 개발자용 계약과 검사
 

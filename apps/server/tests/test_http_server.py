@@ -72,6 +72,7 @@ def test_openapi_describes_only_implemented_api_and_its_response():
         "/drafts/{draft_id}/revise",
         "/health",
         "/mails",
+        "/mails/sync",
         "/mails/{mail_id}",
         "/profile",
         "/profile/preview",

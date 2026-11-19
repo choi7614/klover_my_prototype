@@ -7,5 +7,6 @@ const mail = Object.freeze<MailReadBridge>({
   session: () => ipcRenderer.invoke('klover:mail:session'),
   inbox: query => ipcRenderer.invoke('klover:mail:inbox', query),
   detail: mailId => ipcRenderer.invoke('klover:mail:detail', mailId),
+  sync: () => ipcRenderer.invoke('klover:mail:sync'),
 });
 contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail }));

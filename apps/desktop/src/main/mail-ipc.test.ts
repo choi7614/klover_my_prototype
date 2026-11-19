@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron';
 import { developmentRendererURL, registerMailReadIPC } from './mail-ipc';
-import { mailChannels } from '../shared/mail-read';
+import { mailChannels, mailSyncChannel } from '../shared/mail-read';
 
 function setup() {
   const frame = { url: 'file:///app/renderer/index.html#/mail/inbox' };
@@ -13,7 +13,7 @@ function setup() {
     handle: vi.fn((channel, listener) => handlers.set(channel, listener)),
     removeHandler: vi.fn(channel => handlers.delete(channel)),
   } as unknown as Pick<IpcMain, 'handle' | 'removeHandler'>;
-  const client = { session: vi.fn().mockResolvedValue({ ok: true, data: {} }), inbox: vi.fn(), detail: vi.fn() };
+  const client = { session: vi.fn().mockResolvedValue({ ok: true, data: {} }), inbox: vi.fn(), detail: vi.fn(), sync: vi.fn() };
   const connected = vi.fn();
   const dispose = registerMailReadIPC(ipc, contents, 'file:///app/renderer/index.html', client, connected);
   return { frame, contents, event, handlers, client, connected, dispose };
@@ -27,7 +27,7 @@ describe('제한된 메일 IPC', () => {
   });
   it('등록된 세 조회와 검증된 인수만 호출하고 성공한 계정 연결 후 창을 전환한다', async () => {
     const s = setup();
-    expect([...s.handlers.keys()]).toEqual(Object.values(mailChannels));
+    expect([...s.handlers.keys()]).toEqual([...Object.values(mailChannels), mailSyncChannel]);
     await s.handlers.get(mailChannels.session)!(s.event);
     s.handlers.get(mailChannels.inbox)!(s.event, { limit: 20, cursor: 'opaque' });
     s.handlers.get(mailChannels.detail)!(s.event, 'safe-mail-id');
@@ -65,5 +65,13 @@ describe('제한된 메일 IPC', () => {
     expect(s.client.session).not.toHaveBeenCalled();
     expect(s.client.inbox).not.toHaveBeenCalled();
     expect(s.client.detail).not.toHaveBeenCalled();
+  });
+  it('새 메일 가져오기는 신뢰한 화면의 인수 없는 요청만 서버에 전달한다', async () => {
+    const s = setup();
+    s.handlers.get(mailSyncChannel)!(s.event);
+    expect(s.client.sync).toHaveBeenCalledOnce();
+    expect(await s.handlers.get(mailSyncChannel)!(s.event, { url: 'http://outside.invalid' })).toMatchObject({ ok: false });
+    expect(await s.handlers.get(mailSyncChannel)!({ ...s.event, sender: {} } as unknown as IpcMainInvokeEvent)).toMatchObject({ ok: false });
+    expect(s.client.sync).toHaveBeenCalledOnce();
   });
 });
