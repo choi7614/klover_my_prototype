@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Base, Mail
 from app.db.repositories.mail import MailRepository
+from app.db.repositories.search_recent import search_metadata
 
 START = datetime(2026, 11, 18, 0, 0, tzinfo=UTC)
 
@@ -77,11 +78,21 @@ def test_migration_repeat_and_model_match(database):
     engine, config = database
     command.upgrade(config, "head")
     with engine.connect() as connection:
-        assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
+        assert (
+            compare_metadata(
+                MigrationContext.configure(connection), [Base.metadata, search_metadata]
+            )
+            == []
+        )
     command.downgrade(config, "base")
     command.upgrade(config, "head")
     with engine.connect() as connection:
-        assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
+        assert (
+            compare_metadata(
+                MigrationContext.configure(connection), [Base.metadata, search_metadata]
+            )
+            == []
+        )
 
 
 def test_mail_survives_session_and_connection_recreation(database):
