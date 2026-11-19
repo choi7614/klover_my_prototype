@@ -7,10 +7,11 @@
 | 항목 | 내용 |
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
-| 작업 도구 | Codex |
-| 상태 | PR 대기 — [#20](https://github.com/choi7614/klover_my_prototype/pull/20), develop 병합 조건부 승인 |
+| 작업 도구 | 없음 |
+| 상태 | develop 병합 — [#20](https://github.com/choi7614/klover_my_prototype/pull/20) |
 | 마지막 구현 커밋 | `79cc6ff` — 최신 공통 DB와 F5 API·공유 타입 통합 |
-| 기준 develop | `b147cfd` |
+| 병합 커밋 | `72fb8e4` — 승인된 PR #20 병합 |
+| 기준 develop | `72fb8e4` (통합 검사 기반은 b147cfd) |
 | 미커밋 변경 | 없음 (이 현황 갱신도 커밋·Push) |
 | 갱신일 | 2026-11-19 |
 
@@ -44,7 +45,7 @@ F1과 F5 계약 사이에는 행동 키·근거 인용·본문 해시 등의 변
 | 공유 타입 생성·typecheck | 통과 | `pnpm gen:api-types`로 재생성 |
 | 통합 패치 재검증 | 통과 | 새 임시 복사본의 동일 343개 검사, OpenAPI 일치 |
 | 마이그레이션 보존 | 통과 | 0004_f2 → 0005_f5 반복 upgrade·downgrade·재-upgrade. 합성 기존 메일·계정·수신 커서·암호문·F2 프로필·F3 검색 기록 보존 |
-| GitHub Actions | PR #20 검사 진행 중 | DB 검사는 CI에서 skip될 수 있어 위 로컬 DB 결과와 구분 |
+| GitHub Actions | [PR #20 CI 통과](https://github.com/choi7614/klover_my_prototype/actions/runs/44470201568) | 서버·데스크톱 두 작업 통과. DB 검사는 CI에서 skip될 수 있어 위 로컬 결과와 구분 |
 
 검사 DB: 이 작업 전용 `klover_f5_test`, 루프백 포트 32769. 기존 DB·메일 계정은 사용하지 않았다.
 검사 당시 환경 변수는 KLOVER_TEST_DATABASE_URL, KLOVER_F1_TEST_DATABASE_URL,
@@ -60,13 +61,13 @@ KLOVER_F5_TEST_DATABASE_URL을 모두 이 DB로 지정했다.
 
 ## 다음 할 일
 
-1. PR·CI 결과를 확인하고 사용자가 승인한 조건에 따라 develop에 병합한다. main 병합은 승인 범위가 아니다.
-2. F1 결과 변환과 F0 화면·알림 연결을 별도 단위로 구현·검사한다.
-3. 실제 권한과 실행 코드 확인 후에만 Calendar 동의/실제 실행을 별도로 검토한다.
+1. F1 결과 변환과 F0 화면·알림 연결을 별도 단위로 구현·검사한다.
+2. 운영 DB의 0005_f5 실제 적용은 사용자 환경에서 별도로 확인한다.
+3. 실제 권한과 실행 코드 확인 후에만 Calendar 동의/실제 실행을 별도로 검토한다. main 병합은 승인 범위가 아니다.
 
 ## 인수인계 메모
 
-- 멈춘 지점: 구현·로컬 통합 검사 완료, PR #20 CI 확인 후 승인된 develop 병합.
+- 멈춘 지점: 구현·로컬 통합 검사·GitHub CI 통과, PR #20 develop 병합 완료.
 - 미실행: 실제 LLM·Google Calendar·메일 발송·OS 알림/트레이·운영 DB 마이그레이션.
 - 주의: F5 테스트 성공은 실제 Calendar 등록 성공이 아니다. 실행 중 프로세스 종료는 담당자 조정 대상이다.
 - 상세: [계약](F5-ai-scan-contract.md), [최초 분리 개발 기록](F5-ai-scan-report.md),

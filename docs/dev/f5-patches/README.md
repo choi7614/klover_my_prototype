@@ -59,7 +59,7 @@ uv run --directory apps/server python ../../scripts/f5/verify_patches.py \
 1. 최신 develop을 F5 브랜치에 가져왔고 공통 적용·검사를 마쳤다. 기존 브랜치와 이력을 초기화하지 않았다.
 2. 마이그레이션은 progress.md의 0005를 예약한 뒤 0004_f2 다음에 추가했다. 0001~0004는 변경하지 않았다.
 3. 실제 앱에서 `pnpm gen:api-types`로 공유 타입을 재생성했다. 기존 F2/F3와 메일 동기화 경로도 포함한다.
-4. 사용자가 승인한 커밋·Push·develop 대상 PR과, 문제가 없으면 develop 병합을 진행한다.
+4. 커밋·Push 후 GitHub CI를 통과했고, 사용자 승인에 따라 [PR #20](https://github.com/choi7614/klover_my_prototype/pull/20)을 develop에 병합했다(`72fb8e4`).
 
 main 병합은 별도 승인 대상이다. Calendar는 기본 차단이며 실제 transport·권한 검토와
 별도 허용 전에는 실행하지 않는다. F0 main/preload/app과 기존 OAuth·수신 코드는 수정하지 않았다.
