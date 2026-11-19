@@ -1,4 +1,8 @@
-# F2 적용 전 패치 — 아직 미적용
+# F2 공통 패치 — 적용 완료 (기록용)
+
+> 2026-11-19 통합 채팅에서 F0(#10) 반영 후 develop `7a9d4dd` 기준으로 적용했다([#16](https://github.com/choi7614/klover_my_prototype/pull/16)).
+> 03은 F0의 `app.tsx`와 충돌해 수동으로 합쳤고, 04는 `pnpm gen:api-types`로 재생성했다. 이미 반영된 소스에 다시 적용하지 않는다.
+> 아래는 적용 전 기록이다.
 
 최초 기준은 `origin/develop` 0f68ad1이며, 승인 후 최신 `9244454`의 F1/F3를 가져와 다시 생성했다.
 `feat/F2-profile-draft`는 가져온 공통 파일을 직접 수정하지 않는다.
