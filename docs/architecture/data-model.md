@@ -181,3 +181,14 @@ Gmail history ID다. 배치 시작에 확인한 ID를 저장해 실행 중 도�
 
 날짜 경계, 사용자 분류 우선순위, 분석 미완료 처리와 그룹 연결 규칙은
 [F4 구현 계획](../dev/F4-weekly-report-plan.md)의 내부 계약을 따른다.
+
+## F2 저장 구조 (0004_f2)
+
+0004_f2는 profiles/style_learnings/drafts만 추가한다. 기존 테이블·행·키는 바꾸지 않는다.
+모델은 app.db.f2_models의 별도 F2Base.metadata이며 공통 Base.metadata와 함께 검사한다.
+profiles는 위 설계의 필드와 excluded_phrases(jsonb), version(int>=1)을 저장한다.
+style_learnings는 user_id(PK/FK), payload(jsonb: status/analyzed_count/phrases/traits)를 저장한다.
+실제 학습 수집·쓰기 작업자는 아직 없다. drafts는 draft_id(PK), user_id(FK·인덱스),
+payload(jsonb: DraftState 전체), version(int>=1)을 저장한다. 사용자·버전 조건으로 갱신한다.
+학습 기록 삭제는 해당 사용자 기록을 지우고 학습 동의를 끄며 프로필 버전을 올린다.
+세부 계약과 F4 읽기 포트는 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.

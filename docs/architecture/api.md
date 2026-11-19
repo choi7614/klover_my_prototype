@@ -131,3 +131,12 @@
 | `mail.received` | 새 메일 도착 (분석 전) | 목록에 추가 |
 | `mail.analyzed` | 분석 완료 (요약·태그) | 목록 갱신 |
 | `suggestion.created` | 새 AI 제안 | Windows 토스트 알림 |
+
+## F2 프로필·답장 초안 API
+
+F2 router는 `app.main`에 등록되어 있다. 0004_f2 마이그레이션을 적용한 DB와 F2Context(로컬 실행 명령에서 조립)가 필요하다.
+GET/PUT /profile, GET/DELETE /profile/style, POST /profile/preview, POST /drafts,
+GET/PATCH /drafts/{draft_id}, POST /drafts/{draft_id}/revise.
+인증·Origin 제한은 기존 로컬 메일 조회 API를 그대로 따른다. 발송 API는 추가하지 않는다.
+AI 미연결은 503 ai_unavailable이며 합성 결과로 대체하지 않는다.
+입력·출력·버전·동의·오류 계약은 [F2 구현 안내](../dev/F2-profile-draft.md)를 따른다.

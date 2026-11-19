@@ -66,10 +66,16 @@ def test_openapi_describes_only_implemented_api_and_its_response():
     assert response.status_code == 200
     schema = response.json()
     assert set(schema["paths"]) == {
-        "/health",
         "/auth/session",
+        "/drafts",
+        "/drafts/{draft_id}",
+        "/drafts/{draft_id}/revise",
+        "/health",
         "/mails",
         "/mails/{mail_id}",
+        "/profile",
+        "/profile/preview",
+        "/profile/style",
         "/search",
         "/search/recent",
     }
