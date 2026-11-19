@@ -4,6 +4,8 @@ import argparse
 
 import uvicorn
 
+from app.ai.f2_port import F2Error, UnavailableDraftAI
+from app.ai.f2_shared_adapter import SharedDraftAI
 from app.ai.interfaces import ProvidersNotConfigured
 from app.ai.runtime import load_providers
 from app.ai.search_adapter import SharedQueryParser, SharedSearchAnswerer
@@ -33,6 +35,15 @@ def search_ai():
         return SharedQueryParser(generator), SharedSearchAnswerer(generator)
     except ProvidersNotConfigured:
         return None, None
+
+
+def draft_ai():
+    """실제 공통 AI 제공자가 있을 때만 F2 답장 초안 생성을 켠다. 없으면 503으로 안내한다."""
+    try:
+        generator, _embedding = load_providers()
+        return SharedDraftAI(generator)
+    except (ProvidersNotConfigured, F2Error):
+        return UnavailableDraftAI()
 
 
 def main():
@@ -65,7 +76,8 @@ def main():
             parser=search_parser,
             answerer=search_answerer,
         )
-        application.state.profile_draft = F2Context(F2Repository(engine))
+        # F2 답장 초안: 검색과 같은 공통 AI 제공자를 쓴다. 관련 메일 검색(related)은 아직 없다.
+        application.state.profile_draft = F2Context(F2Repository(engine), ai=draft_ai())
         application.state.weekly_reports = WeeklyReportRuntime(engine)
         # 실제 Calendar transport는 별도 승인·권한 확인 전까지 차단한다.
         application.state.f5_service = F5Service(F5Repository(engine))
