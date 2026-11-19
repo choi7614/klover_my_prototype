@@ -1,6 +1,6 @@
 # 개발 현황판
 
-> 갱신: 2026-11-20 · 기준: `origin/develop@d0ec68a` · 갱신 도구: Codex
+> 갱신: 2026-11-20 · 기준: `origin/develop@e5f7efd` · 갱신 도구: Codex
 
 **도구를 바꾸기 전·이어받은 직후 이 표부터 갱신한다.** 규칙은 [AGENTS.md](../../AGENTS.md)의 '도구 전환과 인수인계'.
 도구 전환용 프롬프트 모음: **[handoff-prompts.md](handoff-prompts.md)** · status 문서 양식: [status-template.md](status-template.md)
@@ -33,7 +33,8 @@
 | F2 답장 초안 AI 연결 | `integrate/F2-ai` | 없음 | develop 병합 ([#31](https://github.com/choi7614/klover_my_prototype/pull/31)) | `3da516a` 2026-11-19 | 맥북 실제 AI 확인 | 2026-11-19 |
 | F1 자동 분석 공통 패치 05~07 적용 | `integrate/F1-auto-analysis` | 없음 | develop 병합 (#34, `dbdf236`) | `138db45` 2026-11-19 | 맥북 실기에서 메일 목록·본문·요약·분류·제안 표시 확인, 나머지 흐름 후속 | 2026-11-19 |
 | F2 답장 작성 관점 보완 | `fix/F2-reply-perspective` | 없음 | develop 병합 (#35, `d0ec68a`) | `e97459e` | 맥북 초안 재검증, 이후 Claude API 합성 연결 확인 | 2026-11-20 |
-| F2 로컬 AI 대기 시간 | `fix/F2-generation-timeout` | Codex | 진행 중 (로컬 검사·승인 대기) | 미커밋, 기준 `d0ec68a` | 생성 120초·미리보기 30초·앱 150초 조정과 취소·편집본 보존 검사 후 묶음 승인 | 2026-11-20 |
+| F2 로컬 AI 대기 시간 | `fix/F2-generation-timeout` | 없음 | develop 병합 (#36, `e5f7efd`) | `7d2c259` | 맥북 재검증, 후속 AI 제공자 선택 통합 | 2026-11-20 |
+| F0·F2·F3·F4 AI 선택·첫 주 보고 | `integrate/ai-provider-selection` | Codex | 진행 중 (구현·검사 완료, 묶음 승인 대기) | 미커밋, 기준 `e5f7efd` | 서버 575/skip 0·앱 182·브라우저 3·정적 검사/빌드 통과. 승인 후 PR·CI 확인, 문제 없으면 develop 병합(사용자 조건부 승인) | 2026-11-20 |
 | 공통 서버·DB·Gmail 기반 | `feat/server-foundation` 외 4개 | 없음 | develop 병합 (#4~#9) | `b24f9d6` 2026-11-18 | 추가 작업 없음 | 2026-11-19 |
 
 ## 마이그레이션 번호 예약

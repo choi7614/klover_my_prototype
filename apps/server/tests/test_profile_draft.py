@@ -452,3 +452,42 @@ def test_private_storage_failure_does_not_expose_exception():
         response = client.get("/profile", headers=HEADERS)
         assert response.status_code == 503
         assert response.headers["cache-control"] == "no-store"
+
+
+def test_create_and_revision_honor_request_ai_provider_and_preserve_profile(repository, tmp_path):
+    from app.ai.selection import AISettingsStore, AIUpdate, Defaults, SelectedGeneration
+
+    store = AISettingsStore(tmp_path / "ai", values={"OLLAMA_MODEL": "synthetic"})
+    store.update(AIUpdate(defaults=Defaults(), external_consent=True))
+    router = SelectedGeneration(store)
+    seen = []
+
+    class AI(SyntheticAI):
+        async def generate(self, request):
+            seen.append(router.provider_for("draft"))
+            return await super().generate(request)
+
+    application_with_ai = application(repository, ai=AI())
+    application_with_ai.state.ai_settings = store
+    with TestClient(
+        application_with_ai, base_url="http://127.0.0.1:8000", client=("127.0.0.1", 12345)
+    ) as client:
+        assert save_profile(client).status_code == 200
+        original = client.post(
+            "/drafts", json={"mail_id": "original", "ai_provider": "claude"}, headers=HEADERS
+        ).json()
+        revised = client.post(
+            f"/drafts/{original['draft_id']}/revise",
+            json={
+                "action": "shorter",
+                "body": original["body"],
+                "expected_version": original["version"],
+                "ai_provider": "ollama",
+            },
+            headers=HEADERS,
+        )
+        assert revised.status_code == 200
+        assert seen == ["claude", "ollama"]
+        assert client.get("/profile", headers=HEADERS).json()["profile"] == PROFILE.model_dump(
+            mode="json"
+        )

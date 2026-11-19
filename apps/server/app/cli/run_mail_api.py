@@ -4,11 +4,13 @@ import argparse
 
 import uvicorn
 
+from app.ai.config import environment_values
 from app.ai.f2_port import F2Error, UnavailableDraftAI
 from app.ai.f2_shared_adapter import SharedDraftAI
 from app.ai.interfaces import ProvidersNotConfigured
 from app.ai.runtime import load_providers
 from app.ai.search_adapter import SharedQueryParser, SharedSearchAnswerer
+from app.ai.selection import AISettingsStore, SelectedGeneration
 from app.api.mail_read import MailAPIContext
 from app.api.mail_sync import MailSyncContext
 from app.api.profile_draft import F2Context
@@ -59,13 +61,20 @@ def main():
         settings = load_settings()
         engine = database_engine()
         application = create_app()
+        store = AISettingsStore()
+        application.state.ai_settings = store
+        generator = SelectedGeneration(store)
         # F1 분류 수정(PATCH /mails/{mail_id}/category). 소유자는 기존 인증 세션에서만 정한다.
         application.state.mail_analysis_engine = engine
         mail_query = MailQueryRepository(engine, settings.expected_email)
         application.state.mail_api = MailAPIContext(token, mail_query)
         # F1 새 메일 자동 분석: 새로고침 저장 뒤 '분석 시작' 신호만 주고 응답은 기다리지 않는다.
-        # AI 미설정·외부 AI면 분석하지 않고 메일은 pending으로 남는다.
-        analysis_runner = build_auto_analysis(engine, mail_query.session)
+        # 로컬 모델 미설정이면 pending 유지. 수동 기능의 Claude 선택은 자동 분석에 영향 없음.
+        analysis_runner = build_auto_analysis(
+            engine,
+            mail_query.session,
+            loader=lambda: load_providers({**environment_values(), "AI_PROVIDER": "ollama"}),
+        )
         application.state.mail_analysis_runner = analysis_runner
         if analysis_runner.state == "ready":
             # 분석 완료 알림 지점에 F5 제안 만들기를 잇는다(저장 확정 뒤 hook(mail, result)).
@@ -83,16 +92,22 @@ def main():
             lambda: GmailMailClient(settings),
             after_sync=analysis_runner.kick,
         )
-        search_parser, search_answerer = search_ai()
+        search_parser, search_answerer = (
+            SharedQueryParser(generator),
+            SharedSearchAnswerer(generator),
+        )
         application.state.search_service = SearchService(
             SQLSearchRepository(engine),
             SQLRecentSearchRepository(engine),
             parser=search_parser,
             answerer=search_answerer,
+            model_timeout=120,
         )
         # F2 답장 초안: 검색과 같은 공통 AI 제공자를 쓴다. 관련 메일 검색(related)은 아직 없다.
-        application.state.profile_draft = F2Context(F2Repository(engine), ai=draft_ai())
-        application.state.weekly_reports = WeeklyReportRuntime(engine)
+        application.state.profile_draft = F2Context(
+            F2Repository(engine), ai=SharedDraftAI(generator)
+        )
+        application.state.weekly_reports = WeeklyReportRuntime(engine, generator=generator)
         # 실제 Calendar transport는 별도 승인·권한 확인 전까지 차단한다.
         application.state.f5_service = F5Service(F5Repository(engine))
         print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")

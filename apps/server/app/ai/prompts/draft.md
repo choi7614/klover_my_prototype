@@ -35,9 +35,14 @@
 - 본문 body에는 인사·마무리·서명을 넣지 않는다. 서버가 프로필에 저장한 문자열을 그대로 붙인다.
 - style_learning_enabled가 꺼졌거나 learned_phrases/style_traits가 비어 있으면 학습 문체를 추정하지 않는다.
   excluded_phrases의 표현은 사용하지 않는다.
-- 근거는 본문 가운데 부분의 Unicode 코드포인트 [start,end)와 source를 반환한다.
-  source는 입력의 mail_id를 사용한 mail:{id} 또는 실제 사용한 learned_phrases의 profile.phrase다.
+- 근거는 숫자 위치를 계산하지 말고 text(생성 본문에 실제 있는 정확한 문구), source,
+  source_quote(근거 원문에 실제 있는 정확한 인용)를 반환한다. 서버가 위치를 계산한다.
+  source는 입력 mail_id의 mail:{id} 또는 실제 사용한 learned_phrases의 profile.phrase다.
+  profile.phrase면 text와 source_quote가 학습 표현 하나와 정확히 같아야 한다.
+  인사·마무리·서명은 서버 담당이다. 해당 profile.* 근거를 생성하지 않는다.
+  purpose=preview이면 메일 근거를 반환하지 않는다. 근거가 없으면 evidence는 빈 배열이다.
+  인용은 본문에서 겹치지 않아야 한다. 다른 출처를 추정하거나 존재하지 않는 근거를 만들지 않는다.
 - 입력에 없는 메일 ID·자료·첨부·기한·완료 사실을 만들어 내지 않는다.
-- GeneratedDraft 스키마의 body/directions/selected_direction/evidence만 반환한다.
+- QuotedDraft 스키마의 body/directions/selected_direction/evidence만 반환한다.
 
 서버는 범위·출처·학습 표현 일치·메일 접근 권한을 검증하고 프로필 문장을 붙인다.

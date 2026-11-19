@@ -220,3 +220,27 @@ it('근거의 Unicode 범위·HTML 문자 처리를 서버와 맞춘다', () => 
   expect(document.querySelector('script')).toBeNull();
   expect(within(document.body).queryByRole('alert')).not.toBeInTheDocument();
 });
+
+
+it('이번 초안 수정에 선택 AI를 전달하고 변경 전 본문을 보존한다', async () => {
+  const { client } = await replyPage();
+  const revise = vi.spyOn(client, 'reviseDraft');
+  fireEvent.change(screen.getByLabelText('답장 본문'), { target: { value: '보존할 편집본' } });
+  fireEvent.change(screen.getByLabelText('이번 요청의 AI'), { target: { value: 'claude' } });
+  expect(screen.getByLabelText('답장 본문')).toHaveValue('보존할 편집본');
+  fireEvent.click(screen.getByRole('button', { name: '더 짧게' }));
+  await waitFor(() => expect(revise).toHaveBeenCalled());
+  expect(revise.mock.calls[0][1]).toMatchObject({ body: '보존할 편집본', ai_provider: 'claude', action: 'shorter' });
+});
+
+
+it('앱에서는 최초 생성 전에 AI를 고르고 명시적으로 초안을 만든다', async () => {
+  const client = new SyntheticF2Client();
+  const create = vi.spyOn(client, 'createDraft');
+  render(<ReplyDraftPage client={client} autoGenerate={false} mailId={SYNTHETIC_MAIL.mail_id} onExit={vi.fn()} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: '초안 만들기' })).toBeEnabled());
+  expect(create).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText('이번 요청의 AI'), { target: { value: 'claude' } });
+  fireEvent.click(screen.getByRole('button', { name: '초안 만들기' }));
+  await waitFor(() => expect(create).toHaveBeenCalledWith({ mail_id: SYNTHETIC_MAIL.mail_id, ai_provider: 'claude', direction: undefined }));
+});

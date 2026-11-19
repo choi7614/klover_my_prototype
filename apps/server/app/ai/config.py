@@ -120,7 +120,10 @@ def loopback_url(raw: str) -> str:
 
 
 def _claude(values) -> ClaudeSettings:
-    if _text(values, "AI_CLAUDE_TEST_DATA_ONLY", "").lower() != "true":
+    if (
+        _text(values, "AI_CLAUDE_TEST_DATA_ONLY", "").lower() != "true"
+        and _text(values, "AI_CLAUDE_EXTERNAL_CONSENT", "").lower() != "true"
+    ):
         raise AIConfigurationError(
             "Claude는 메일을 외부로 보냅니다. 테스트 데이터만 쓴다는 확인으로 "
             "AI_CLAUDE_TEST_DATA_ONLY=true를 설정하세요"

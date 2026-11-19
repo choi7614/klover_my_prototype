@@ -58,7 +58,7 @@ def test_common_generation_contract_is_used_with_f2_schema(purpose):
     assert common_request.purpose == "draft"
     assert json.loads(common_request.user_prompt)["purpose"] == purpose
     assert json.loads(common_request.user_prompt)["original"]["mail_id"] == "synthetic-only"
-    assert common_request.response_schema["title"] == "GeneratedDraft"
+    assert common_request.response_schema["title"] == "QuotedDraft"
     assert "신뢰할 수 없는 데이터" in common_request.system_prompt
 
 
@@ -163,3 +163,82 @@ def test_revision_keeps_user_reply_and_action_separate_from_incoming_mail():
     assert payload["direction"] == "추가 문의"
     assert payload["current_body"] == "대상 기간을 알려 주세요."
     assert result.body == "기간을 알려 주세요."
+
+
+@pytest.mark.parametrize("greeting,closing", [("", ""), ("안녕하세요.", "감사합니다.")])
+def test_quote_evidence_is_located_by_server_with_or_without_fixed_profile_parts(greeting, closing):
+    from app.services.profile_draft import compose
+
+    request = input_for().model_copy(
+        update={"profile": Profile(name="합성 사용자", greeting=greeting, closing=closing)}
+    )
+    generator = SharedSyntheticGeneration(
+        json.dumps(
+            {
+                "body": "😀 문의를 확인했습니다.",
+                "directions": ["확인 후 회신", "추가 문의"],
+                "selected_direction": "확인 후 회신",
+                "evidence": [
+                    {
+                        "text": "문의를 확인했습니다.",
+                        "source": "mail:synthetic-only",
+                        "source_quote": "합성 본문",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        )
+    )
+    result = asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(request))
+    assert result.evidence[0].span == (2, len(result.body))
+    body, evidence = compose(result, request)
+    item = next(e for e in evidence if e.source.startswith("mail:"))
+    assert body[item.span[0] : item.span[1]] == "문의를 확인했습니다."
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"source": "mail:other-owner"},
+        {"source_quote": "원문에 없는 비밀"},
+        {"text": "본문에 없는 문구"},
+        {"source": "profile.greeting"},
+    ],
+)
+def test_invalid_quote_evidence_is_never_guessed_or_silently_dropped(patch):
+    evidence = {
+        "text": "검사 문장",
+        "source": "mail:synthetic-only",
+        "source_quote": "합성 본문",
+        **patch,
+    }
+    generator = SharedSyntheticGeneration(
+        json.dumps(
+            {
+                "body": "검사 문장",
+                "directions": ["확인", "문의"],
+                "selected_direction": "확인",
+                "evidence": [evidence],
+            }
+        )
+    )
+    with pytest.raises(F2Error) as error:
+        asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(input_for()))
+    assert error.value.code == "invalid_ai_output"
+    assert len(generator.requests) == 2
+    assert "원문에 없는 비밀" not in generator.requests[-1].user_prompt
+
+
+def test_bad_output_has_one_repair_attempt_without_echoing_response():
+    class Repair(SharedSyntheticGeneration):
+        async def generate(self, request):
+            if not self.requests:
+                self.requests.append(request)
+                return "synthetic-private-invalid-response"
+            return await super().generate(request)
+
+    generator = Repair()
+    result = asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(input_for()))
+    assert result.body == "합성 검사 문장입니다."
+    assert len(generator.requests) == 2
+    assert "synthetic-private-invalid-response" not in generator.requests[-1].user_prompt

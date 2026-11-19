@@ -21,7 +21,7 @@ const messages: Record<string, string> = {
   invalid_report: '생성 결과의 섹션과 항목을 확인하지 못했습니다. 기존 내용은 보존됩니다.',
   invalid_evidence: '모든 항목에 대상 업무 메일 근거를 연결해 주세요.',
   report_conflict: '저장본이 변경되었습니다. 편집 내용을 보존했어요. 저장본을 확인해 주세요.',
-  report_not_ready: '사용 1주 후부터 만들 수 있어요.',
+  report_not_ready: '서버를 최신 버전으로 업데이트하고 다시 실행해 주세요.',
   not_found: '보고서를 찾을 수 없습니다.',
   unauthenticated: '앱의 연결 계정을 확인해 주세요.',
   storage_unavailable: '보고서 저장소에 연결할 수 없어요. 편집 내용은 보존됩니다.',
@@ -68,7 +68,7 @@ export function draftIsValid(report: WeeklyReportDocument, sections: ReportSecti
 }
 
 export function reportText(report: WeeklyReportDocument, sections: ReportSection[]): string {
-  return [report.title, report.subtitle, `보고 대상: ${report.recipient}`, '',
+  return [report.title, report.subtitle, `대상 기간: ${report.period.start} ~ ${report.period.end} · 조회 ${report.scope.total}건`, ...(report.partial_period ? ['일부 기간 자료: 사용 시작 이후 확보된 메일만 반영'] : []), `보고 대상: ${report.recipient}`, '',
     ...sections.flatMap((section, index) => [
       `${index + 1}. ${section.name}`,
       ...section.items.map((item) => `${report.style === 'bullet' ? ' - ' : ''}${item.text}`), '',

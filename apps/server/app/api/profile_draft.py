@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.ai.f2_port import DraftAI, F2Error, RelatedMailSearch, UnavailableDraftAI
+from app.api.ai_scope import ai_scope
 from app.api.errors import error_response
 from app.api.mail_read import authorize
 from app.db.repositories.mail_query import MailAccountUnavailable
@@ -81,13 +82,15 @@ def delete_style(api: Service):
 
 
 @router.post("/profile/preview", response_model=PreviewState)
-async def preview(request: PreviewRequest, api: Service):
-    return await api.preview(request.profile)
+async def preview(request: PreviewRequest, api: Service, http: Request):
+    with ai_scope(http, request.ai_provider):
+        return await api.preview(request.profile)
 
 
 @router.post("/drafts", response_model=DraftState, status_code=201)
-async def create_draft(request: DraftCreate, api: Service):
-    return await api.create(request)
+async def create_draft(request: DraftCreate, api: Service, http: Request):
+    with ai_scope(http, request.ai_provider):
+        return await api.create(request)
 
 
 @router.get("/drafts/{draft_id}", response_model=DraftState)
@@ -101,8 +104,9 @@ def save_draft(draft_id: Identifier, request: DraftSave, api: Service):
 
 
 @router.post("/drafts/{draft_id}/revise", response_model=DraftState)
-async def revise_draft(draft_id: Identifier, request: DraftRevise, api: Service):
-    return await api.revise(draft_id, request)
+async def revise_draft(draft_id: Identifier, request: DraftRevise, api: Service, http: Request):
+    with ai_scope(http, request.ai_provider):
+        return await api.revise(draft_id, request)
 
 
 def register_profile_draft(application):

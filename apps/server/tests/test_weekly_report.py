@@ -123,12 +123,24 @@ def test_profile_missing_and_unavailable_ai_never_create_a_report(service):
         assert connection.scalar(select(weekly_reports.c.report_id)) is None
 
 
-def test_one_week_readiness_blocks_generation(service):
+def test_first_week_is_available_with_actual_default_period(service):
     recent = ACTOR.model_copy(update={"sync_started_at": NOW - timedelta(days=6)})
-    assert run(service.options(recent)).remaining_days == 1
-    with pytest.raises(WeeklyReportError) as error:
-        run(service.generate(recent, GenerateWeeklyReport()))
-    assert error.value.code == "report_not_ready" and service.generator.calls == 0
+    options = run(service.options(recent))
+    assert options.remaining_days == 0
+    assert options.default_period.start.isoformat() == "2026-10-06"
+    assert options.default_period.end.isoformat() == "2026-10-12"
+    report = run(service.generate(recent, GenerateWeeklyReport()))
+    assert report.period == options.default_period
+    assert report.partial_period and report.collection_started_at == recent.sync_started_at
+    assert service.generator.calls == 1
+
+
+def test_start_day_is_available_and_empty_does_not_call_ai(service):
+    recent = ACTOR.model_copy(update={"sync_started_at": NOW})
+    report = run(service.generate(recent, GenerateWeeklyReport()))
+    assert report.period.start == report.period.end
+    assert report.status == "empty" and report.scope.total == 0
+    assert service.generator.calls == 0
 
 
 @pytest.mark.parametrize("only_excluded", [False, True])
@@ -432,3 +444,18 @@ def test_review_cli_refuses_existing_unmarked_files_without_modifying_them(tmp_p
     assert result.returncode == 2
     assert path.read_bytes() == original
     assert "검토 DB로 사용하지 않습니다" in result.stderr
+
+
+def test_switching_provider_creates_separate_report_and_preserves_edited_copy(service):
+    selected_provider = ["ollama"]
+    service.generator.cache_key = lambda: selected_provider[0]
+    original = generate(service)
+    edited = run(
+        service.edit(ACTOR, original.report_id, edit_request(original, text="보존할 편집본"))
+    )
+    selected_provider[0] = "claude"
+    other = generate(service)
+    assert other.report_id != original.report_id
+    assert run(service.get(ACTOR, original.report_id)) == edited
+    selected_provider[0] = "ollama"
+    assert generate(service) == edited

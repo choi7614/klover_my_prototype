@@ -35,6 +35,8 @@ export type WeeklyReportDocument = {
   evidence_mails: ReportMail[];
   status: 'ready' | 'empty';
   generation: 'ai' | 'test_double' | 'none';
+  partial_period?: boolean;
+  collection_started_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -46,6 +48,7 @@ export type WeeklyReportOptions = {
   generation: 'ai' | 'test_double' | 'unavailable';
 };
 export type GenerateReportRequest = ReportPeriod & {
+  ai_provider?: import('../../../shared/ai-bridge').AIChoice;
   template: ReportTemplate;
   recipient: string;
   regenerate?: boolean;

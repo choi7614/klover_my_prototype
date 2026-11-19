@@ -1,3 +1,5 @@
+import { AIChoiceControl } from '../ai-settings/ai-choice';
+import type { AIChoice } from '../../../shared/ai-bridge';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Copy, FileText, Mail, Plus, RefreshCw, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,10 +46,12 @@ function MailContents({ mail }: { mail: ReportMail }) {
   </>;
 }
 
-export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.clipboard.writeText(text) }: {
+export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard = (text) => navigator.clipboard.writeText(text) }: {
   client: WeeklyReportClient;
+  autoGenerate?: boolean;
   writeClipboard?: (text: string) => Promise<void>;
 }) {
+  const [provider, setProvider] = useState<AIChoice>('default');
   const [options, setOptions] = useState<WeeklyReportOptions | null>(null);
   const [period, setPeriod] = useState<ReportPeriod>({ start: '', end: '' });
   const [template, setTemplate] = useState<ReportTemplate>('profile');
@@ -93,7 +97,7 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
         if (!live) return;
         setOptions(next); setPeriod(next.default_period);
         setRecipient(next.profile?.report_recipient || ''); setTemplate('profile');
-        if (next.profile && next.remaining_days === 0 && next.profile.report_recipient.trim()) {
+        if (autoGenerate && next.profile && next.profile.report_recipient.trim()) {
           const document = await client.generate({ ...next.default_period, template: 'profile', recipient: next.profile.report_recipient });
           if (live) display(document);
         }
@@ -102,7 +106,7 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
     }
     void initialize();
     return () => { live = false; mounted.current = false; };
-  }, [client]);
+  }, [client, autoGenerate]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -114,7 +118,7 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
   async function generate(mode: 'open' | 'regenerate') {
     setConfirm(null); setBusy(true); setError(''); setMessage('');
     try {
-      const document = await client.generate({ ...period, template, recipient,
+      const document = await client.generate({ ...period, template, recipient, ai_provider: provider,
         regenerate: mode === 'regenerate', expected_revision: report?.revision });
       if (isCurrentClient()) { display(document); setMessage(mode === 'regenerate' ? '보고서를 다시 만들었습니다.' : '저장된 보고서 또는 새 결과를 열었습니다.'); }
     } catch (error) { if (isCurrentClient()) setError(errorText(error)); }
@@ -150,12 +154,13 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
     catch (error) { if (isCurrentClient()) setError(errorText(error)); }
     finally { if (isCurrentClient()) setExcludedLoading(false); }
   }
-  const mayGenerate = !busy && !!options?.profile && options.remaining_days === 0
+  const mayGenerate = !busy && !!options?.profile
     && !!period.start && !!period.end && period.end >= period.start && !!recipient.trim();
 
   return <section aria-label="주간 보고" className="flex min-h-[720px] min-w-0 flex-1 flex-col bg-background">
     <div className="flex flex-wrap items-end gap-3 border-b px-6 py-4">
       <div className="mr-2 flex items-center gap-2 pb-2 text-title font-semibold"><FileText className="size-5 text-primary" />주간 보고</div>
+      <AIChoiceControl purpose="weekly_report" value={provider} onChange={setProvider} disabled={busy} />
       <fieldset className="flex gap-2" disabled={busy}>
         <label className="flex flex-col gap-1 text-caption text-muted-foreground">시작일<input aria-label="시작일" type="date" className={inputClass} value={period.start} onChange={(event) => setPeriod({ ...period, start: event.target.value })} /></label>
         <label className="flex flex-col gap-1 text-caption text-muted-foreground">종료일<input aria-label="종료일" type="date" className={inputClass} value={period.end} onChange={(event) => setPeriod({ ...period, end: event.target.value })} /></label>
@@ -169,6 +174,7 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
         <Button variant="secondary" className="border-ai-border bg-ai text-ai-foreground hover:bg-ai-text" disabled={!mayGenerate} onClick={() => requestGeneration('regenerate')}><RefreshCw />다시 만들기</Button>
       </div>
     </div>
+    <p className="border-b px-6 py-2 text-caption text-muted-foreground">첫 주에도 현재까지 수집된 자료로 생성합니다. 선택 기간 중 수집 전 자료는 포함하지 않습니다.</p>
     {options?.generation === 'test_double' && <p className="border-b border-warning-border bg-warning-subtle px-6 py-2 text-caption text-warning">검토용 테스트 대역 · 가짜 메일만 사용합니다. 실제 AI 생성 결과가 아닙니다.</p>}
     {error && <div role="alert" className="border-b border-warning-border bg-warning-subtle px-6 py-3 text-body text-warning">{error}</div>}
     {message && <p role="status" className="border-b bg-success-subtle px-6 py-2 text-caption text-success">{message}</p>}
@@ -176,12 +182,12 @@ export function WeeklyReportPage({ client, writeClipboard = (text) => navigator.
       <main aria-label="보고서 본문" className="min-w-0 flex-1 px-8 py-6" aria-busy={busy}>
         {!options && busy && <Loading sections={['금주 주요 업무', '진행 중인 업무', '이슈·요청사항', '차주 계획']} />}
         {options && !options.profile && <Empty title="주간 보고 프로필이 없습니다" description="프로필과 보고 양식을 연결한 뒤 다시 열어 주세요." />}
-        {options && options.remaining_days > 0 && <Empty title={`사용 1주 후부터 만들 수 있어요 (${options.remaining_days}일 남음)`} description={`${options.available_on}부터 사용할 수 있습니다.`} />}
-        {options?.profile && options.remaining_days === 0 && !report && busy && <Loading sections={options.profile.report_sections} />}
+        {options?.profile && !report && busy && <Loading sections={options.profile.report_sections} />}
         {options?.profile && !busy && !report && (recipient.trim()
-          ? <Empty title="보고서를 아직 만들지 못했어요" description="연결 상태를 확인한 뒤 보고서 열기를 눌러 주세요." />
+          ? <Empty title={error ? "보고서를 아직 만들지 못했어요" : "보고서를 만들 준비가 됐어요"} description="AI와 기간을 선택한 뒤 보고서 열기를 눌러 주세요." />
           : <Empty title="보고 대상을 입력해 주세요" description="위 입력란에 보고 대상을 적은 뒤 보고서 열기를 눌러 주세요." />)}
         {report && <>
+          {report.partial_period && <p className="mb-3 text-caption text-muted-foreground">일부 기간 자료 · 사용 시작 이후 현재까지 확보된 메일을 반영했습니다. 대상 {report.period.start} ~ {report.period.end} · 조회 {report.scope.total}건</p>}
           <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-heading font-bold">{report.title}</h1><span className="text-caption text-muted-foreground">{dirty ? '저장하지 않은 수정 있음' : `저장본 · 버전 ${report.revision}`}</span></div>
           <p className="mt-2 text-caption text-muted-foreground">{report.subtitle} · {report.generation === 'test_double' ? '테스트 대역 결과' : report.generation === 'ai' ? '◆ AI 작성' : '업무 메일 없음'} — 내용을 바로 고칠 수 있어요</p>
           <p className="mt-1 text-caption text-muted-foreground">보고 대상: {report.recipient} · {report.style === 'bullet' ? '개조식' : '서술형'}</p>

@@ -1,6 +1,87 @@
 {
   "components": {
     "schemas": {
+      "AIState": {
+        "properties": {
+          "claude_key_set": {
+            "title": "Claude Key Set",
+            "type": "boolean"
+          },
+          "claude_model": {
+            "title": "Claude Model",
+            "type": "string"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/Defaults"
+          },
+          "external_consent": {
+            "title": "External Consent",
+            "type": "boolean"
+          },
+          "local_configured": {
+            "title": "Local Configured",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "defaults",
+          "external_consent",
+          "claude_key_set",
+          "local_configured",
+          "claude_model"
+        ],
+        "title": "AIState",
+        "type": "object"
+      },
+      "AIUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "format": "password",
+                "maxLength": 512,
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "claude_model": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9._:/-]{1,200}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claude Model"
+          },
+          "clear_key": {
+            "default": false,
+            "title": "Clear Key",
+            "type": "boolean"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/Defaults"
+          },
+          "external_consent": {
+            "title": "External Consent",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "defaults",
+          "external_consent"
+        ],
+        "title": "AIUpdate",
+        "type": "object"
+      },
       "ActionItem": {
         "additionalProperties": false,
         "properties": {
@@ -365,9 +446,59 @@
         "title": "DateRange",
         "type": "object"
       },
+      "Defaults": {
+        "additionalProperties": false,
+        "properties": {
+          "draft": {
+            "default": "ollama",
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Draft",
+            "type": "string"
+          },
+          "search": {
+            "default": "ollama",
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Search",
+            "type": "string"
+          },
+          "weekly_report": {
+            "default": "ollama",
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Weekly Report",
+            "type": "string"
+          }
+        },
+        "title": "Defaults",
+        "type": "object"
+      },
       "DraftCreate": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "direction": {
             "anyOf": [
               {
@@ -404,6 +535,22 @@
             ],
             "title": "Action",
             "type": "string"
+          },
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
           },
           "body": {
             "maxLength": 25000,
@@ -753,6 +900,22 @@
       "GenerateWeeklyReport": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "end": {
             "anyOf": [
               {
@@ -1523,6 +1686,22 @@
       "PreviewRequest": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "profile": {
             "$ref": "#/components/schemas/Profile"
           }
@@ -1553,6 +1732,47 @@
           "evidence"
         ],
         "title": "PreviewState",
+        "type": "object"
+      },
+      "Probe": {
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "title": "Probe",
+        "type": "object"
+      },
+      "ProbeResult": {
+        "properties": {
+          "provider": {
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "status": {
+            "const": "reachable",
+            "default": "reachable",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "title": "ProbeResult",
         "type": "object"
       },
       "Profile": {
@@ -2350,6 +2570,22 @@
       "SearchRequest": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "overrides": {
             "$ref": "#/components/schemas/SearchOverrides"
           },
@@ -3108,6 +3344,18 @@
       "WeeklyReportDocument": {
         "additionalProperties": false,
         "properties": {
+          "collection_started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Started At"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -3128,6 +3376,11 @@
             ],
             "title": "Generation",
             "type": "string"
+          },
+          "partial_period": {
+            "default": false,
+            "title": "Partial Period",
+            "type": "boolean"
           },
           "period": {
             "$ref": "#/components/schemas/ReportPeriod"
@@ -3466,7 +3719,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3594,7 +3847,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3730,7 +3983,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3868,7 +4121,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4765,7 +5018,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4889,7 +5142,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5015,7 +5268,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5131,7 +5384,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5245,7 +5498,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5371,7 +5624,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5477,7 +5730,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5597,7 +5850,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5725,7 +5978,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5849,7 +6102,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5955,7 +6208,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6045,7 +6298,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6076,6 +6329,162 @@
         "summary": "Recent",
         "tags": [
           "F3 검색"
+        ]
+      }
+    },
+    "/settings/ai": {
+      "get": {
+        "operationId": "read_settings_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Read",
+        "tags": [
+          "AI 설정"
+        ]
+      },
+      "put": {
+        "operationId": "update_settings_ai_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Update",
+        "tags": [
+          "AI 설정"
+        ]
+      }
+    },
+    "/settings/ai/check": {
+      "post": {
+        "operationId": "check_settings_ai_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Probe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Check",
+        "tags": [
+          "AI 설정"
         ]
       }
     },
@@ -6155,7 +6564,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6265,7 +6674,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6457,7 +6866,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6574,7 +6983,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6701,7 +7110,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6828,7 +7237,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6955,7 +7364,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -7112,7 +7521,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -7226,7 +7635,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -7353,7 +7762,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {

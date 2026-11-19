@@ -43,6 +43,7 @@ class ReportActor(ReportModel):
 
 
 class GenerateWeeklyReport(ReportModel):
+    ai_provider: Literal["default", "ollama", "claude"] | None = None
     start: date | None = None
     end: date | None = None
     template: Literal["profile", "bullet", "prose"] = "profile"
@@ -106,6 +107,8 @@ class WeeklyReportDocument(ReportModel):
     evidence_mails: tuple[ReportMail, ...]
     status: Literal["ready", "empty"]
     generation: Literal["test_double", "ai", "none"]
+    partial_period: bool = False
+    collection_started_at: AwareDatetime | None = None
     created_at: AwareDatetime
     updated_at: AwareDatetime
 
