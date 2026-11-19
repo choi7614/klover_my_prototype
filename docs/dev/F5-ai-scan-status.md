@@ -8,8 +8,8 @@
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
 | 작업 도구 | 없음 |
-| 상태 | PR 대기 — 앱 연결 단위 (이전 단위는 develop 병합 [#20](https://github.com/choi7614/klover_my_prototype/pull/20)) |
-| 마지막 구현 커밋 | 이 커밋 — `[F5] 앱 제안·할 일 화면 연결과 main/preload 공통 패치` |
+| 상태 | develop 병합 — 앱 연결 단위 [#25](https://github.com/choi7614/klover_my_prototype/pull/25) (`841f782`), 공통 패치 적용 전 |
+| 마지막 구현 커밋 | `7b96be1` — 앱 제안·할 일 화면 연결과 main/preload 공통 패치 (CI 통과) |
 | 병합 커밋 | `72fb8e4` — 승인된 PR #20 병합 |
 | 기준 develop | `420078e` (F4 공통 패치까지 포함, fast-forward 로컬 통합) |
 | 미커밋 변경 | 없음 (이 현황 갱신도 커밋·Push) |
@@ -93,7 +93,7 @@ KLOVER_F5_TEST_DATABASE_URL을 모두 이 DB로 지정했다.
 
 ## 인수인계 메모
 
-- 멈춘 지점: 앱 연결 단위 구현·검사 완료, PR 생성 후 develop 병합 승인 대기. 공통 패치는 미적용.
+- 멈춘 지점: 앱 연결 단위 PR #25 CI 통과·develop 병합 완료. 공통 패치 `patches/F5/`는 통합 채팅 적용 대기.
 - 이전: 구현·로컬 통합 검사·GitHub CI 통과, PR #20 develop 병합 완료.
 - 미실행: 실제 LLM·Google Calendar·메일 발송·OS 알림/트레이·운영 DB 마이그레이션.
 - 주의: F5 테스트 성공은 실제 Calendar 등록 성공이 아니다. 실행 중 프로세스 종료는 담당자 조정 대상이다.
