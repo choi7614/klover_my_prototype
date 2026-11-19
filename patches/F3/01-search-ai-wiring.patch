@@ -1,0 +1,43 @@
+diff --git a/apps/server/app/cli/run_mail_api.py b/apps/server/app/cli/run_mail_api.py
+index c612d4f..31b546e 100644
+--- a/apps/server/app/cli/run_mail_api.py
++++ b/apps/server/app/cli/run_mail_api.py
+@@ -4,6 +4,9 @@ import argparse
+ 
+ import uvicorn
+ 
++from app.ai.interfaces import ProvidersNotConfigured
++from app.ai.runtime import load_providers
++from app.ai.search_adapter import SharedQueryParser, SharedSearchAnswerer
+ from app.api.mail_read import MailAPIContext
+ from app.api.mail_sync import MailSyncContext
+ from app.api.profile_draft import F2Context
+@@ -23,6 +26,15 @@ from app.services.search import SearchService
+ from app.services.weekly_report_runtime import WeeklyReportRuntime
+ 
+ 
++def search_ai():
++    """실제 공통 AI 제공자가 있을 때만 F3 해석기·답변기를 만든다. 없으면 검색은 503으로 안내한다."""
++    try:
++        generator, _embedding = load_providers()
++        return SharedQueryParser(generator), SharedSearchAnswerer(generator)
++    except ProvidersNotConfigured:
++        return None, None
++
++
+ def main():
+     parser = argparse.ArgumentParser(description="로컬 메일 조회 API 실행")
+     parser.add_argument("--port", type=int, default=8000)
+@@ -44,9 +56,12 @@ def main():
+             GmailSyncRepository(engine, settings),
+             lambda: GmailMailClient(settings),
+         )
++        search_parser, search_answerer = search_ai()
+         application.state.search_service = SearchService(
+             SQLSearchRepository(engine),
+             SQLRecentSearchRepository(engine),
++            parser=search_parser,
++            answerer=search_answerer,
+         )
+         application.state.profile_draft = F2Context(F2Repository(engine))
+         application.state.weekly_reports = WeeklyReportRuntime(engine)
