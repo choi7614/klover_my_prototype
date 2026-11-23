@@ -147,3 +147,5 @@ Git·문서에 복사하지 않았다. 검증 후 이 프로젝트의 DB만 stop
 재확인하고 문서 범위·참조·형식을 재검증한 뒤 기존 `docs/getting-started` 브랜치에서 제출한다.
 앱/서버 코드와 위 실환경 미검증 범위는 그대로이며 새 PR의 GitHub Actions 결과는 PR에서 확인한다.
 develop/main 병합과 자동 병합은 이 작업 묶음에 포함하지 않는다. AGENTS.md의 별도 병합 승인 규칙을 따른다.
+
+문서 본문은 `690d6ba`로 커밋·Push했고 [PR #38](https://github.com/choi7614/klover_my_prototype/pull/38)을 develop 대상으로 생성했다. GitHub PR 파일 목록도 Markdown 67개뿐임을 확인했다. 이후 이 문서와 현황판에 PR 번호를 기록하는 문서 커밋을 추가하며, 최신 자동 검사 상태는 PR을 기준으로 확인한다. 병합은 실행하지 않았다.

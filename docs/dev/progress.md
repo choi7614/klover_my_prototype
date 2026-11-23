@@ -33,7 +33,7 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 | 작업 | 브랜치·도구 | 실제 상태 | 다음 단계 |
 | --- | --- | --- | --- |
 | 기존 공통 패치·AI 선택 통합 | 기존 통합 브랜치 보존 · 없음 | #14~#37의 해당 PR 병합 완료. 패치는 적용 또는 후속 코드로 대체되어 재적용 금지 | [통합 후속 작업](integration-followups.md) |
-| 설치·실행 문서 정리 | `docs/getting-started` · 없음 | 문서 검증 완료·PR 준비. 사용자 커밋·Push·PR 생성 승인. 앱·서버 기능 코드 변경 없음 | develop 대상 PR 검사 확인. develop/main 병합은 별도 승인 |
+| 설치·실행 문서 정리 | `docs/getting-started` · 없음 | PR 대기 ([#38](https://github.com/choi7614/klover_my_prototype/pull/38)). 문서 커밋·Push 완료. 앱·서버 기능 코드 변경 없음 | PR 자동 검사 확인 후 develop 병합 별도 승인. main은 변경하지 않음 |
 
 다른 기능 브랜치에는 이번 작업에서 손대지 않았다. 이전 브랜치·커밋·검사 건수는 [과거 현황판](archive/2026-11-24/progress-before.md)에 보존했다.
 기능 브랜치의 작업 도구는 이전 현황판에서 모두 없음이며, PR #37 통합도 병합 완료다. 이어받을 때 원격 status를 다시 확인한다.
