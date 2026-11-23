@@ -1,5 +1,7 @@
 # F4 최신 develop 연결 검사 — 2026-11-19
 
+> 과거 전달·검사 기록을 포함한다. 2026-11-24 현재 API/IPC·F1 입력·F4 AI 통합은 PR #37까지 반영됐다. 미연결·패치 적용 요청은 당시 기록이며 현재 작업 상태는 [progress.md](progress.md)와 각 status, 실행은 [setup.md](setup.md)를 따른다. 기존 패치를 재적용하지 않는다.
+
 ## 결과와 보존 범위
 
 기존 `feat/F4-weekly-report`의 WIP `c061a46`과 후속 코드를 보존하고 최신 develop

@@ -1,87 +1,64 @@
-# 시스템 구조
+# 시스템 구조 — 현재 구현과 목표
 
-## 기능별 AI 선택 (2026-11-20)
+> 2026-11-24 · 실제 코드 기준 `develop f498d27`(PR #37). 실행 절차는 [setup.md](../dev/setup.md)만 기준으로 한다.
 
-메일 API 실행은 자동 분석·임베딩·F5 훅에 로컬 제공자만 주입한다. F2/F3/F4는 요청별
-`SelectedGeneration`으로 호출한다. 선택과 설정 스냅샷은 요청 범위에서만 유지하며 동시 요청과 섞이지 않는다.
-기본 설정·Claude 키·전송 허용·선택 모델은 서버 `.local-secrets/ai-settings.enc`에 암호화 저장한다.
-키 파일은 별도 `ai-settings.key`(둘 다 0600)이며 기존 Google/token 키와 DB는 변경하지 않는다.
-이는 기존 단일 로컬 운영자 서버 설정이며 여러 사용자용 클라우드 키 관리 기능은 아니다.
+## 현재 구성
 
+앱(Electron+React+TypeScript), 서버(Python FastAPI), PostgreSQL 16+pgvector, 로컬 Ollama를
+같은 컴퓨터에서 사용한다. 현재 구성을 유지하며 **클라우드 이전은 보류**, 사내망 적용은 장기 목표다.
+설치 파일·다중 사용자 공유 서버를 제공하는 단계는 아니다.
 
-> 최종 수정: 2026-11-18 | 그림: `docs/design/mockups/arch-01-system.png`
-
-## 구현 진행 (2026-11-18)
-
-공통 FastAPI 서버는 `GET /health`로 HTTP 프로세스 응답을 확인하는 첫 단위다.
-F0 첫 화면과 F4 보고 입력 준비 서비스·CLI는 보존한다. PostgreSQL 연결·마이그레이션과
-사용자·계정·받은 메일의 최소 저장소는 별도 명령으로 실행·검사한다.
-주기적 Gmail 수신·AI·WebSocket과 앱의 실제 연결은 아직 없다. 아래 구조와 데이터 흐름은 완성 목표이며,
-현재 실행 범위는 [개발 환경 준비](../dev/setup.md)와 [API 목록](api.md)을 따른다.
-
-Google 연결 첫 단위(2026-11-19)는 맥북의 별도 로컬 연결 서버에서 로그인·읽기 권한 동의·
-Gmail 계정 주소 확인·토큰 암호화 저장을 구현했고, 사용자가 맥북에서 연결 성공을 확인했다.
-새 메일 수신 단위는 CLI로 받은편지함을 한 번 동기화·저장·조회하고 만료된 토큰을 갱신한다.
-사용자가 맥북에서 실제 새 메일 1건 저장·조회와 재수신 시 중복 없음까지 확인했다.
-실제 Google 토큰 갱신은 미확인이며 자동 검사와 구분한다.
-로컬 API 토큰 인증과 계정·목록·일반 텍스트 본문 조회는 서버에 구현했다.
-F0 Electron main 연결과 맥북의 실제 API 본문 조회는 후속 확인이다.
-[연결 계약과 실행 순서](../dev/mail-read-api.md)를 따른다. Windows 제품 목표는 유지하고
-맥북에서는 개발 실행으로 검증한다.
-
-## 한눈에 보기
-
-메일 계정 접근, AI 분석, 저장은 모두 **서버**가 맡고, **데스크톱 앱**은 서버가 만든 결과를 보여 주고 사용자의 승인을 받는다. 앱은 서버 API만 호출하며 메일 계정에 직접 접근하지 않는다.
-
-```
-[메일 소스]                [서버 (FastAPI)]                                      [데스크톱 앱 (Electron)]
-Gmail (1단계) ─┐   메일 커넥터 (소스별 어댑터)                                  받은편지함·AI 분류
-사외 웹메일 ───┼─▶      ↓                                                       자연어 검색
-사내 메일 ─────┘   수신 감지·동기화 큐 (Redis + arq)                             답장 초안
-                         ↓                                                       주간 보고
-                   분석 파이프라인: F1 분류·메타데이터·임베딩 / F5 AI 스캔 ──푸시──▶ AI 제안 알림 (Windows 토스트)
-                         ↓ 저장            ↘ 호출: AI 모델 (LLM, 임베딩)          프로필 설정
-                   PostgreSQL: 메타데이터 · 벡터(pgvector) · 사용자 프로필         트레이 상주
-                         ↓ 조회
-                   서비스 API: 검색(F3) · 답장 초안(F2) · 주간 보고(F4) · 프로필(F2) ◀──API──▶
-                         │
-Google Calendar ◀────────┘ (사용자 승인 시 일정 등록, F5)
+```text
+Electron renderer → 제한된 preload IPC → Electron main → 로컬 Bearer API
+                                                       ↓
+           run_mail_api (FastAPI, 단일 로컬 운영자) → PostgreSQL
+                 ↓              ↓                       (메일·분석·프로필·초안·보고·제안)
+             Gmail INBOX     로컬 Ollama (생성·bge-m3)
+                                ↓
+                      필요한 수동 F2/F3/F4만 Claude 선택
 ```
 
-## 데이터 흐름
+| 구성 요소 | 현재 코드·상태 |
+| --- | --- |
+| 데스크톱 | `apps/desktop/src/main`, `preload`, `renderer`. React·Tailwind/shadcn 기반. 실제 의존성은 package.json 기준 |
+| 업무 서버 | `apps/server/app/cli/run_mail_api.py`가 저장소·AI·계정·API를 조립. 일반 app.main은 경로·스키마/health 기반일 뿐 같은 실행 상태가 아님 |
+| Google 최초 연결 | 별도 `run_google_connection` CLI·브라우저. 앱 연결 버튼은 미구현 |
+| 메일 수신 | 앱 새로고침/명시적 CLI, 시작 이후 INBOX·중복 방지. 주기 수신은 없음 |
+| 분석 | sync 후 서버 내부 백그라운드 작업자 스레드가 로컬 F1 분석·임베딩 수행. 완료 뒤 로컬 F5 훅으로 제안 저장 |
+| 분석 표시 | 앱의 조회·재시도·상태 폴링. WebSocket 푸시 아님 |
+| AI | F2/F3/F4는 요청별 `SelectedGeneration`, 자동 F1/임베딩/F5는 로컬만 주입 |
+| 검색 | SQL 기간·상대·키워드+선택 AI 해석/답변. 벡터 저장은 있지만 F3 의미 검색 어댑터는 미연결 |
+| 주간 보고 | F1 저장소·F2 프로필·선택 AI·0006 보고 저장·앱 연결. 첫 주 생성 지원, 자료·프로필 필요 |
+| F5 | F1 결과→제안 변환·S04/할 일·승인 경계. 실제 Calendar transport는 차단, OS 알림/트레이 없음 |
+| 공유 타입 | OpenAPI → `packages/api-types` 자동 생성. 직접 수정 금지 |
+| 로컬 DB | Compose의 db 서비스만. Redis/arq·별도 workers·WebSocket은 현재 구현/실행 대상 아님 |
 
-1. 새 메일 도착 → 커넥터가 감지 → 분석 파이프라인
-2. 분석 결과 → 메타데이터·벡터로 저장
-3. 일정 등 제안 → 앱에 푸시 알림(WebSocket → Windows 토스트) → 사용자 승인 시 캘린더 등록
+## 데이터·승인·키 경계
 
-## 구성 요소와 기술
+1. 앱 새로고침은 서버가 새 메일을 저장한 후 분석 신호를 주고 응답한다. CLI sync는 분석 신호를 주지 않는다.
+2. 기본 수신·조회는 계정 `sync_started_at` 이후다. 분석 결과·원문 근거를 저장하고 F2/F3/F4/F5가 이용한다.
+3. 기본 AI는 로컬. 필요한 F2 초안·수정, F3 검색·답변, F4 보고만 Claude를 선택하며 최초 외부 전송·비용 동의가 필요하다.
+4. 키는 앱에서 입력하고 서버 `.local-secrets/ai-settings.enc`에 암호화 저장한다. `ai-settings.key`는 별도이며 기존 Google `token.key`·DB·메일을 바꾸지 않는다.
+5. **프로필 자동 미리보기 예외**: 답장 기본값을 따라 모델을 호출하므로 Claude 기본값·동의가 있으면 화면 진입/변경에도 프로필 전송·비용이 생길 수 있다. [통합 수정 필요](../dev/integration-followups.md).
+6. 사용자 버튼·동의 없이 메일 발송/Calendar 실행하지 않는다. 현재 실제 발송·Calendar transport 자체는 미구현이다.
 
-| 구성 요소 | 기술 | 위치 |
-| --- | --- | --- |
-| 데스크톱 앱 | Electron + electron-vite + React + TypeScript, Tailwind + shadcn/ui, TanStack Query + Zustand | `apps/desktop` |
-| 서버 API | Python 3.12 + FastAPI, uv | `apps/server/app/api` |
-| 메일 커넥터 | 공통 인터페이스 + Gmail 구현 + fixture(가짜 메일) 구현 | `apps/server/app/connectors` |
-| 수신 큐·작업 | Redis + arq | `apps/server/workers` |
-| 분석 파이프라인 | ingest → preprocess → analyze(F1) → scan(F5) → embed | `apps/server/app/pipeline` |
-| 저장소 | PostgreSQL 16 + pgvector, SQLAlchemy, Alembic | `apps/server/app/db` |
-| AI 모델 호출부 | LLM·임베딩 인터페이스 + Claude API·로컬 Ollama 구현(`AI_PROVIDER`로 선택), 프롬프트는 MD 파일 | `apps/server/app/ai` |
-| 실시간 푸시 | WebSocket | `apps/server/app/api/ws.py` |
-| 타입 공유 | 서버 OpenAPI → TypeScript 타입 자동 생성 (openapi-typescript) | `packages/api-types` |
-| 로컬 실행 | Docker Compose (Postgres+pgvector, Redis) | `infra/` |
+로컬 기본값은 강제 전용 모드가 아니고 현재 Claude 실패 시 다른 제공자로 자동 전환하지 않는다.
+기존 형식 보정·동일 제공자 재시도와 개발 예정의 Claude→로컬 1회 대체 재시도를 구분한다.
 
-## 설계 원칙 (3단계 사내 구축 대비)
+## 확정 개발 예정과 장기 목표
 
-- **메일 커넥터 분리**: 메일 소스가 바뀌는 부분은 `connectors/`에만 둔다. 파이프라인·저장소·화면은 소스와 무관하게 동작한다.
-- **모델 호출부 분리**: LLM·임베딩은 반드시 `ai/`의 인터페이스로 호출한다. 다른 폴더에서 외부 API SDK를 직접 import하지 않는다.
-- **저장소 분리**: DB 접근은 `db/repositories/`로만 한다. Vector DB를 별도 제품으로 바꿔도 리포지토리만 바꾸면 되게 한다.
+- [기간 선택 과거 메일 가져오기](../product/features/planned-mail-history-import.md): 기본 수신은 유지하며 명시 실행·진행/중단/재시도·중복 방지·로컬 분석·검색/보고 연결. 현재 저장·검색의 시작 시점 경계 설계 변경이 필요. 가져오기만으로 Claude 호출 금지.
+- Claude 실패 시 로컬 1회 자동 재시도, 로컬 전용 모드의 Claude 선택/호출/검사 차단은 개발 예정·미구현.
+- Redis/arq·주기 수신·WebSocket·트레이·설치 파일·다른 메일 소스는 목표 구조이며 현재 설치 명령으로 안내하지 않는다.
+- 사내망은 장기 목표. 외부 API 허용은 별도 보안 검토가 필요하고 개인 동의로 대체하지 않는다.
 
-## 데모 단계 단순화
+## 유지할 구조 원칙
 
-| 항목 | 데모 | 나중에 |
-| --- | --- | --- |
-| Gmail 수신 감지 | 30초 폴링 (Gmail history API) | Gmail 푸시 알림 (Cloud Pub/Sub) |
-| Vector DB | PostgreSQL pgvector | 필요 시 전용 Vector DB |
-| 키워드 검색 | pg_trgm 부분 일치 | 한국어 형태소 분석 검색 |
-| 서버 위치 | 개발자 PC 또는 공용 개발 서버 1대 | 사내 인프라 |
-| 앱 배포 | electron-builder 설치 파일 공유 | 자동 업데이트, 코드 서명 |
-| 오프라인 캐시 | 없음 | 확인 포인트 |
+- 앱은 서버 API만 호출한다. Gmail·LLM·DB를 renderer에서 직접 호출하지 않는다.
+- 메일 소스별 코드는 connectors, 모델 호출은 ai 인터페이스, DB 접근은 db/repositories 경계를 따른다.
+- AI는 제안하고 근거 메일을 연결한다. 사용자 승인 없는 외부 실행을 추가하지 않는다.
+
+## 원본 설계와 기록
+
+[기존 구조 문서](../dev/archive/2026-11-24/system-before.md)와 [설계안 원본](../design/mockups/README.md)을 보존했다.
+그림의 Redis+arq·Windows 토스트·Calendar·30초 수신은 목표 구조이며 현재 구현을 보증하지 않는다.
