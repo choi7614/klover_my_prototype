@@ -1,3 +1,18 @@
+# F3 자연어 검색 — 현재 상태
+
+> 2026-11-24 · 실제 기준 `origin/develop f498d27` · PR #37 병합 확인 · 이번 작업은 문서만 수정
+
+## 현재 구현과 남은 일
+
+- 구현·자동 검사 완료: 기간·상대·키워드 조회, 질문 해석·근거 답변의 선택 AI, 최근 검색·F0 진입·실제 IPC가 연결됨(#19·#30·#37).
+- 남은 일·실환경 제한: 의미 벡터 어댑터·조직/미회신/분류/첨부 필터·보낸 메일 열기 계약은 미구현. 실제 모델의 정확도·5초 성능은 미검증.
+- 새 설치·평소 실행·업데이트는 [setup.md](setup.md), 공통 확인 수준은 [현황판](progress.md)·[이번 검증](verification-2026-11-24.md)을 따른다.
+- 과거의 '미연결/미커밋/승인 대기'는 아래 당시 기록이다. PR #37과 기존 공통 패치는 이미 병합되어 재적용하지 않는다.
+- 확정된 개발 예정: 기간 선택 과거 메일 가져오기, Claude→로컬 1회 자동 재시도, 로컬 전용 모드. 모두 현재 미구현이며 이번에 코드를 변경하지 않는다.
+
+<details>
+<summary>이전 기능 브랜치·검사·인수인계 기록 (현재 실행 지시 아님)</summary>
+
 # F3 구현·검사 결과
 
 ## 최신 통합 작업 (2026-11-20, Codex)
@@ -32,7 +47,7 @@
 - 완료(이번 단위, 2026-11-19): 공통 `TextGeneration`만 쓰는 질문 해석기·답변기.
   - `app/ai/search_adapter.py`: `SharedQueryParser`, `SharedSearchAnswerer`. 제공자(Claude API·로컬 Qwen)를 직접 고르지 않는다.
   - 프롬프트: `app/ai/prompts/search_parse.md`, `search_answer.md`.
-  - 로컬 모델 대비: 코드 블록 표시(```json)는 벗겨 내고, 형식·근거 인용 오류는 **응답 원문 없이 오류 안내만 붙여 1번 재시도**.
+  - 로컬 모델 대비: JSON 코드 블록 표시는 벗겨 내고, 형식·근거 인용 오류는 **응답 원문 없이 오류 안내만 붙여 1번 재시도**.
     제공자 오류·시간 초과는 재시도하지 않는다. 전체 대기는 `SearchService.model_timeout`(기본 10초) 안.
   - 실패 안내는 기존 코드만 사용: 해석 `parse_failed`(422)·`parse_unavailable`(503)·`parser_unavailable`(503),
     답변 `invalid_answer`·`answer_failed`·`answer_unavailable`. 가짜 결과로 대체하지 않는다.
@@ -109,10 +124,10 @@ F0 진입점·기존 인증/메일 API·수신/키·공통 모델·잠금 파일
 
 검사 화면:
 
-- [1440px 화면](../../apps/desktop/artifacts/f3-search-1440.png)
-- [1280px 화면](../../apps/desktop/artifacts/f3-search-1280.png)
-- [좁은 화면](../../apps/desktop/artifacts/f3-search-760.png)
-- [빈 결과](../../apps/desktop/artifacts/f3-search-empty.png)
+- 1440px 화면 (당시 로컬 산출물: `../../apps/desktop/artifacts/f3-search-1440.png`, Git 미포함)
+- 1280px 화면 (당시 로컬 산출물: `../../apps/desktop/artifacts/f3-search-1280.png`, Git 미포함)
+- 좁은 화면 (당시 로컬 산출물: `../../apps/desktop/artifacts/f3-search-760.png`, Git 미포함)
+- 빈 결과 (당시 로컬 산출물: `../../apps/desktop/artifacts/f3-search-empty.png`, Git 미포함)
 
 이미지와 실행 보고서는 로컬 `artifacts` 산출물이며 커밋 대상에서 제외했다.
 
@@ -148,9 +163,9 @@ ESLint 포함 문제를 수정했다. 위 표는 수정 후 결과다.
 
 로컬 상세 보고서:
 
-- [서버 JUnit](../../artifacts/f3-server.xml)
-- [승인 전 패치 JUnit](../../artifacts/f3-proposals.xml)
-- [통합 후 F1/F3 전체 서버 JUnit](../../artifacts/f3-integrated-server.xml)
+- 서버 JUnit (당시 로컬 산출물: `../../artifacts/f3-server.xml`, Git 미포함)
+- 승인 전 패치 JUnit (당시 로컬 산출물: `../../artifacts/f3-proposals.xml`, Git 미포함)
+- 통합 후 F1/F3 전체 서버 JUnit (당시 로컬 산출물: `../../artifacts/f3-integrated-server.xml`, Git 미포함)
 
 ## 변경 파일
 
@@ -218,3 +233,5 @@ Gmail 수신/연결/키·잠금 파일은 보존했다. 새 Alembic 이력과 �
 - 2026-11-19 사용자가 로컬 통합·커밋·Push·PR과 문제없을 경우 `develop` 병합까지 승인했다.
   통합 후 재검사에서 249개가 모두 통과했다. PR은 F3 기능·등록 범위이며 실제 AI 연결 완료를 뜻하지 않는다.
 - `main` 병합은 승인 범위에 포함하지 않는다.
+
+</details>

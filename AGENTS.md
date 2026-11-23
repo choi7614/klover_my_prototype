@@ -140,9 +140,10 @@ scripts/             시드, 타입 생성 등
 
 ```bash
 docker compose --env-file .env -f infra/docker-compose.yml up -d --wait  # 개발용 DB
-cd apps/server && uv run uvicorn app.main:app --reload    # 서버
-cd apps/server && uv run pytest                           # 서버 테스트
-cd apps/server && uv run ruff check . && uv run ruff format --check .
+uv run --locked --directory apps/server python -m app.cli.run_mail_api  # 앱용 서버(사전 준비: docs/dev/setup.md)
+uv run --locked --directory apps/server pytest             # 서버 테스트
+uv run --locked --directory apps/server ruff check .
+uv run --locked --directory apps/server ruff format --check .
 pnpm --filter desktop dev                                 # 앱
 pnpm --filter desktop lint && pnpm --filter desktop typecheck && pnpm --filter desktop test
 pnpm gen:api-types                                        # 서버 API 변경 후 TS 타입 재생성 (통합 채팅)

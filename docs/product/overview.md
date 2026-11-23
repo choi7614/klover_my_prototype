@@ -1,5 +1,8 @@
 # Klover 서비스 개요
 
+> 현재 구현 기준: `develop f498d27`(2026-11-24 확인). 아래 기능 간 연결은 목표 구조를 포함한다. 실제 지원/미검증은 [현황판](../dev/progress.md), 설치는 [setup.md](../dev/setup.md)를 따른다.
+> 앱·서버·PostgreSQL 유지·로컬 AI 기본, 필요한 F2/F3/F4만 Claude 선택. 클라우드 이전 보류·사내망 장기 목표. 과거 메일 가져오기는 [개발 예정](features/planned-mail-history-import.md)이며 기본 수신은 시작 이후 그대로다.
+
 > 최종 수정: 2026-10-16
 
 ## 이름

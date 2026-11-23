@@ -1,7 +1,6 @@
 # Klover API 타입
 
-서버 OpenAPI에서 자동 생성한 TypeScript 선언이다. 현재 `/health`, `/auth/session`,
-`/mails`, `/mails/{mail_id}`의 GET 계약을 제공한다. 설계에만 있는 쓰기·AI API는 포함하지 않는다.
+서버 OpenAPI에서 자동 생성한 TypeScript 선언이다. 현재 메일·동기화·F1 분석·F2 프로필/초안·F3 검색·F4 보고·F5 제안/할 일·AI 설정 계약을 포함한다. 정확한 경로는 현재 openapi.json과 실제 라우터를 기준으로 한다.
 인증·로컬 실행과 필드 의미는 [API 목록](../../docs/architecture/api.md)을 따른다.
 
 저장소 루트에서 생성·검사한다.

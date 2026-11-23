@@ -1,46 +1,62 @@
 # Klover
 
-> 받은 메일을 AI가 바로 읽고 분류·요약·제안까지 해 주는 Windows 데스크톱 메일 앱
+받은 메일을 로컬 AI로 분류·요약하고, 필요할 때 답장 초안·검색 답변·주간 보고를 만드는 **개발용 데모**입니다.
 
-**Klover** = 클로버(Clover)의 C를 **K**oscom의 K로. 현재 데모 단계이며 Gmail로 시작합니다.
+**Klover** = Clover의 C를 **K**oscom의 K로. Koscom CoP의 1인 개발이며 Codex·Claude Code를 기능별·공통·통합 채팅으로 나누어 사용합니다.
 
-## 주요 기능
+## 처음 방문했다면
 
-| 번호 | 기능 | 한 줄 설명 |
-| --- | --- | --- |
-| F0 | 첫 실행·기본 메일함 | Gmail을 대체하는 메일 앱, 과거 메일 없이 빈 받은편지함에서 시작 |
-| F1 | 메일 분류·저장 | 도착한 메일을 7개 카테고리로 분류하고 요약·할 일·마감을 추출해 메타데이터·벡터로 저장 |
-| F2 | 프로필·답장 초안 | 내 부서·문체·서명으로 '내가 쓴 것처럼' 답장 초안 작성 |
-| F3 | 자연어 검색 | "지난달 영업기획팀 예산 메일 중 답 안 한 거" 처럼 말하듯 검색 |
-| F4 | 주간 보고 | 한 주의 메일을 업무별로 묶어 내 양식의 보고서로 정리 |
-| F5 | AI 스캔 | 메일 수신 즉시 일정 등록·할 일·회신을 Windows 알림으로 제안 |
+**[설치·실행 안내 → docs/dev/setup.md](docs/dev/setup.md)**
 
-자세한 내용: [docs/README.md](docs/README.md)
+실행 코드는 현재 **`develop`**에 있습니다. 2026-11-24 확인 기준 `develop f498d27`(PR #37)에 비해
+`main 9575f47`에는 실행 코드가 없습니다. 저장소가 비공개라면 소유자에게 접근 권한을 받고 GitHub 인증을 먼저 준비하세요.
 
-## 구성
-
-```
-klover/
-├─ docs/          기능 정의서, 디자인 시스템, 구조, 개발 규칙
-├─ apps/desktop/  데스크톱 앱 (Electron + React + TypeScript)
-├─ apps/server/   서버 (Python FastAPI)
-├─ packages/      공유 타입
-├─ fixtures/      데모용 가짜 메일
-└─ infra/         Docker Compose (PostgreSQL + pgvector)
+```bash
+git clone --branch develop --single-branch https://github.com/choi7614/klover_my_prototype.git
+cd klover_my_prototype
 ```
 
-- 데스크톱: Windows 10 이상, 트레이 상주, 시작 프로그램 등록
-- 메일 소스: Gmail(1단계) → 사외 웹메일(2단계) → 사내 메일(3단계)
+이후 [setup.md](docs/dev/setup.md)의 **새 사용자 설치**를 따르세요. 필요한 도구·DB 설정 생성·Google 프로젝트와
+OAuth JSON·Ollama 모델·앱 API 토큰 준비까지 포함합니다. 기존 사용자는 같은 문서의 **업데이트**를 사용하고
+DB·암호화 키·메일을 초기화하지 마세요. 설치·평소 실행·종료·오류 해결은 이 문서 한 곳이 기준입니다.
 
-## 시작하기
+## 현재 범위와 확인 수준
 
-개발 환경 준비와 실행 방법은 [docs/dev/setup.md](docs/dev/setup.md),
-작업 방식(채팅 운영, 브랜치, Codex·Claude 전환)은 [docs/dev/workflow.md](docs/dev/workflow.md)를 보세요.
-현재 진행 상황은 [docs/dev/progress.md](docs/dev/progress.md) 현황판에 있습니다.
+| 구분 | 내용 |
+| --- | --- |
+| 구현·자동 검사 완료 | CLI Google 연결, 사용 시작 이후 INBOX 수신·중복 방지, 앱 목록·본문·새로고침, 로컬 분석 표시, 프로필, F2 초안, F3 검색·답변, F4 첫 주 보고, F5 제안·앱 할 일, 기능별 AI 설정 |
+| 실환경 미검증 | 신규 사용자의 Google→실제 모델→Electron 전체 흐름, 실제 Claude·Ollama 품질·속도, Windows 고유 동작. 자동 검사는 실서비스 성공을 보장하지 않음 |
+| 미구현 | 앱 안 Google 연결·5단계 완료, 메일 작성·발송·보관·삭제, 주기 수신, 벡터 의미 검색, 실제 Calendar, OS 알림·트레이, 설치 파일 배포 등 |
+| 확정된 개발 예정·미구현 | 기간 선택 과거 메일 가져오기, Claude 실패 시 로컬 1회 자동 재시도, Claude 선택·호출·연결 검사를 차단하는 로컬 전용 모드 |
+| 보류·장기 목표 | 클라우드 이전은 보류. 사내망 적용·다른 메일 소스는 장기 목표 |
 
-작업 규칙은 루트의 [AGENTS.md](AGENTS.md) 하나로 관리합니다. GPT Codex는 AGENTS.md를,
-Claude Code는 이를 불러오는 [CLAUDE.md](CLAUDE.md)를 자동으로 읽습니다.
+완성된 Gmail 대체 제품은 아닙니다. Windows 10 이상이 제품 목표이며 이번 검사는 Linux 자동 검사 중심입니다.
+macOS의 일부 연결 성공은 과거 사용자 보고이고, OS별 검증 범위는 [setup.md](docs/dev/setup.md)를 보세요.
+**최초 Google 연결은 CLI가 필요합니다.** 앱 첫 화면의 Google 연결·다음 버튼은 아직 비활성입니다.
 
-## 팀
+기본 수신은 사용 시작 이후 메일입니다. '과거 메일 없이 시작'은 기본 동작이며,
+기간 선택 [과거 메일 가져오기](docs/product/features/planned-mail-history-import.md)는 보류가 아닌 개발 예정입니다.
 
-Koscom CoP — 1인 개발 (GPT Codex·Claude Code를 기능별·공통·통합 채팅으로 나눠 사용)
+## AI와 데이터
+
+- 현재 앱·서버·PostgreSQL 구성을 유지합니다. 기본 AI는 로컬 Ollama, 임베딩은 로컬 bge-m3입니다.
+- 필요한 F2 초안·수정, F3 검색·답변, F4 보고 요청만 Claude를 선택합니다. 최초 외부 전송 동의와 전송 자료·API 요금 안내가 있습니다.
+- 키는 앱 AI 설정에서 입력하고 현재 서버에 암호화 저장합니다. Claude 구독과 API 요금은 별도입니다.
+- **프로필 자동 미리보기는 답장 기본 AI를 호출합니다.** 기본값이 Claude이고 동의했다면 생성 버튼 없이도 프로필 전송·과금이 발생할 수 있습니다. 회피 방법은 [setup.md](docs/dev/setup.md)를 보세요.
+- 로컬 기본값은 강제 로컬 전용 모드가 아닙니다. Claude 실패 시 로컬 자동 전환도 아직 없습니다.
+- 키·토큰·실제 메일을 Git·문서·채팅에 공유하지 마세요. DB와 암호화 키는 함께 보존합니다.
+
+## 문서 찾기
+
+- [문서 지도](docs/README.md): 기능 명세·UI 목업·구조 문서
+- [현황판](docs/dev/progress.md): 현재 구현·미검증·예정과 F0~F5 status
+- [이번 실행 검증](docs/dev/verification-2026-11-24.md): 코드·PR·검사 근거와 한계
+- [통합 개발 전달 사항](docs/dev/integration-followups.md): 코드 수정이 필요한 작업
+- [AGENTS.md](AGENTS.md) / [개발 절차](docs/dev/workflow.md): 개발 채팅 공통 규칙
+
+## 출처·저작권·라이선스
+
+설계안 원본은 [와이어프레임](docs/design/mockups/README.md), 로고 등의 출처·사용 규칙은
+[브랜드 자료](docs/design/brand/README.md), 앱 브랜드 리소스는 [desktop resources](apps/desktop/resources/README.md)를 보세요.
+기존 출처·저작권·라이선스 표기는 유지했습니다. 이번 기준 커밋에는 저장소 전체의 LICENSE 파일이 없습니다.
+공개·재배포 허용을 뜻하지 않으므로 이용 조건은 소유자에게 확인하세요.

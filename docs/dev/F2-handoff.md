@@ -1,5 +1,7 @@
 # F2 전달 문장과 남은 연결
 
+> 과거 전달·검사 기록을 포함한다. 2026-11-24 현재 API/IPC·F1 입력·F4 AI 통합은 PR #37까지 반영됐다. 미연결·패치 적용 요청은 당시 기록이며 현재 작업 상태는 [progress.md](progress.md)와 각 status, 실행은 [setup.md](setup.md)를 따른다. 기존 패치를 재적용하지 않는다.
+
 작업 브랜치: `feat/F2-profile-draft`, 시작 기준 `origin/develop` 0f68ad1.
 승인 후 F1/F3가 포함된 `origin/develop` 9244454를 같은 작업 브랜치로 가져왔다.
 이 문서의 내용은 전달용으로 정리한 것이며 다른 채팅에 메시지를 발송하지 않았다.
