@@ -56,7 +56,17 @@ def pending_module():
 
 
 def all_metadata():
-    return [F1Base.metadata, search_metadata, F2Base.metadata]
+    # 이 검사는 0007 자체를 왕복한다. 0008의 추가물만 제외한 스냅샷과 비교한다.
+    from sqlalchemy import MetaData
+
+    target = MetaData()
+    for table in F1Base.metadata.tables.values():
+        if table.name == "history_import_jobs":
+            continue
+        copied = table.to_metadata(target)
+        if table.name == "mails" and "history_imported" in copied.c:
+            copied._columns.remove(copied.c.history_imported)
+    return [target, search_metadata, F2Base.metadata]
 
 
 def test_pending_revision_follows_reserved_number():

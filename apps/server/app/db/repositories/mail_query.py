@@ -100,7 +100,7 @@ class MailQueryRepository:
             Mail.account_id == account.account_id,
             Mail.direction == "received",
             Mail.mailbox == "inbox",
-            Mail.received_at >= account.sync_started_at,
+            or_(Mail.received_at >= account.sync_started_at, Mail.history_imported.is_(True)),
         )
 
     def list(self, *, limit=20, cursor=None):

@@ -18,6 +18,7 @@ from app.connectors.gmail_mail import GmailMailClient
 from app.db.config import DatabaseConfigurationError, database_engine
 from app.db.repositories.f5 import F5Repository
 from app.db.repositories.gmail_sync import GmailSyncRepository
+from app.db.repositories.history_import import HistoryRepository
 from app.db.repositories.mail_query import MailQueryRepository
 from app.db.repositories.profile_draft import F2Repository
 from app.db.repositories.search import SQLSearchRepository
@@ -27,6 +28,7 @@ from app.mail_api_config import MailAPIConfigurationError, read_api_token
 from app.main import create_app
 from app.pipeline.auto_analysis import build_auto_analysis
 from app.services.f5 import AnalysisScanHook, F5Service
+from app.services.history_import import HistoryRunner
 from app.services.search import SearchService
 from app.services.weekly_report_runtime import WeeklyReportRuntime
 
@@ -95,6 +97,12 @@ def main():
         search_parser, search_answerer = (
             SharedQueryParser(generator),
             SharedSearchAnswerer(generator),
+        )
+        application.state.history_import = HistoryRunner(
+            HistoryRepository(engine, mail_query.session()),
+            GmailSyncRepository(engine, settings),
+            lambda: GmailMailClient(settings),
+            after_save=analysis_runner.kick,
         )
         application.state.search_service = SearchService(
             SQLSearchRepository(engine),

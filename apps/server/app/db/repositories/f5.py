@@ -80,7 +80,7 @@ class F5Repository:
             .where(
                 Mail.mail_id == mail_id,
                 Mail.direction == "received",
-                Mail.received_at >= MailAccount.sync_started_at,
+                (Mail.received_at >= MailAccount.sync_started_at) | Mail.history_imported.is_(True),
             )
         )
         row = session.scalar(query.with_for_update(of=Mail) if lock else query)

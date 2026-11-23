@@ -96,6 +96,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/mail-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listing */
+        get: operations["listing_mail_history_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_mail_history_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail-history/{job_id}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Action */
+        post: operations["action_mail_history__job_id___action__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/mails": {
         parameters: {
             query?: never;
@@ -584,6 +619,12 @@ export interface components {
             external_consent: boolean;
             /** Local Configured */
             local_configured: boolean;
+            /**
+             * Mode
+             * @default local_only
+             * @enum {string}
+             */
+            mode: "local_only" | "hybrid";
         };
         /** AIUpdate */
         AIUpdate: {
@@ -599,6 +640,12 @@ export interface components {
             defaults: components["schemas"]["Defaults"];
             /** External Consent */
             external_consent: boolean;
+            /**
+             * Mode
+             * @default local_only
+             * @enum {string}
+             */
+            mode: "local_only" | "hybrid";
         };
         /** ActionItem */
         ActionItem: {
@@ -806,6 +853,10 @@ export interface components {
         };
         /** DraftState */
         DraftState: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
             /** Body */
             body: string;
             context_status: components["schemas"]["ContextStatus"];
@@ -929,6 +980,49 @@ export interface components {
              * @constant
              */
             status: "ok";
+        };
+        /** HistoryJobState */
+        HistoryJobState: {
+            /** Created At */
+            created_at: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Error */
+            error: string | null;
+            /** Job Id */
+            job_id: string;
+            /** Processed */
+            processed: number;
+            /** Saved */
+            saved: number;
+            /** Skipped */
+            skipped: number;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "paused" | "failed" | "completed";
+        };
+        /** ImportRange */
+        ImportRange: {
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
         };
         /** LocalSession */
         LocalSession: {
@@ -1181,6 +1275,10 @@ export interface components {
         };
         /** PreviewState */
         PreviewState: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
             /** Body */
             body: string;
             /** Evidence */
@@ -1520,6 +1618,10 @@ export interface components {
         };
         /** SearchResponse */
         SearchResponse: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
             answer?: components["schemas"]["SearchAnswer"] | null;
             answer_error?: components["schemas"]["SearchFailure"] | null;
             parsed: components["schemas"]["ParsedQuery"];
@@ -1761,6 +1863,10 @@ export interface components {
         };
         /** WeeklyReportDocument */
         WeeklyReportDocument: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
             /** Collection Started At */
             collection_started_at?: string | null;
             /**
@@ -2373,6 +2479,127 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listing_mail_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryJobState"][];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_mail_history_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryJobState"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    action_mail_history__job_id___action__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+                action: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryJobState"];
                 };
             };
             /** @description 요청 형식 오류 */

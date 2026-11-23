@@ -45,7 +45,7 @@ def register_ai_settings(application):
     async def check(body: Probe, request: Request):
         settings = store(request)
         try:
-            with selected(settings, body.provider):
+            with selected(settings, body.provider, fallback=False):
                 await asyncio.wait_for(
                     SelectedGeneration(settings).generate(
                         GenerationRequest(

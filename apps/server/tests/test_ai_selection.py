@@ -34,7 +34,9 @@ def settings(tmp_path, **values):
 
 def update(store, *, consent=True, defaults=None, key=KEY):
     return store.update(
-        AIUpdate(defaults=defaults or Defaults(), external_consent=consent, api_key=key)
+        AIUpdate(
+            mode="hybrid", defaults=defaults or Defaults(), external_consent=consent, api_key=key
+        )
     )
 
 
@@ -55,7 +57,7 @@ def test_encrypted_settings_survive_restart_and_never_return_key(tmp_path):
     for name in ("ai-settings.key", "ai-settings.enc"):
         assert stat.S_IMODE((store.directory / name).stat().st_mode) == 0o600
     assert settings(tmp_path).state() == state
-    store.update(AIUpdate(defaults=Defaults(), external_consent=False))
+    store.update(AIUpdate(mode="hybrid", defaults=Defaults(), external_consent=False))
     assert store.state().claude_key_set  # 빈 입력은 기존 키를 유지한다.
 
 
@@ -124,7 +126,7 @@ def test_defaults_overrides_simultaneous_calls_and_two_stage_snapshot(tmp_path):
     assert len(seen) == 6
 
 
-def test_provider_error_never_falls_back_and_auto_purposes_are_blocked(tmp_path):
+def test_two_provider_errors_are_bounded_and_auto_purposes_are_blocked(tmp_path):
     store = settings(tmp_path)
     update(store)
     calls = []
@@ -147,7 +149,7 @@ def test_provider_error_never_falls_back_and_auto_purposes_are_blocked(tmp_path)
                 await router.generate(request(purpose))
 
     asyncio.run(run())
-    assert calls == ["claude"]
+    assert calls == ["claude", "ollama"]
 
 
 def test_real_mail_consent_is_separate_from_synthetic_test_flag():
@@ -211,6 +213,7 @@ def test_model_setting_is_saved_and_used_only_for_selected_claude_calls(tmp_path
     store = settings(tmp_path, CLAUDE_MODEL_DRAFT="old-synthetic-model")
     store.update(
         AIUpdate(
+            mode="hybrid",
             defaults=Defaults(draft="claude"),
             external_consent=True,
             api_key=KEY,
@@ -234,3 +237,126 @@ def test_model_setting_is_saved_and_used_only_for_selected_claude_calls(tmp_path
     asyncio.run(run())
     assert captured[0]["CLAUDE_MODEL_DRAFT"] == "new-synthetic-model"
     assert store.state().claude_model == "new-synthetic-model"
+
+
+def test_new_install_local_only_blocks_saved_and_explicit_claude_despite_environment(tmp_path):
+    store = settings(
+        tmp_path, AI_PROVIDER="claude", ANTHROPIC_API_KEY=KEY, AI_CLAUDE_EXTERNAL_CONSENT="true"
+    )
+    assert store.state().mode == "local_only"
+    store.update(
+        AIUpdate(
+            mode="local_only", defaults=Defaults(draft="claude"), external_consent=True, api_key=KEY
+        )
+    )
+    calls = []
+
+    def loader(values):
+        calls.append(values["AI_PROVIDER"])
+
+        async def gen(_):
+            return "synthetic"
+
+        return SimpleNamespace(generate=gen)
+
+    async def run():
+        with selected(store):
+            await SelectedGeneration(store, loader=loader).generate(request())
+        with selected(store, "claude"), pytest.raises(AISelectionError):
+            await SelectedGeneration(store, loader=loader).generate(request())
+
+    asyncio.run(run())
+    assert calls == ["ollama"]
+    assert store.state().claude_key_set
+
+
+def test_fallback_is_once_per_request_and_pins_remaining_search_stages_to_local(tmp_path):
+    store = settings(tmp_path)
+    update(store)
+    calls = []
+
+    def loader(values):
+        calls.append(values["AI_PROVIDER"])
+
+        async def gen(_):
+            if values["AI_PROVIDER"] == "claude":
+                raise ProviderCallError(code="claude_unreachable")
+            return "synthetic"
+
+        return SimpleNamespace(generate=gen)
+
+    async def run():
+        with selected(store, "claude") as trace:
+            router = SelectedGeneration(store, loader=loader)
+            await router.generate(request("search"))
+            await router.generate(request("search"))
+            assert trace["fallback"] and trace["reason"] == "claude_unreachable"
+
+    asyncio.run(run())
+    assert calls == ["claude", "ollama", "ollama"]
+
+
+def test_probe_cannot_report_local_success_as_claude_connected(tmp_path):
+    store = settings(tmp_path)
+    update(store)
+    calls = []
+
+    def loader(values):
+        calls.append(values["AI_PROVIDER"])
+
+        async def gen(_):
+            raise ProviderCallError(code="claude_auth_failed")
+
+        return SimpleNamespace(generate=gen)
+
+    async def run():
+        with selected(store, "claude", fallback=False), pytest.raises(ProviderCallError):
+            await SelectedGeneration(store, loader=loader).generate(request())
+
+    asyncio.run(run())
+    assert calls == ["claude"]
+
+
+def test_local_mode_blocks_claude_probe_api_without_provider_construction(tmp_path, monkeypatch):
+    store = settings(tmp_path)
+    store.update(
+        AIUpdate(
+            mode="local_only", defaults=Defaults(draft="claude"), external_consent=True, api_key=KEY
+        )
+    )
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("로컬 모드에서 Claude SDK 생성 금지")
+
+    monkeypatch.setattr("app.ai.claude.ClaudeGeneration.__init__", forbidden)
+    with client(store) as http:
+        response = http.post("/settings/ai/check", json={"provider": "claude"}, headers=AUTH)
+        assert response.status_code == 503
+        assert KEY not in response.text
+
+
+def test_cancelled_claude_request_does_not_start_local(tmp_path):
+    store = settings(tmp_path)
+    update(store)
+    calls = []
+    started = asyncio.Event()
+
+    def loader(values):
+        calls.append(values["AI_PROVIDER"])
+
+        async def generate(_):
+            started.set()
+            await asyncio.Future()
+
+        return SimpleNamespace(generate=generate)
+
+    async def run():
+        with selected(store, "claude"):
+            task = asyncio.create_task(SelectedGeneration(store, loader=loader).generate(request()))
+            await started.wait()
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+
+    asyncio.run(run())
+    assert calls == ["claude"]

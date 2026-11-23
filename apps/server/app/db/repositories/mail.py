@@ -54,8 +54,9 @@ class MailRepository:
         thread_id: str | None = None,
         cc: list[dict] | None = None,
         is_read: bool = False,
+        history_imported: bool = False,
     ) -> str | None:
-        """사용 시작 이후만 저장한다. 같은 소스 메일의 재시도는 기존 ID를 반환한다."""
+        """일반 수신은 시작 이후만, 명시적 가져오기는 과거도 저장한다. 중복은 기존 ID 반환."""
         _aware(received_at)
         account = self.session.scalar(
             select(MailAccount).where(
@@ -65,7 +66,7 @@ class MailRepository:
         )
         if account is None:
             raise ValueError("지정한 사용자의 메일 아카운트가 없습니다")
-        if received_at < account.sync_started_at:
+        if received_at < account.sync_started_at and not history_imported:
             return None
         statement = (
             insert(Mail)
@@ -75,6 +76,7 @@ class MailRepository:
                 account_id=account_id,
                 source_message_id=source_message_id,
                 received_at=received_at,
+                history_imported=history_imported,
                 from_addr=from_addr,
                 from_name=from_name,
                 subject=subject,

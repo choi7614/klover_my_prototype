@@ -21,6 +21,15 @@
           "local_configured": {
             "title": "Local Configured",
             "type": "boolean"
+          },
+          "mode": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "hybrid"
+            ],
+            "title": "Mode",
+            "type": "string"
           }
         },
         "required": [
@@ -73,6 +82,15 @@
           "external_consent": {
             "title": "External Consent",
             "type": "boolean"
+          },
+          "mode": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "hybrid"
+            ],
+            "title": "Mode",
+            "type": "string"
           }
         },
         "required": [
@@ -608,6 +626,18 @@
       "DraftState": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
           "body": {
             "title": "Body",
             "type": "string"
@@ -996,6 +1026,95 @@
           "status"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HistoryJobState": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "processed": {
+            "title": "Processed",
+            "type": "integer"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "integer"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "paused",
+              "failed",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "start",
+          "end",
+          "status",
+          "saved",
+          "skipped",
+          "processed",
+          "error",
+          "created_at"
+        ],
+        "title": "HistoryJobState",
+        "type": "object"
+      },
+      "ImportRange": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "ImportRange",
         "type": "object"
       },
       "LocalSession": {
@@ -1715,6 +1834,18 @@
       "PreviewState": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
           "body": {
             "title": "Body",
             "type": "string"
@@ -2617,6 +2748,18 @@
       "SearchResponse": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
           "answer": {
             "anyOf": [
               {
@@ -3344,6 +3487,18 @@
       "WeeklyReportDocument": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
           "collection_started_at": {
             "anyOf": [
               {
@@ -4214,6 +4369,176 @@
         "summary": "서버 실행 상태 확인",
         "tags": [
           "공통"
+        ]
+      }
+    },
+    "/mail-history": {
+      "get": {
+        "operationId": "listing_mail_history_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryJobState"
+                  },
+                  "title": "Response Listing Mail History Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Listing",
+        "tags": [
+          "과거 메일 가져오기"
+        ]
+      },
+      "post": {
+        "operationId": "create_mail_history_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryJobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "과거 메일 가져오기"
+        ]
+      }
+    },
+    "/mail-history/{job_id}/{action}": {
+      "post": {
+        "operationId": "action_mail_history__job_id___action__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "title": "Action",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryJobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Action",
+        "tags": [
+          "과거 메일 가져오기"
         ]
       }
     },

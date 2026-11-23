@@ -30,6 +30,7 @@ export type SearchResult = {
   direction: Direction;
 };
 export type SearchAnswer = {
+  ai_execution?: unknown;
   text: string;
   sentences: { mail_id: string; quote: string }[];
   citations: { number: number; mail_id: string }[];

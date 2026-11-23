@@ -7,6 +7,7 @@ from uuid import uuid4
 from pydantic import ValidationError
 
 from app.ai.f2_port import DraftAI, F2Error, RelatedMailSearch
+from app.ai.selection import execution_info
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.db.repositories.profile_draft import F2Repository, conflict
 from app.schemas.profile_draft import (
@@ -178,6 +179,7 @@ class F2Service:
         result, (body, evidence) = await self._generate(context)
         self.ensure_current(context, version)
         draft = DraftState(
+            ai_execution=execution_info(),
             draft_id="draft_" + uuid4().hex,
             mail_id=request.mail_id,
             directions=result.directions,
@@ -258,6 +260,7 @@ class F2Service:
                 "version": previous.version + 1,
                 "profile_version": version,
                 "context_status": status,
+                "ai_execution": execution_info(),
             }
         )
         return self.repository.save_draft(

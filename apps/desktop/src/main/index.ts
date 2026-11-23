@@ -1,3 +1,4 @@
+import { registerHistoryIPC } from './history-ipc';
 import { registerAIIPC } from './ai-ipc';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
@@ -43,6 +44,7 @@ function createOnboardingWindow(): void {
   const rendererURL = developmentURL ?? pathToFileURL(rendererFile).href;
   const configuration = { baseURL: process.env.KLOVER_API_BASE_URL, tokenFile: process.env.KLOVER_API_TOKEN_FILE };
   const client = new MailAPIClient(configuration);
+  const unregisterHistory = registerHistoryIPC(ipcMain, window.webContents, rendererURL, configuration);
   const unregisterAI = registerAIIPC(ipcMain, window.webContents, rendererURL, configuration);
   let mailboxWindow = false;
   const unregister = registerMailReadIPC(ipcMain, window.webContents, rendererURL, client, () => {
@@ -63,7 +65,7 @@ function createOnboardingWindow(): void {
   const unregisterF5 = registerF5IPC(ipcMain, window.webContents, rendererURL, new F5APIClient(configuration));
   // F1 분류·요약 표시: 분석 결과 묶음 조회와 실패 다시 시도만 공개한다.
   const unregisterF1 = registerF1IPC(ipcMain, window.webContents, rendererURL, new F1APIClient(configuration));
-  window.once('closed', () => { unregister(); unregisterAI(); unregisterF2(); unregisterSearch(); unregisterF4(); unregisterF5(); unregisterF1(); });
+  window.once('closed', () => { unregister(); unregisterHistory(); unregisterAI(); unregisterF2(); unregisterSearch(); unregisterF4(); unregisterF5(); unregisterF1(); });
 
   if (developmentURL) {
     void window.loadURL(developmentURL);

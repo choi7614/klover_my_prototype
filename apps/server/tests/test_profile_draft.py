@@ -458,7 +458,7 @@ def test_create_and_revision_honor_request_ai_provider_and_preserve_profile(repo
     from app.ai.selection import AISettingsStore, AIUpdate, Defaults, SelectedGeneration
 
     store = AISettingsStore(tmp_path / "ai", values={"OLLAMA_MODEL": "synthetic"})
-    store.update(AIUpdate(defaults=Defaults(), external_consent=True))
+    store.update(AIUpdate(mode="hybrid", defaults=Defaults(), external_consent=True))
     router = SelectedGeneration(store)
     seen = []
 
@@ -491,3 +491,28 @@ def test_create_and_revision_honor_request_ai_provider_and_preserve_profile(repo
         assert client.get("/profile", headers=HEADERS).json()["profile"] == PROFILE.model_dump(
             mode="json"
         )
+
+
+def test_automatic_preview_forces_local_even_with_explicit_claude_request(repository, tmp_path):
+    from app.ai.selection import AISettingsStore, AIUpdate, Defaults, SelectedGeneration
+
+    store = AISettingsStore(tmp_path / "ai", values={"OLLAMA_MODEL": "synthetic"})
+    store.update(AIUpdate(mode="hybrid", defaults=Defaults(draft="claude"), external_consent=True))
+    router = SelectedGeneration(store)
+    seen = []
+
+    class AI(SyntheticAI):
+        async def generate(self, request):
+            seen.append(router.provider_for("draft"))
+            return await super().generate(request)
+
+    app = application(repository, ai=AI())
+    app.state.ai_settings = store
+    with TestClient(app, base_url="http://127.0.0.1:8000", client=("127.0.0.1", 12345)) as http:
+        response = http.post(
+            "/profile/preview",
+            json={"profile": PROFILE.model_dump(mode="json"), "ai_provider": "claude"},
+            headers=HEADERS,
+        )
+        assert response.status_code == 200
+        assert seen == ["ollama"]

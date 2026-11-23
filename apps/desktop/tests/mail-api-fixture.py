@@ -7,6 +7,8 @@ import uvicorn
 
 from app.api.mail_read import MailAPIContext
 from app.main import create_app
+from fastapi import Depends
+from app.api.mail_read import authorize
 
 SESSION = {
     "user_id": "test-user",
@@ -67,6 +69,11 @@ if __name__ == "__main__":
     application.state.mail_api = MailAPIContext(
         Path(args.token_file).read_text().strip(), SyntheticRepository()
     )
+    @application.post("/mails/sync")
+    def synthetic_sync(repository=Depends(authorize)):
+        return {"status":"ok", "saved":0, "skipped":0, "mode":"history", "token_refreshed":False}
+    # 기존 sync 라우터 대신 합성 동작을 먼저 찾도록 지정한다.
+    application.router.routes.insert(0, application.router.routes.pop())
     uvicorn.run(
         application,
         host="127.0.0.1",

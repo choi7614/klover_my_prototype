@@ -32,7 +32,7 @@ test('AI 설정에서 기본값·전송 허용·키 입력과 연결 검사를 �
   await page.goto('/#/settings/ai');
   await page.getByLabel('답장 초안·수정').selectOption('claude');
   await page.getByLabel('Claude API 키 등록·교체').fill('synthetic-key-never-real');
-  await page.getByRole('checkbox').check();
+  await page.getByRole('checkbox', { name: /외부 전송과 비용/ }).check();
   await page.getByRole('button', { name: '설정 저장' }).click();
   await expect(page.getByLabel('Claude API 키 등록·교체')).toHaveValue('');
   await page.getByRole('button', { name: 'Claude 연결 검사' }).click();
@@ -61,4 +61,23 @@ test('첫날 보고서는 대기 없이 선택 AI로 요청하고 실제 기간�
   await expect(page.getByText(/일부 기간 자료 ·/)).toContainText('2026-11-20');
   expect(await page.evaluate(() => (window as unknown as { testCalls: { ai_provider: string }[] }).testCalls[0].ai_provider)).toBe('claude');
   await page.screenshot({ path: 'artifacts/ai-selection/weekly.png', fullPage: true });
+});
+
+test('과거 메일은 날짜 선택·시작 확인 후에만 요청하고 진행을 표시한다', async ({ page }) => {
+  await page.addInitScript(() => {
+    let jobs: unknown[] = [];
+    Object.assign(window.klover!, { history: {
+      list: async () => ({ ok: true, data: jobs }),
+      start: async () => { jobs = [{ job_id: 'a'.repeat(32), start: '2020-01-01', end: '2020-01-03', status: 'running', saved: 1, skipped: 0, processed: 1 }]; return { ok: true, data: jobs[0] }; },
+      action: async () => ({ ok: true, data: {} }),
+    } });
+  });
+  await page.goto('/#/settings/mail-history');
+  await expect(page.getByRole('button', { name: '선택 기간 가져오기' })).toBeDisabled();
+  await page.getByLabel('가져오기 시작일').fill('2020-01-01');
+  await page.getByLabel('가져오기 종료일').fill('2020-01-03');
+  page.once('dialog', d => d.accept());
+  await page.getByRole('button', { name: '선택 기간 가져오기' }).click();
+  await expect(page.getByText(/새 저장 1건/)).toBeVisible();
+  await page.screenshot({ path: 'artifacts/ai-selection/history.png', fullPage: true });
 });

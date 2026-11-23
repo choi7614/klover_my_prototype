@@ -1,3 +1,4 @@
+import { AIExecutionNotice } from '../ai-settings/ai-execution';
 import { AIChoiceControl } from '../ai-settings/ai-choice';
 import type { AIChoice } from '../../../shared/ai-bridge';
 import { useEffect, useRef, useState } from 'react';
@@ -152,6 +153,7 @@ export function ReplyDraftPage({ client, mailId, draftId, autoGenerate = true, o
         {draft?.directions.map(direction => <button type="button" key={direction} aria-pressed={direction === draft.selected_direction} disabled={busy} onClick={() => void generate('rewrite', direction)} className={`min-h-8 rounded-full border border-ai-border px-3 text-caption focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 ${direction === draft.selected_direction ? 'bg-ai text-ai-foreground' : 'bg-ai-subtle text-ai-text'}`}>{direction}</button>)}
         {profile && <span className="ml-auto text-caption text-muted-foreground">격식 {profile.formality} · 길이 {{ short: '짧게', normal: '보통', long: '자세히' }[profile.reply_length]}</span>}
       </div>
+      <AIExecutionNotice value={draft?.ai_execution} />
       {error && <div role="alert" className="flex flex-wrap items-center gap-3 border-b bg-warning-subtle px-6 py-3 text-caption"><p className="flex-1">{error}</p><Button variant="secondary" disabled={busy} onClick={() => void generate()}>다시 시도</Button><Button variant="secondary" disabled={busy} onClick={() => { setManual(true); onManualReply?.(mailId, bodyRef.current); }}>직접 쓰기</Button></div>}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {busy && !body && !manual ? <div className="p-6"><p className="mb-4 text-body text-ai-text">◆ 답장 초안을 만들고 있어요…</p><p className="mb-4 text-caption text-muted-foreground">로컬 AI는 시간이 걸릴 수 있어요. 최대 2분 동안 기다립니다.</p><Skeleton label="초안 생성 중" /></div>

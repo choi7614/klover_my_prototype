@@ -90,6 +90,12 @@ class SharedDraftAI:
             except ProvidersNotConfigured:
                 raise F2Error("ai_unavailable", 503, "AI 연결이 준비되지 않았어요.") from None
             except ProviderCallError as error:
+                if error.code == "both_providers_failed":
+                    raise F2Error(
+                        "both_providers_failed",
+                        502,
+                        "Claude와 로컬 AI 모두 처리하지 못했어요. 편집 내용은 보존됩니다.",
+                    ) from None
                 if error.code in {"ollama_timeout", "claude_timeout"}:
                     raise F2Error(
                         "ai_timeout", 504, "AI 응답이 늦어졌어요. 잠시 뒤 다시 시도해 주세요."

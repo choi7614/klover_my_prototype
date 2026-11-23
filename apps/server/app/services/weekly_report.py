@@ -9,6 +9,7 @@ from uuid import uuid4
 from pydantic import ValidationError
 
 from app.ai.interfaces import ProviderCallError, ProvidersNotConfigured
+from app.ai.selection import execution_info
 from app.ai.weekly_report import WeeklyReportGenerator
 from app.db.repositories.report_mail import ReportMailRepository
 from app.db.repositories.weekly_report import (
@@ -236,6 +237,7 @@ class WeeklyReportService:
 
         stamp = self.now()
         document = WeeklyReportDocument(
+            ai_execution=execution_info(),
             report_id=existing.document.report_id if existing else uuid4().hex,
             revision=existing.document.revision + 1 if existing else 1,
             period=period,

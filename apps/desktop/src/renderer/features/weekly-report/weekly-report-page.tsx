@@ -1,3 +1,4 @@
+import { AIExecutionNotice } from '../ai-settings/ai-execution';
 import { AIChoiceControl } from '../ai-settings/ai-choice';
 import type { AIChoice } from '../../../shared/ai-bridge';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -176,6 +177,7 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
     </div>
     <p className="border-b px-6 py-2 text-caption text-muted-foreground">첫 주에도 현재까지 수집된 자료로 생성합니다. 선택 기간 중 수집 전 자료는 포함하지 않습니다.</p>
     {options?.generation === 'test_double' && <p className="border-b border-warning-border bg-warning-subtle px-6 py-2 text-caption text-warning">검토용 테스트 대역 · 가짜 메일만 사용합니다. 실제 AI 생성 결과가 아닙니다.</p>}
+    <AIExecutionNotice value={report?.ai_execution} />
     {error && <div role="alert" className="border-b border-warning-border bg-warning-subtle px-6 py-3 text-body text-warning">{error}</div>}
     {message && <p role="status" className="border-b bg-success-subtle px-6 py-2 text-caption text-success">{message}</p>}
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">

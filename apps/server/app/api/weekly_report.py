@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.ai.interfaces import ProvidersNotConfigured
-from app.api.ai_scope import ai_scope
+from app.api.ai_scope import ai_scope, execution_result
 from app.api.errors import error_response
 from app.api.mail_read import authorize
 from app.db.repositories.mail_query import MailAccountUnavailable
@@ -77,8 +77,8 @@ def register_weekly_report_api(application, service=None):
     @router.post("", response_model=WeeklyReportDocument)
     async def generate(body: GenerateWeeklyReport, context: Context, request: Request):
         service, actor = context
-        with ai_scope(request, body.ai_provider):
-            return await service.generate(actor, body)
+        with ai_scope(request, body.ai_provider) as trace:
+            return execution_result(await service.generate(actor, body), trace)
 
     @router.get("/{report_id}", response_model=WeeklyReportDocument)
     async def get(report_id: ReportID, context: Context):

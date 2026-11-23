@@ -1,12 +1,14 @@
 # API 목록
 
-> 최종 수정: 2026-11-24 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
+## AI 정책·과거 수신 API (2026-11-24)
 
-이 문서는 **요약 목록**이다. 엔드포인트를 추가·변경하면 여기에 한 줄 반영하고, `packages/api-types`의 타입을 다시 생성한다.
-
-> 현재 기준: `develop f498d27`(PR #37 병합, 2026-11-24 확인). 메일·F1 분석·F2·F3·F4·F5·AI 설정의 경로/앱 IPC와 저장소 조립이 구현되어 있다.
-> 실제 제공자 호출은 설정·동의·로컬 모델 준비가 필요하며 실환경 성공은 미검증이다. 현재 실행은 [setup.md](../dev/setup.md), 정확한 스키마는 코드의 OpenAPI를 따른다.
-> 아래 '설계·미구현' 표와 WebSocket은 현재 지원 API가 아니다.
+AI 설정에 mode(local_only/hybrid)를 추가한다. 새 설정은 local_only, 기존 모드 없는 저장본은 hybrid로 보존한다.
+생성 결과에 ai_execution(calls/used, fallback, reason)을 붙인다. 검색 스트림은 answer/answer_error에 포함한다.
+자동 preview는 로컬 고정. Claude 연결 검사는 전환하지 않는다.
+`GET /mail-history`는 최근 20개 작업, `POST /mail-history {start,end}`는 명시적 시작,
+`POST /mail-history/{job_id}/{action}`은 pause/resume이다. 기존 loopback/Bearer/Origin 경계를 재사용한다.
+진행 응답에서 내부 Gmail 페이지 토큰·페이지 체크포인트·실행 번호는 제외한다.
+[기간·상한·취소·업데이트 계약](../dev/local-ai-history-run.md)을 따른다.
 
 ## 공통
 
@@ -51,7 +53,7 @@
   cursor는 서버가 준 값 그대로 전달한다. 검색·분류·정렬 변경·다른 편지함은 미지원이며
   목록의 알 수 없거나 중복된 쿼리 인수는 422다.
 - 소유자는 요청에서 받지 않는다. 기존 로컬 운영자·설정된 Gmail 계정·연결 기록으로 한정하고,
-  사용 시작 이후 받은편지함 메일만 읽는다. 다른 계정 메일 ID도 없는 메일과 같이 404다.
+  사용 시작 이후 받은편지함과 명시적 가져오기 메일을 읽는다. 다른 계정 메일 ID도 없는 메일과 같이 404다.
 - 로컬 접속과 허용 Host만 받으며 모든 Origin 헤더를 거부한다. Renderer 직접 fetch 대신
   Electron main의 Node fetch + 제한된 IPC를 사용한다. CORS를 추가해 우회하지 않는다.
 - 인증 실패 401, 외부 출처 403, DB·계정 준비 부족 503. 개인 응답은 `Cache-Control: no-store`다.
@@ -208,14 +210,14 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 - `PUT /settings/ai`: `defaults`(draft/search/weekly_report 각각 ollama/claude), `external_consent`, 선택 `api_key`·`claude_model`·`clear_key`. 키 생략/빈 UI 입력은 유지. `clear_key`는 암호화 파일에 저장한 키만 삭제하며 환경 변수 키는 보존.
 - `POST /settings/ai/check`: `{provider: ollama|claude}`. 메일 없는 고정 합성 요청으로 연결 검사(Claude 소량 과금). 실제 기능 품질 검사가 아님.
 - 모두 기존 loopback·Bearer·Origin 차단 경계와 비공개 응답 정책을 사용한다. 기존 연결 계정의 로컬 운영자 설정이다.
-- `POST /drafts`, `/drafts/{id}/revise`, `/profile/preview`, `/search`, `/reports/weekly`에 선택 `ai_provider: default|ollama|claude|null` 추가. 생략/null/default는 저장 기본값(최초에는 기존 AI_PROVIDER, 없으면 로컬).
+- `POST /drafts`, `/drafts/{id}/revise`, `/profile/preview`, `/search`, `/reports/weekly`에 선택 `ai_provider: default|ollama|claude|null` 추가. 생략/null/default는 저장 기본값(새 설정은 로컬 전용·로컬 기본). `/profile/preview`는 선택과 무관하게 로컬 고정.
 - F3는 해석과 답변이 같은 설정 스냅샷을 사용한다. 요청 간 변경은 다음 요청부터 적용한다.
 - F4는 제공자별 생성 저장 키를 분리해 전환 시 기존 보고서·편집본을 덮어쓰지 않는다. 기존 ID 조회·편집은 유지한다.
 - 첫 주 options는 remaining_days=0, 기본 기간=사용 시작일~오늘. 보고서에 partial_period·collection_started_at 추가(기존 저장본은 기본값으로 호환).
 - 서버 타임아웃: 초안/보고서 120초, 미리보기 30초, 운영 검색 각 AI 단계 120초. 앱 초안/보고서/연결 검사는 150초까지 기다림. 실제 성능 보장과 구분한다.
 
-## 개발 예정·현재 엔드포인트 없음
+## 이번 작업 브랜치의 통합 구현
 
-기간 선택 과거 메일 가져오기, Claude→로컬 1회 대체 재시도, 강제 로컬 전용 모드는 미구현이다.
-특히 `/profile/preview`는 현재 답장 기본 AI를 따라 자동 미리보기를 생성한다. Claude 기본값/동의가 있으면
-프로필 화면에서도 외부 요청·과금이 생길 수 있다. [setup.md](../dev/setup.md)·[통합 전달 사항](../dev/integration-followups.md)을 따른다.
+기간 선택 과거 메일 가져오기, Claude→로컬 1회 대체 재시도, 강제 로컬 전용 모드는 통합 작업 브랜치에서 구현·자동 검사했으며 develop 반영 PR #39(사용자 병합 승인 완료)다.
+`/profile/preview`는 서버에서 로컬을 강제한다. 수동 초안·수정의 Claude 선택은 별도이며
+로컬 전용 모드·외부 전송 동의 검사를 통과해야 한다. [setup.md](../dev/setup.md)·[통합 전달 사항](../dev/integration-followups.md)을 따른다.

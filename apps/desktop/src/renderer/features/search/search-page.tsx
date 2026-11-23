@@ -1,3 +1,4 @@
+import { AIExecutionNotice } from '../ai-settings/ai-execution';
 import { AIChoiceControl } from '../ai-settings/ai-choice';
 import type { AIChoice } from '../../../shared/ai-bridge';
 import { useEffect, useRef, useState, type ComponentProps, type FormEvent } from 'react';
@@ -159,7 +160,7 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
 
   return <section className="f3-search-page" aria-label="자연어 검색">
     <header className="f3-search-header">
-      <h1>자연어 검색</h1>
+      <h1>자연어 검색</h1>      <AIExecutionNotice value={state.answer?.ai_execution} />
       <AIChoiceControl purpose="search" value={provider} onChange={setProvider} disabled={['parsing', 'searching', 'answering'].includes(state.phase)} />
       <form onSubmit={submit} className="f3-query-form">
         <span className="f3-ai" aria-hidden="true">◆</span>

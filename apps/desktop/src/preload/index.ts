@@ -1,3 +1,4 @@
+import type { HistoryBridge } from '../shared/history-bridge';
 import type { AIBridge } from '../shared/ai-bridge';
 import { contextBridge, ipcRenderer } from 'electron';
 import type { MailReadBridge } from '../shared/mail-read';
@@ -72,4 +73,5 @@ const ai = Object.freeze<AIBridge>({
   save: update => ipcRenderer.invoke('klover:ai:save', update),
   check: provider => ipcRenderer.invoke('klover:ai:check', provider),
 });
-contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, ai, mail, f2, search, weeklyReport, suggestions, analysis }));
+const history = Object.freeze<HistoryBridge>({ list: () => ipcRenderer.invoke('klover:history:list'), start: range => ipcRenderer.invoke('klover:history:start', range), action: (id, action) => ipcRenderer.invoke('klover:history:action', id, action) });
+contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, ai, history, mail, f2, search, weeklyReport, suggestions, analysis }));
