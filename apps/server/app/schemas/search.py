@@ -110,6 +110,7 @@ class SearchMail(Contract):
     user_id: Text
     account_id: Text
     received_at: AwareDatetime
+    history_imported: bool = False
     direction: Direction
     from_addr: str
     from_name: str = ""
@@ -166,6 +167,7 @@ class SearchFailure(Contract):
 
 
 class SearchResponse(Contract):
+    ai_execution: dict | None = None
     search_id: str
     parsed: ParsedQuery
     reference_date: date

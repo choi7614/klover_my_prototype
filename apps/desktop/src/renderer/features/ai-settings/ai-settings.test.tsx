@@ -23,10 +23,10 @@ describe('AI 설정', () => {
     fireEvent.change(screen.getByLabelText('답장 초안·수정'), { target: { value: 'claude' } });
     fireEvent.change(screen.getByLabelText('Claude API 키 등록·교체'), { target: { value: 'synthetic-private-key' } });
     expect(screen.getByLabelText('Claude API 키 등록·교체')).toHaveAttribute('type', 'password');
-    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('checkbox', { name: /외부 전송과 비용/ }));
     fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
     await screen.findByText(/AI 설정을 저장했습니다/);
-    expect(ai.save).toHaveBeenCalledWith({ defaults: { draft: 'claude', search: 'ollama', weekly_report: 'claude' }, external_consent: true, api_key: 'synthetic-private-key' });
+    expect(ai.save).toHaveBeenCalledWith({ mode: 'hybrid', defaults: { draft: 'claude', search: 'ollama', weekly_report: 'claude' }, external_consent: true, api_key: 'synthetic-private-key' });
     expect(screen.getByLabelText('Claude API 키 등록·교체')).toHaveValue('');
     expect(screen.queryByText('synthetic-private-key')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Claude 연결 검사' }));

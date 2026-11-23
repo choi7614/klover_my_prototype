@@ -16,7 +16,8 @@ export function registerAIIPC(ipc: IpcMain, contents: WebContents, rendererURL: 
     } else {
       if (args.length !== 1 || !args[0] || typeof args[0] !== 'object' || Array.isArray(args[0])) return fail();
       const row = args[0] as Record<string, unknown>;
-      if (Object.keys(row).some(k => !['defaults', 'external_consent', 'api_key', 'clear_key', 'claude_model'].includes(k))
+      if (Object.keys(row).some(k => !['mode', 'defaults', 'external_consent', 'api_key', 'clear_key', 'claude_model'].includes(k))
+        || (row.mode !== undefined && !['local_only', 'hybrid'].includes(row.mode as string))
         || typeof row.external_consent !== 'boolean' || !row.defaults || typeof row.defaults !== 'object'
         || Object.keys(row.defaults).length !== 3
         || !['draft', 'search', 'weekly_report'].every(p => validProvider((row.defaults as Record<string, unknown>)[p]))

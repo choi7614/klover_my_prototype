@@ -93,6 +93,7 @@ class Mail(Base):
     body_html: Mapped[str] = mapped_column(Text, server_default="")
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     is_read: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    history_imported: Mapped[bool] = mapped_column(Boolean, server_default="false")
     analysis_status: Mapped[str] = mapped_column(String(20), server_default="pending")
 
 
@@ -109,3 +110,18 @@ class WeeklyReportRow(Base):
     selection_key: Mapped[str] = mapped_column(Text, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, nullable=False)
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+
+class HistoryImportJob(Base):
+    __tablename__ = "history_import_jobs"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "user_id"],
+            ["mail_accounts.account_id", "mail_accounts.user_id"],
+            name="fk_history_import_owner",
+        ),
+    )
+    job_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    user_id: Mapped[str] = mapped_column(Text)
+    account_id: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict] = mapped_column(JSONB)

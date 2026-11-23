@@ -3,6 +3,7 @@
 interface Window {
   readonly klover?: Readonly<{
     platform: string;
+    history?: import('../shared/history-bridge').HistoryBridge;
     ai?: import('../shared/ai-bridge').AIBridge;
     mail: import('../shared/mail-read').MailReadBridge;
     /** main/preload 연결 전 빌드에서는 없을 수 있다. */

@@ -1,5 +1,17 @@
 # F3 자연어 검색 — 현재 상태
 
+## 현재 상태 — 2026-11-24 통합 작업
+
+- 작업: `integrate/local-ai-mail-history` · Codex · 기준 `origin/develop 5e2b7a7`(PR #38).
+- 로컬 전용 차단·Claude 실패 후 로컬 1회 전환·실제 AI 표시를 연결했다. 가져온 과거 메일은 SQL 조회와 결과 정렬/근거 답변 모두 허용한다. 의미 벡터 검색·추가 조건·보낸 메일 열기는 기존 미완료 범위다.
+- 서버 590개(분리 PostgreSQL, skip 0), 앱 185개, 합성 Chromium 4개 통과. Ruff·lint·typecheck·빌드 결과는 [통합 검증 기록](verification-local-ai-history.md)을 따른다.
+- 실제 사용자 DB·Gmail·Ollama·유료 Claude·네이티브 Electron은 미실행이다.
+- 기존 기능 브랜치·키·메일·설정은 보존했다. 이번 변경은 **미커밋·미Push·PR 없음**, 묶음 승인 대기다. develop/main 병합은 각각 별도 승인이다.
+- 다음 할 일: 승인 후 PR 제출, develop 병합 별도 검토, [맥북 업데이트/실기 확인](local-ai-history-run.md). 이미 반영된 과거 공통 패치는 재적용하지 않는다.
+
+<details>
+<summary>PR #38 당시 요약 — 이번 작업 전 기준</summary>
+
 > 2026-11-24 · 실제 기준 `origin/develop f498d27` · PR #37 병합 확인 · 이번 작업은 문서만 수정
 
 ## 현재 구현과 남은 일
@@ -9,6 +21,8 @@
 - 새 설치·평소 실행·업데이트는 [setup.md](setup.md), 공통 확인 수준은 [현황판](progress.md)·[이번 검증](verification-2026-11-24.md)을 따른다.
 - 과거의 '미연결/미커밋/승인 대기'는 아래 당시 기록이다. PR #37과 기존 공통 패치는 이미 병합되어 재적용하지 않는다.
 - 확정된 개발 예정: 기간 선택 과거 메일 가져오기, Claude→로컬 1회 자동 재시도, 로컬 전용 모드. 모두 현재 미구현이며 이번에 코드를 변경하지 않는다.
+
+</details>
 
 <details>
 <summary>이전 기능 브랜치·검사·인수인계 기록 (현재 실행 지시 아님)</summary>

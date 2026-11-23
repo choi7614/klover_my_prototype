@@ -1,5 +1,6 @@
 """로컬 운영자용 기능별 AI 설정. 키·설정은 서버의 암호화 파일에만 저장한다."""
 
+import asyncio
 import json
 import os
 import tempfile
@@ -13,7 +14,12 @@ from cryptography.fernet import Fernet
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from app.ai.config import ENV_FILE, environment_values
-from app.ai.interfaces import GenerationRequest, ProviderIdentity, ProvidersNotConfigured
+from app.ai.interfaces import (
+    GenerationRequest,
+    ProviderCallError,
+    ProviderIdentity,
+    ProvidersNotConfigured,
+)
 from app.ai.runtime import load_generation
 
 Provider = Literal["ollama", "claude"]
@@ -29,6 +35,7 @@ class Defaults(BaseModel):
 
 class AIUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    mode: Literal["local_only", "hybrid"] = "local_only"
     defaults: Defaults
     external_consent: bool = Field(strict=True)
     api_key: SecretStr | None = Field(default=None, max_length=512)
@@ -37,6 +44,7 @@ class AIUpdate(BaseModel):
 
 
 class AIState(BaseModel):
+    mode: Literal["local_only", "hybrid"] = "local_only"
     defaults: Defaults
     external_consent: bool
     claude_key_set: bool
@@ -71,13 +79,10 @@ class AISettingsStore:
         with self.lock:
             target = self.directory / "ai-settings.enc"
             if not target.exists():
-                # 최초에는 기존 운영 설정을 이어받는다. 외부 전송 동의는 별도로 받는다.
-                provider = self.values().get("AI_PROVIDER", "ollama")
-                provider = provider if provider in {"claude", "ollama"} else "ollama"
+                # 새 설정은 환경 변수와 무관하게 로컬 전용으로 시작한다.
                 return {
-                    "defaults": Defaults(
-                        **dict.fromkeys(Defaults.model_fields, provider)
-                    ).model_dump(),
+                    "defaults": Defaults().model_dump(),
+                    "mode": "local_only",
                     "external_consent": False,
                     "api_key": None,
                 }
@@ -92,6 +97,7 @@ class AISettingsStore:
         data = self.read()
         values = self.values()
         return AIState(
+            mode=data.get("mode", "hybrid"),
             defaults=data["defaults"],
             external_consent=data["external_consent"],
             claude_key_set=bool(data.get("api_key") or values.get("ANTHROPIC_API_KEY")),
@@ -110,7 +116,9 @@ class AISettingsStore:
             if update.clear_key and key is not None:
                 raise AISelectionError("키 저장과 삭제는 따로 요청하세요.")
             data.update(
-                defaults=update.defaults.model_dump(), external_consent=update.external_consent
+                mode=update.mode,
+                defaults=update.defaults.model_dump(),
+                external_consent=update.external_consent,
             )
             if update.claude_model is not None:
                 data["claude_model"] = update.claude_model
@@ -136,10 +144,11 @@ _selection: ContextVar[tuple | None] = ContextVar("ai_selection", default=None)
 
 
 @contextmanager
-def selected(store, choice: Choice | None = None):
-    token = _selection.set((store.read(), choice, store.values()))
+def selected(store, choice: Choice | None = None, *, fallback=True):
+    trace = {"calls": [], "fallback": False, "allow_fallback": fallback}
+    token = _selection.set((store.read(), choice, store.values(), trace))
     try:
-        yield
+        yield trace
     finally:
         _selection.reset(token)
 
@@ -152,30 +161,91 @@ class SelectedGeneration:
         self.store, self.loader = store, loader
 
     def provider_for(self, purpose):
-        data, choice, _values = _selection.get() or (self.store.read(), None, self.store.values())
-        return choice if choice not in {None, "default"} else data["defaults"][purpose]
+        data, choice, _values, trace = _selection.get() or (
+            self.store.read(),
+            None,
+            self.store.values(),
+            {},
+        )
+        provider = choice if choice not in {None, "default"} else data["defaults"][purpose]
+        if data.get("mode", "hybrid") == "local_only":
+            if choice == "claude":
+                raise AISelectionError("로컬 전용 모드에서는 Claude를 사용할 수 없어요.")
+            return "ollama"
+        return "ollama" if trace.get("fallback") else provider
 
     async def generate(self, request: GenerationRequest):
         if request.purpose not in Defaults.model_fields:
             raise AISelectionError("자동 분석에는 로컬 AI만 사용할 수 있어요.")
-        data, _choice, values = _selection.get() or (self.store.read(), None, self.store.values())
+        data, _choice, values, trace = _selection.get() or (
+            self.store.read(),
+            None,
+            self.store.values(),
+            {"calls": [], "allow_fallback": False},
+        )
         provider = self.provider_for(request.purpose)
-        values = {**values, "AI_PROVIDER": provider}
-        if provider == "claude":
-            if not data["external_consent"]:
-                raise AISelectionError(
-                    "AI 설정에서 외부 전송과 API 비용 안내를 확인하고 Claude 사용을 허용하세요."
-                )
-            values["AI_CLAUDE_EXTERNAL_CONSENT"] = "true"
-            if data.get("claude_model"):
-                values["CLAUDE_MODEL"] = data["claude_model"]
-                for purpose in Defaults.model_fields:
-                    values[f"CLAUDE_MODEL_{purpose.upper()}"] = data["claude_model"]
-            if data.get("api_key"):
-                values["ANTHROPIC_API_KEY"] = data["api_key"]
-        generator = self.loader(values)
+        if provider == "claude" and not data["external_consent"]:
+            raise AISelectionError(
+                "AI 설정에서 외부 전송과 API 비용 안내를 확인하고 Claude 사용을 허용하세요."
+            )
+
+        async def call(chosen, limit):
+            current = {**values, "AI_PROVIDER": chosen}
+            if chosen == "claude":
+                current["AI_CLAUDE_EXTERNAL_CONSENT"] = "true"
+                if data.get("api_key"):
+                    current["ANTHROPIC_API_KEY"] = data["api_key"]
+                if data.get("claude_model"):
+                    for key in [
+                        "CLAUDE_MODEL",
+                        *[f"CLAUDE_MODEL_{p.upper()}" for p in Defaults.model_fields],
+                    ]:
+                        current[key] = data["claude_model"]
+            generator = self.loader(current)
+            try:
+                result = await asyncio.wait_for(generator.generate(request), timeout=limit)
+                trace["calls"].append({"purpose": request.purpose, "used": chosen})
+                return result
+            finally:
+                if chosen == "claude" and hasattr(getattr(generator, "client", None), "close"):
+                    await generator.client.close()
+
         try:
-            return await generator.generate(request)
-        finally:
-            if provider == "claude" and hasattr(getattr(generator, "client", None), "close"):
-                await generator.client.close()
+            return await call(provider, 45 if provider == "claude" else 65)
+        except (ProvidersNotConfigured, ProviderCallError, TimeoutError) as error:
+            if (
+                provider != "claude"
+                or not trace.get("allow_fallback")
+                or trace.get("fallback")
+                or getattr(error, "code", "") == "claude_refused"
+            ):
+                raise
+            trace.update(
+                fallback=True,
+                reason=getattr(
+                    error,
+                    "code",
+                    "claude_not_configured"
+                    if isinstance(error, ProvidersNotConfigured)
+                    else "claude_timeout",
+                ),
+            )
+            try:
+                return await call("ollama", 65)
+            except (ProvidersNotConfigured, ProviderCallError, TimeoutError):
+                raise ProviderCallError(
+                    "Claude와 로컬 AI 모두 처리하지 못했어요. 편집 내용은 보존됩니다.",
+                    code="both_providers_failed",
+                ) from None
+
+
+def execution_info():
+    state = _selection.get()
+    if not state or not state[3].get("calls"):
+        return None
+    trace = state[3]
+    return {
+        "calls": [dict(x) for x in trace["calls"]],
+        "fallback": trace["fallback"],
+        "reason": trace.get("reason"),
+    }

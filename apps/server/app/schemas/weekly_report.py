@@ -95,6 +95,7 @@ class EditWeeklyReport(ReportModel):
 
 
 class WeeklyReportDocument(ReportModel):
+    ai_execution: dict | None = None
     report_id: Identifier
     revision: int = Field(ge=1)
     period: ReportPeriod

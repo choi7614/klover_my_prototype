@@ -131,7 +131,7 @@ def test_request_provider_scope_covers_both_parser_and_answer_and_is_reset(tmp_p
     from app.ai.selection import AISettingsStore, AIUpdate, Defaults, SelectedGeneration
 
     store = AISettingsStore(tmp_path / "ai", values={"OLLAMA_MODEL": "synthetic"})
-    store.update(AIUpdate(defaults=Defaults(), external_consent=True))
+    store.update(AIUpdate(mode="hybrid", defaults=Defaults(), external_consent=True))
     router = SelectedGeneration(store)
     seen = []
 

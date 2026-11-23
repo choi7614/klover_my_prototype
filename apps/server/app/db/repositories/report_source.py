@@ -27,7 +27,8 @@ class SQLReportMailRepository:
                     Mail.direction.in_(("received", "sent")),
                     Mail.received_at >= start_at,
                     Mail.received_at < end_before,
-                    Mail.received_at >= MailAccount.sync_started_at,
+                    (Mail.received_at >= MailAccount.sync_started_at)
+                    | Mail.history_imported.is_(True),
                 )
                 .order_by(Mail.received_at, Mail.mail_id)
             ).all()

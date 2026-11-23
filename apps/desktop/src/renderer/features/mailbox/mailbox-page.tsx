@@ -157,7 +157,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-selected text-selected-foreground" aria-hidden="true">{session.email.slice(0, 1).toUpperCase()}</span>
       </header>
       <div className="border-b bg-muted px-5 py-2 text-caption text-muted-foreground">
-        프로필과 AI 제공자는 설정에서 변경할 수 있습니다. <a href="#/settings/ai" className="underline">AI 설정</a> · 알림 설정은 준비 중입니다. <a className="ml-3 underline underline-offset-2 focus-visible:outline-ring" href="#/onboarding/1">첫 실행 설정 보기</a>
+        프로필과 AI 제공자는 설정에서 변경할 수 있습니다. <a href="#/settings/mail-history" className="underline">과거 메일 가져오기</a> · <a href="#/settings/ai" className="underline">AI 설정</a> · 알림 설정은 준비 중입니다. <a className="ml-3 underline underline-offset-2 focus-visible:outline-ring" href="#/onboarding/1">첫 실행 설정 보기</a>
       </div>
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-[220px] shrink-0 flex-col border-r bg-sidebar p-3" aria-label="메일함">

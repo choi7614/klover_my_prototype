@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { HistoryPage } from './features/mailbox/history-page';
 import { AISettingsPage } from './features/ai-settings/ai-settings-page';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { OnboardingStartPage } from './features/onboarding/onboarding-start-page';
@@ -58,6 +59,7 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
   return (
     <HashRouter>
       <Routes>
+        {session && <Route path="/settings/mail-history" element={<HistoryPage />} />}
         {session && <Route path="/settings/ai" element={<AISettingsPage />} />}
         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
         {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} analysis={analysis} />} />}

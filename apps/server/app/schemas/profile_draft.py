@@ -166,6 +166,7 @@ class ContextStatus(F2Model):
 
 
 class DraftState(F2Model):
+    ai_execution: dict | None = None
     draft_id: Identifier
     mail_id: Identifier
     directions: tuple[str, ...]
@@ -179,6 +180,7 @@ class DraftState(F2Model):
 
 
 class PreviewState(F2Model):
+    ai_execution: dict | None = None
     body: str
     evidence: tuple[Evidence, ...]
 

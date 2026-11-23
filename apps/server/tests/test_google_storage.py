@@ -7,7 +7,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from test_postgresql_storage import database as database
-from test_postgresql_storage import seed_account, store
+from test_postgresql_storage import seed_account
 
 from app.db.models import GoogleCredential, Mail, MailAccount, User
 from app.db.repositories.google_connection import GoogleConnectionRepository
@@ -89,7 +89,25 @@ def test_new_migration_preserves_existing_mail_data(database):
     engine, config = database
     command.downgrade(config, "0001")
     with Session(engine) as session, session.begin():
-        store(seed_account(session))
+        # 0001 구조에 자료를 넣은 뒤 최신 이력으로 올려 보존을 검사한다.
+        from sqlalchemy import MetaData, Table
+
+        seed_account(session)
+        old_mail = Table("mails", MetaData(), autoload_with=session.connection())
+        session.execute(
+            old_mail.insert().values(
+                mail_id="old",
+                user_id="user-a",
+                account_id="account-a",
+                source_message_id="old",
+                received_at=datetime(2026, 11, 18, tzinfo=UTC),
+                direction="received",
+                from_addr="synthetic@example.invalid",
+                subject="합성",
+                body_text="합성",
+                to=[],
+            )
+        )
     command.upgrade(config, "head")
     with Session(engine) as session:
         assert session.scalar(select(func.count()).select_from(Mail)) == 1

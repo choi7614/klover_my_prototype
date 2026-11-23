@@ -23,6 +23,7 @@ export type ReportProfile = {
 };
 export type ReportScope = { total: number; grouped: number; groups: number; excluded: number };
 export type WeeklyReportDocument = {
+  ai_execution?: unknown;
   report_id: string;
   revision: number;
   period: ReportPeriod;

@@ -86,7 +86,7 @@ class AnalysisRepository:
             .where(
                 Mail.user_id == self.user_id,
                 Mail.account_id == self.account_id,
-                Mail.received_at >= MailAccount.sync_started_at,
+                (Mail.received_at >= MailAccount.sync_started_at) | Mail.history_imported.is_(True),
             )
         )
 
@@ -107,7 +107,7 @@ class AnalysisRepository:
                     WHERE m.user_id=:user_id AND m.account_id=:account_id
                       AND m.direction='received' AND m.analysis_status='pending'
                       AND m.mailbox IN ('inbox','archive')
-                      AND m.received_at >= a.sync_started_at
+                      AND (m.received_at >= a.sync_started_at OR m.history_imported)
                       AND (:allow_gmail OR a.source='fixture')
                 """),
                 {
@@ -176,7 +176,7 @@ class AnalysisRepository:
                   AND a.user_id=m.user_id AND a.account_id=m.account_id
                 WHERE m.user_id=:user_id AND m.account_id=:account_id
                   AND m.direction='received' AND m.mailbox IN ('inbox','archive')
-                  AND m.received_at>=account.sync_started_at
+                  AND (m.received_at>=account.sync_started_at OR m.history_imported)
                   AND m.mail_id = ANY(:ids)
             """),
                 {"user_id": self.user_id, "account_id": self.account_id, "ids": ids},
@@ -435,7 +435,7 @@ class F1ReportMailRepository:
                 WHERE m.user_id=:user_id AND m.account_id=:account_id
                   AND m.direction IN ('received','sent')
                   AND m.received_at>=:start_at AND m.received_at<:end_before
-                  AND m.received_at>=account.sync_started_at
+                  AND (m.received_at>=account.sync_started_at OR m.history_imported)
                 ORDER BY m.received_at,m.mail_id
             """),
                 {
