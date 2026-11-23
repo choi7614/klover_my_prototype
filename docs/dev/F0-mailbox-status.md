@@ -2,12 +2,12 @@
 
 ## 현재 상태 — 2026-11-24 통합 작업
 
-- 작업: `integrate/local-ai-mail-history` · Codex · 기준 `origin/develop 5e2b7a7`(PR #38).
+- 작업: `integrate/local-ai-mail-history` · 작업 도구 없음(제출 완료) · 기준 `origin/develop 5e2b7a7`(PR #38).
 - 메일함에서 기간 선택 가져오기 화면으로 이동한다. 고정 IPC·서버 인증·중복/중단/재개를 연결했다. Electron 검사 기대값은 현재 IPC와 새로고침으로 수정했으나 네이티브 실행은 미검증이다.
 - 서버 590개(분리 PostgreSQL, skip 0), 앱 185개, 합성 Chromium 4개 통과. Ruff·lint·typecheck·빌드 결과는 [통합 검증 기록](verification-local-ai-history.md)을 따른다.
 - 실제 사용자 DB·Gmail·Ollama·유료 Claude·네이티브 Electron은 미실행이다.
-- 기존 기능 브랜치·키·메일·설정은 보존했다. 이번 변경은 **미커밋·미Push·PR 없음**, 묶음 승인 대기다. develop/main 병합은 각각 별도 승인이다.
-- 다음 할 일: 승인 후 PR 제출, develop 병합 별도 검토, [맥북 업데이트/실기 확인](local-ai-history-run.md). 이미 반영된 과거 공통 패치는 재적용하지 않는다.
+- 기존 기능 브랜치·키·메일·설정은 보존했다. 코드 `0a357b3`을 커밋·Push하고 [PR #39](https://github.com/choi7614/klover_my_prototype/pull/39)을 develop 대상으로 제출했다. 사용자 develop 병합 승인도 받았다. 최종 병합 이력은 PR 상태를 따른다. main은 별도 승인이다.
+- 다음 할 일: PR 자동 검사 확인 후 승인된 develop 병합, [맥북 업데이트/실기 확인](local-ai-history-run.md). 이미 반영된 과거 공통 패치는 재적용하지 않는다.
 
 <details>
 <summary>PR #38 당시 요약 — 이번 작업 전 기준</summary>

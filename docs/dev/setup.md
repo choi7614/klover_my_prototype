@@ -1,6 +1,6 @@
 # Klover 설치·실행 안내
 
-> 2026-11-24 · 기준 `develop 5e2b7a7`(PR #38) + 미커밋 통합 작업 `integrate/local-ai-mail-history`. 새 설치·평소 실행·업데이트의 단일 기준 문서.
+> 2026-11-24 · 기준 `develop 5e2b7a7`(PR #38) + 통합 PR #39 작업 `integrate/local-ai-mail-history`. 새 설치·평소 실행·업데이트의 단일 기준 문서.
 
 현재는 소스에서 실행하는 개발용 데모다. 앱(Electron)·서버(FastAPI)·PostgreSQL과 로컬 Ollama를
 같은 컴퓨터에서 사용한다. 클라우드 이전은 보류, 사내망 적용은 장기 목표다.

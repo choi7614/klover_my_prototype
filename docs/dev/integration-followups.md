@@ -2,7 +2,7 @@
 
 ## 2026-11-24 구현 갱신
 
-자동 미리보기·Electron 기대값·로컬 전용·로컬 재시도·과거 메일의 코드는 `integrate/local-ai-mail-history`에서 구현·자동 검사 완료, 커밋·Push·PR 생성 승인 대기다.
+자동 미리보기·Electron 기대값·로컬 전용·로컬 재시도·과거 메일의 코드는 `integrate/local-ai-mail-history`에서 구현·자동 검사 완료, 커밋·Push·PR #39 제출 완료다.
 아래는 개발 전 요청 기록이며 현재 사용 절차는 [통합 실행 안내](local-ai-history-run.md)를 따른다. 실제 외부 연결·OS 전체 실행은 별도 확인이다.
 
 

@@ -1,6 +1,6 @@
 # 개발 현황판
 
-> 갱신: 2026-11-24 · 코드 기준 `origin/develop 5e2b7a7`(PR #38), 작업 브랜치 변경은 미커밋 · 갱신 도구: Codex
+> 갱신: 2026-11-24 · 코드 기준 `origin/develop 5e2b7a7`(PR #38), 통합 코드 `0a357b3`·[PR #39](https://github.com/choi7614/klover_my_prototype/pull/39) 제출 완료 · 갱신 도구: Codex
 
 설치·실행의 기준은 [setup.md](setup.md). 개발 규칙은 [AGENTS.md](../../AGENTS.md).
 원격 `main 9575f47`은 실행 코드가 없고 `develop`에 실행 코드가 있다. PR #37은 병합 완료이며 승인 대기가 아니다.
@@ -17,7 +17,7 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 | F4 보고 | F1 입력·F2 프로필·0006 저장·API/앱·선택 AI·첫 주 생성 | Word·발송·예약 미구현, 실제 모델 품질·속도 미검증 | [status](F4-weekly-report-status.md) |
 | F5 제안 | 0005 제안/할 일·S04/할 일 화면·F1 변환/훅 연결 | 실제 Calendar·회신 실행·OS 알림·트레이·S10 미구현 | [status](F5-ai-scan-status.md) |
 
-## 이번 작업 브랜치 구현 (develop 미반영·승인 대기)
+## 통합 PR #39 구현 (develop 반영 이력은 PR 상태 참조)
 
 - **과거 메일 가져오기**: 사용자가 기간을 선택해 명시적으로 시작. 기존 계정·키·메일과 중복 방지를 보존하고 진행·중단·재시도 제공. 로컬 분석 후 검색·보고에 연결. 가져오기 자체로 Claude 자동 호출 금지. [계획](../product/features/planned-mail-history-import.md).
 - **Claude 실패 후 로컬 1회 자동 재시도**: 제공자 오류·시간 초과에 한 번 전환하고 결과 출처를 표시한다. 거절·취소·미동의·근거 오류는 전환하지 않는다.
@@ -41,8 +41,8 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 
 ## 통합 개발 진행
 
-- 브랜치 `integrate/local-ai-mail-history` · Codex · 기준 `5e2b7a7` · 구현·자동 검사 완료, 미커밋.
-- 로컬 정책·재시도·과거 메일·Electron 검사 보완. 커밋/Push/PR 생성 묶음 승인, develop/main 각각 별도 승인.
+- 브랜치 `integrate/local-ai-mail-history` · 작업 도구 없음(제출 완료) · 기준 `5e2b7a7` · 코드 `0a357b3` 커밋·Push·PR #39 제출 완료.
+- 로컬 정책·재시도·과거 메일·Electron 검사 보완. 커밋/Push/PR 생성과 문제없을 때 develop 병합을 사용자 승인받았다. [PR #39](https://github.com/choi7614/klover_my_prototype/pull/39)의 검사·병합 상태를 따른다. main은 별도 승인이다.
 - 사용자 실환경 검증을 완료로 가정하지 않는다.
 
 ## 마이그레이션 번호 예약
@@ -59,7 +59,7 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 | 0005 | AI 제안·할 일·알림 outbox | F5 | 적용(develop, #20), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0005_f5_suggestions.py` (부모 `0004_f2`) |
 | 0006 | 주간 보고 스냅샷 | F4 | 적용(develop, #23), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0006_weekly_reports.py` (revision `0006_f4`, 부모 `0005_f5`) |
 | 0007 | F1 분석·청크·분류 피드백 저장 | F1 | 적용(develop, #30), 운영 DB 적용 미확인 (pgvector 필요) | `apps/server/migrations/versions/0007_f1_analysis.py` (revision `0007_f1`, 부모 `0006_f4`) |
-| 0008 | 명시적 과거 메일 표시·가져오기 작업 | 공통 | 분리 테스트 DB 검증 완료·승인 대기 | 0008_history_import.py (부모 0007_f1) |
+| 0008 | 명시적 과거 메일 표시·가져오기 작업 | 공통 | 분리 테스트 DB 검증 완료·PR #39(사용자 병합 승인) | 0008_history_import.py (부모 0007_f1) |
 
 
 ## 검사 해석

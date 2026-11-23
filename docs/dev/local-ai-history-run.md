@@ -1,6 +1,6 @@
 # 로컬 AI 정책·과거 메일 가져오기 — 맥북 확인
 
-기준 develop `5e2b7a7` · 작업 `integrate/local-ai-mail-history` · 커밋/Push/PR 생성 전 사용자 승인 대기.
+기준 develop `5e2b7a7` · 작업 `integrate/local-ai-mail-history` · PR #39 제출·사용자 develop 병합 승인 완료. 최종 병합 상태는 PR 이력을 따른다.
 실제 Gmail·유료 Claude에는 개발 중 접근하지 않는다. 아래는 승인·병합 후 사용자 PC에서 진행하는 절차다.
 
 ## 기존 사용자 업데이트

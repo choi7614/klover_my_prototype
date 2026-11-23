@@ -218,6 +218,6 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 
 ## 이번 작업 브랜치의 통합 구현
 
-기간 선택 과거 메일 가져오기, Claude→로컬 1회 대체 재시도, 강제 로컬 전용 모드는 통합 작업 브랜치에서 구현·자동 검사했으며 develop 반영 승인 대기다.
+기간 선택 과거 메일 가져오기, Claude→로컬 1회 대체 재시도, 강제 로컬 전용 모드는 통합 작업 브랜치에서 구현·자동 검사했으며 develop 반영 PR #39(사용자 병합 승인 완료)다.
 `/profile/preview`는 서버에서 로컬을 강제한다. 수동 초안·수정의 Claude 선택은 별도이며
 로컬 전용 모드·외부 전송 동의 검사를 통과해야 한다. [setup.md](../dev/setup.md)·[통합 전달 사항](../dev/integration-followups.md)을 따른다.
