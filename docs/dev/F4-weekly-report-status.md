@@ -1,5 +1,15 @@
 # F4 주간 보고 — 현재 상태
 
+## 2026-11-25 앱 마무리 제출
+
+- 실제 최신 원격 develop `7668d94`, #22/#23/#37/#39/#40/#41 병합 확인. 이전 #39 병합 대기 안내는 과거 기록이다.
+- 기존 F4 커밋 `565929f`와 새 환경 원본 work `9575f47` 보존. 승인 후 `/workspace/f4-submit`의 `feat/F4-weekly-report`를 develop `7668d94`로 fast-forward하고 검토본을 적용.
+- 기존 기능 재사용, 화면 이동 후 편집본 복원·오류별 다음 행동·전체 대상 기간 표시를 보완.
+- 공통 파일은 미적용: `patches/F4/finish/06-navigation-draft-scope.patch`. 적용 전에는 운영 화면의 이동 후 복원과 설정 메뉴 연결이 미통합이다.
+- 실제 AI·Gmail·사용자 DB·macOS Electron 미실행. 합성/분리 DB 검사와 실기 확인을 구분한다.
+- 변경 파일·최종 검사·남은 승인과 맥북 절차: [인수인계](F4-app-finish-handoff.md).
+
+
 ## 현재 상태 — 2026-11-24 통합 작업
 
 - 작업: `integrate/local-ai-mail-history` · 작업 도구 없음(제출 완료) · 기준 `origin/develop 5e2b7a7`(PR #38).

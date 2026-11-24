@@ -1,5 +1,13 @@
 # 개발 현황판
 
+## F4 앱 사용 마무리 검토 (2026-11-25)
+
+- Codex · `feat/F4-weekly-report` · `/workspace/f4-submit` · 최신 develop `7668d94` 로컬 통합. 기존 `565929f` 이력 보존.
+- 화면 왕복 편집본 복원·오류 다음 행동·실제 기간 표시 보완. 공통 변경은 `patches/F4/finish/`에만 준비.
+- 사용자 묶음 승인에 따라 기존 F4 브랜치에 develop을 fast-forward로 로컬 통합. 제출 검사 후 커밋·Push·PR 생성 진행. develop/main 병합 금지.
+- 상세: [F4 인수인계와 맥북 절차](F4-app-finish-handoff.md).
+
+
 ## F1 요약 실패 진단·재요청 보완 진행 (2026-11-25)
 
 - `integrate/F1-summary-diagnostics` · 작업 도구 없음(검사 완료·제출) · 최신 원격 기준 `42b319b`(PR #40 병합 확인).

@@ -13,11 +13,11 @@ export type WeeklyReportTransport = (request: {
 const messages: Record<string, string> = {
   report_unavailable: '주간 보고 연결이 아직 준비되지 않았습니다.',
   session_unavailable: '연결된 메일 계정을 확인해 주세요.',
-  analysis_not_ready: '분석 대기·실패 메일을 먼저 확인해 주세요. 기존 내용은 보존됩니다.',
+  analysis_not_ready: '받은편지함에서 분석 완료를 기다리거나 실패 메일의 다시 분석을 눌러 주세요. 완료 후 보고서 열기를 다시 눌러 주세요. 기존 내용은 보존됩니다.',
   profile_missing: '주간 보고 프로필과 양식을 먼저 연결해 주세요.',
   profile_incomplete: '보고 대상을 입력해 주세요.',
-  ai_unavailable: '보고서 AI가 아직 연결되지 않았습니다.',
-  ai_failed: '보고서를 만들지 못했어요. 기존 내용은 보존됩니다.',
+  ai_unavailable: 'AI 설정에서 선택한 AI의 연결을 확인한 뒤 다시 시도해 주세요.',
+  ai_failed: '보고서를 만들지 못했어요. AI 설정과 연결을 확인하고 보고서 열기를 다시 눌러 주세요. 기존 내용은 보존됩니다.',
   invalid_report: '생성 결과의 섹션과 항목을 확인하지 못했습니다. 기존 내용은 보존됩니다.',
   invalid_evidence: '모든 항목에 대상 업무 메일 근거를 연결해 주세요.',
   report_conflict: '저장본이 변경되었습니다. 편집 내용을 보존했어요. 저장본을 확인해 주세요.',
@@ -68,7 +68,7 @@ export function draftIsValid(report: WeeklyReportDocument, sections: ReportSecti
 }
 
 export function reportText(report: WeeklyReportDocument, sections: ReportSection[]): string {
-  return [report.title, report.subtitle, `대상 기간: ${report.period.start} ~ ${report.period.end} · 조회 ${report.scope.total}건`, ...(report.partial_period ? ['일부 기간 자료: 사용 시작 이후 확보된 메일만 반영'] : []), `보고 대상: ${report.recipient}`, '',
+  return [report.title, report.subtitle, `대상 기간: ${report.period.start} ~ ${report.period.end} · 조회 ${report.scope.total}건`, ...(report.partial_period ? ['일부 기간 자료: 선택 기간에 확보된 메일만 반영'] : []), `보고 대상: ${report.recipient}`, '',
     ...sections.flatMap((section, index) => [
       `${index + 1}. ${section.name}`,
       ...section.items.map((item) => `${report.style === 'bullet' ? ' - ' : ''}${item.text}`), '',
