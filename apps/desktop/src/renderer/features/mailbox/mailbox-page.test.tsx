@@ -32,7 +32,7 @@ describe('받은편지함 화면 (합성 API 응답)', () => {
     expect(text.textContent).toBe(body().body_text);
     expect(text.querySelector('img,script,iframe')).toBeNull();
     expect(screen.queryByText('바로 사용')).not.toBeInTheDocument();
-    expect(screen.getByText(/프로필·알림 설정과 AI 기능은 아직 준비 중/)).toBeInTheDocument();
+    expect(screen.getByText(/프로필과 AI 제공자는 설정에서 변경/)).toBeInTheDocument();
     expect(bridge.detail).toHaveBeenCalledWith('mail-1');
   });
   it('커서로 다음 페이지를 읽고 중복을 제거하며 새로고침 후 빈 목록을 표시한다', async () => {

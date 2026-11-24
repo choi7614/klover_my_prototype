@@ -96,6 +96,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/mail-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listing */
+        get: operations["listing_mail_history_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_mail_history_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail-history/{job_id}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Action */
+        post: operations["action_mail_history__job_id___action__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/mails": {
         parameters: {
             query?: never;
@@ -108,6 +143,23 @@ export interface paths {
          * @description 받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.
          */
         get: operations["list_mails_mails_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mails/analysis/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 메일 목록용 분석 결과 묶음 조회 */
+        get: operations["analysis_batch_mails_analysis_batch_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -150,6 +202,40 @@ export interface paths {
         get: operations["read_mail_mails__mail_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mails/{mail_id}/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 메일 한 건의 분석 결과 */
+        get: operations["analysis_detail_mails__mail_id__analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mails/{mail_id}/analysis/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 분석 다시 시도 */
+        post: operations["retry_analysis_mails__mail_id__analysis_retry_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -329,6 +415,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read */
+        get: operations["read_settings_ai_get"];
+        /** Update */
+        put: operations["update_settings_ai_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/ai/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check */
+        post: operations["check_settings_ai_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/suggestion-events": {
         parameters: {
             query?: never;
@@ -487,6 +608,62 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AIState */
+        AIState: {
+            /** Claude Key Set */
+            claude_key_set: boolean;
+            /** Claude Model */
+            claude_model: string;
+            defaults: components["schemas"]["Defaults"];
+            /** External Consent */
+            external_consent: boolean;
+            /** Local Configured */
+            local_configured: boolean;
+            /**
+             * Mode
+             * @default local_only
+             * @enum {string}
+             */
+            mode: "local_only" | "hybrid";
+        };
+        /** AIUpdate */
+        AIUpdate: {
+            /** Api Key */
+            api_key?: string | null;
+            /** Claude Model */
+            claude_model?: string | null;
+            /**
+             * Clear Key
+             * @default false
+             */
+            clear_key: boolean;
+            defaults: components["schemas"]["Defaults"];
+            /** External Consent */
+            external_consent: boolean;
+            /**
+             * Mode
+             * @default local_only
+             * @enum {string}
+             */
+            mode: "local_only" | "hybrid";
+        };
+        /** ActionItem */
+        ActionItem: {
+            /** Due */
+            due: string | null;
+            /** Text */
+            text: string;
+        };
+        /** AnalysisRetryResult */
+        AnalysisRetryResult: {
+            /**
+             * Analysis Status
+             * @constant
+             */
+            analysis_status: "pending";
+            /** Mail Id */
+            mail_id: string;
+        };
         /** ApproveRequest */
         ApproveRequest: {
             /** Payload */
@@ -621,8 +798,31 @@ export interface components {
              */
             start: string;
         };
+        /** Defaults */
+        Defaults: {
+            /**
+             * Draft
+             * @default ollama
+             * @enum {string}
+             */
+            draft: "ollama" | "claude";
+            /**
+             * Search
+             * @default ollama
+             * @enum {string}
+             */
+            search: "ollama" | "claude";
+            /**
+             * Weekly Report
+             * @default ollama
+             * @enum {string}
+             */
+            weekly_report: "ollama" | "claude";
+        };
         /** DraftCreate */
         DraftCreate: {
+            /** Ai Provider */
+            ai_provider?: ("default" | "ollama" | "claude") | null;
             /** Direction */
             direction?: string | null;
             /** Mail Id */
@@ -635,6 +835,8 @@ export interface components {
              * @enum {string}
              */
             action: "shorter" | "politer" | "rewrite";
+            /** Ai Provider */
+            ai_provider?: ("default" | "ollama" | "claude") | null;
             /** Body */
             body: string;
             /** Direction */
@@ -651,6 +853,10 @@ export interface components {
         };
         /** DraftState */
         DraftState: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
             /** Body */
             body: string;
             context_status: components["schemas"]["ContextStatus"];
@@ -745,6 +951,8 @@ export interface components {
         };
         /** GenerateWeeklyReport */
         GenerateWeeklyReport: {
+            /** Ai Provider */
+            ai_provider?: ("default" | "ollama" | "claude") | null;
             /** End */
             end?: string | null;
             /** Expected Revision */
@@ -773,6 +981,49 @@ export interface components {
              */
             status: "ok";
         };
+        /** HistoryJobState */
+        HistoryJobState: {
+            /** Created At */
+            created_at: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Error */
+            error: string | null;
+            /** Job Id */
+            job_id: string;
+            /** Processed */
+            processed: number;
+            /** Saved */
+            saved: number;
+            /** Skipped */
+            skipped: number;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "paused" | "failed" | "completed";
+        };
+        /** ImportRange */
+        ImportRange: {
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+        };
         /** LocalSession */
         LocalSession: {
             /** Account Id */
@@ -786,6 +1037,114 @@ export interface components {
             sync_started_at: string;
             /** User Id */
             user_id: string;
+        };
+        /**
+         * MailAnalysisBatch
+         * @description 목록 표시용 묶음 조회 결과. auto_analysis는 지금 자동 분석이 돌 수 있는지 알려 준다.
+         *
+         *     ready=분석 가능, not_configured=AI 미설정, external_blocked=외부 AI라 실제 메일 분석 안 함,
+         *     not_connected=서버에 자동 분석이 아직 조립되지 않음.
+         */
+        MailAnalysisBatch: {
+            /**
+             * Auto Analysis
+             * @enum {string}
+             */
+            auto_analysis: "ready" | "not_configured" | "external_blocked" | "not_connected";
+            /** Items */
+            items: components["schemas"]["MailAnalysisView"][];
+        };
+        /** MailAnalysisDetail */
+        MailAnalysisDetail: {
+            /**
+             * Action Items
+             * @default []
+             */
+            action_items: components["schemas"]["ActionItem"][];
+            /** Ai Category */
+            ai_category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Analysis Status
+             * @enum {string}
+             */
+            analysis_status: "pending" | "done" | "failed";
+            /**
+             * Auto Analysis
+             * @enum {string}
+             */
+            auto_analysis: "ready" | "not_configured" | "external_blocked" | "not_connected";
+            /** Category */
+            category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Evidence Spans
+             * @default []
+             */
+            evidence_spans: components["schemas"]["MailEvidenceSpan"][];
+            /** Failure Code */
+            failure_code?: string | null;
+            /**
+             * Has Events
+             * @default false
+             */
+            has_events: boolean;
+            /** Mail Id */
+            mail_id: string;
+            /** Needs Reply */
+            needs_reply?: boolean | null;
+            /** Priority */
+            priority?: ("high" | "normal" | "low") | null;
+            /** Priority Reason */
+            priority_reason?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** User Label */
+            user_label?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+        };
+        /**
+         * MailAnalysisView
+         * @description 앱 받은편지함 표시용. 근거 메일은 mail_id로 연결한다. 원문·벡터·모델 정보는 넣지 않는다.
+         *
+         *     category는 화면에 보일 분류(user_label 우선). pending·failed이면 AI 결과 필드는 비어 있다.
+         */
+        MailAnalysisView: {
+            /**
+             * Action Items
+             * @default []
+             */
+            action_items: components["schemas"]["ActionItem"][];
+            /** Ai Category */
+            ai_category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Analysis Status
+             * @enum {string}
+             */
+            analysis_status: "pending" | "done" | "failed";
+            /** Category */
+            category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+            /**
+             * Evidence Spans
+             * @default []
+             */
+            evidence_spans: components["schemas"]["MailEvidenceSpan"][];
+            /** Failure Code */
+            failure_code?: string | null;
+            /**
+             * Has Events
+             * @default false
+             */
+            has_events: boolean;
+            /** Mail Id */
+            mail_id: string;
+            /** Needs Reply */
+            needs_reply?: boolean | null;
+            /** Priority */
+            priority?: ("high" | "normal" | "low") | null;
+            /** Priority Reason */
+            priority_reason?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** User Label */
+            user_label?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
         };
         /** MailDetail */
         MailDetail: {
@@ -835,6 +1194,21 @@ export interface components {
              * @default []
              */
             projects: string[];
+        };
+        /**
+         * MailEvidenceSpan
+         * @description 표시용 근거 위치(본문 인덱스 [start,end)). F5의 EvidenceSpan과 이름이 겹치지 않게 둔다.
+         */
+        MailEvidenceSpan: {
+            /** End */
+            end: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "action" | "due" | "event";
+            /** Start */
+            start: number;
         };
         /** MailPage */
         MailPage: {
@@ -895,14 +1269,42 @@ export interface components {
         };
         /** PreviewRequest */
         PreviewRequest: {
+            /** Ai Provider */
+            ai_provider?: ("default" | "ollama" | "claude") | null;
             profile: components["schemas"]["Profile"];
         };
         /** PreviewState */
         PreviewState: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
             /** Body */
             body: string;
             /** Evidence */
             evidence: components["schemas"]["Evidence"][];
+        };
+        /** Probe */
+        Probe: {
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "ollama" | "claude";
+        };
+        /** ProbeResult */
+        ProbeResult: {
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "ollama" | "claude";
+            /**
+             * Status
+             * @default reachable
+             * @constant
+             */
+            status: "reachable";
         };
         /** Profile */
         Profile: {
@@ -1206,6 +1608,8 @@ export interface components {
         };
         /** SearchRequest */
         SearchRequest: {
+            /** Ai Provider */
+            ai_provider?: ("default" | "ollama" | "claude") | null;
             overrides?: components["schemas"]["SearchOverrides"];
             /** Query */
             query: string;
@@ -1214,6 +1618,10 @@ export interface components {
         };
         /** SearchResponse */
         SearchResponse: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
             answer?: components["schemas"]["SearchAnswer"] | null;
             answer_error?: components["schemas"]["SearchFailure"] | null;
             parsed: components["schemas"]["ParsedQuery"];
@@ -1455,6 +1863,12 @@ export interface components {
         };
         /** WeeklyReportDocument */
         WeeklyReportDocument: {
+            /** Ai Execution */
+            ai_execution?: {
+                [key: string]: unknown;
+            } | null;
+            /** Collection Started At */
+            collection_started_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1467,6 +1881,11 @@ export interface components {
              * @enum {string}
              */
             generation: "test_double" | "ai" | "none";
+            /**
+             * Partial Period
+             * @default false
+             */
+            partial_period: boolean;
             period: components["schemas"]["ReportPeriod"];
             /** Recipient */
             recipient: string;
@@ -1680,7 +2099,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1783,7 +2202,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1890,7 +2309,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1997,7 +2416,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2082,6 +2501,127 @@ export interface operations {
             };
         };
     };
+    listing_mail_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryJobState"][];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_mail_history_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryJobState"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    action_mail_history__job_id___action__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+                action: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryJobState"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     list_mails_mails_get: {
         parameters: {
             query?: {
@@ -2124,6 +2664,73 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    analysis_batch_mails_analysis_batch_get: {
+        parameters: {
+            query: {
+                ids: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailAnalysisBatch"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2319,6 +2926,167 @@ export interface operations {
             };
         };
     };
+    analysis_detail_mails__mail_id__analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mail_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailAnalysisDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    retry_analysis_mails__mail_id__analysis_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mail_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisRetryResult"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 이미 분석 완료 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AI 미연결 */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     update_category_mails__mail_id__category_patch: {
         parameters: {
             query?: never;
@@ -2453,7 +3221,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2558,7 +3326,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2663,7 +3431,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2764,7 +3532,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2865,7 +3633,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2970,7 +3738,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3062,7 +3830,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3156,7 +3924,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3254,7 +4022,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3348,7 +4116,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3435,7 +4203,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3509,7 +4277,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3529,6 +4297,128 @@ export interface operations {
             };
             /** @description Service Unavailable */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    read_settings_ai_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIState"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_settings_ai_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIState"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    check_settings_ai_check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Probe"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProbeResult"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3594,7 +4484,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3686,7 +4576,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3784,7 +4674,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3878,7 +4768,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3976,7 +4866,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4074,7 +4964,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4172,7 +5062,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4268,7 +5158,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4364,7 +5254,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4462,7 +5352,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Unprocessable Content */
+            /** @description Unprocessable Entity */
             422: {
                 headers: {
                     [name: string]: unknown;

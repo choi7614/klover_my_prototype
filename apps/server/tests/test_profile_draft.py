@@ -452,3 +452,105 @@ def test_private_storage_failure_does_not_expose_exception():
         response = client.get("/profile", headers=HEADERS)
         assert response.status_code == 503
         assert response.headers["cache-control"] == "no-store"
+
+
+def test_create_and_revision_honor_request_ai_provider_and_preserve_profile(repository, tmp_path):
+    from app.ai.selection import AISettingsStore, AIUpdate, Defaults, SelectedGeneration
+
+    store = AISettingsStore(tmp_path / "ai", values={"OLLAMA_MODEL": "synthetic"})
+    store.update(AIUpdate(mode="hybrid", defaults=Defaults(), external_consent=True))
+    router = SelectedGeneration(store)
+    seen = []
+
+    class AI(SyntheticAI):
+        async def generate(self, request):
+            seen.append(router.provider_for("draft"))
+            return await super().generate(request)
+
+    application_with_ai = application(repository, ai=AI())
+    application_with_ai.state.ai_settings = store
+    with TestClient(
+        application_with_ai, base_url="http://127.0.0.1:8000", client=("127.0.0.1", 12345)
+    ) as client:
+        assert save_profile(client).status_code == 200
+        original = client.post(
+            "/drafts", json={"mail_id": "original", "ai_provider": "claude"}, headers=HEADERS
+        ).json()
+        revised = client.post(
+            f"/drafts/{original['draft_id']}/revise",
+            json={
+                "action": "shorter",
+                "body": original["body"],
+                "expected_version": original["version"],
+                "ai_provider": "ollama",
+            },
+            headers=HEADERS,
+        )
+        assert revised.status_code == 200
+        assert seen == ["claude", "ollama"]
+        assert client.get("/profile", headers=HEADERS).json()["profile"] == PROFILE.model_dump(
+            mode="json"
+        )
+
+
+def test_automatic_preview_forces_local_even_with_explicit_claude_request(repository, tmp_path):
+    from app.ai.selection import AISettingsStore, AIUpdate, Defaults, SelectedGeneration
+
+    store = AISettingsStore(tmp_path / "ai", values={"OLLAMA_MODEL": "synthetic"})
+    store.update(AIUpdate(mode="hybrid", defaults=Defaults(draft="claude"), external_consent=True))
+    router = SelectedGeneration(store)
+    seen = []
+
+    class AI(SyntheticAI):
+        async def generate(self, request):
+            seen.append(router.provider_for("draft"))
+            return await super().generate(request)
+
+    app = application(repository, ai=AI())
+    app.state.ai_settings = store
+    with TestClient(app, base_url="http://127.0.0.1:8000", client=("127.0.0.1", 12345)) as http:
+        response = http.post(
+            "/profile/preview",
+            json={"profile": PROFILE.model_dump(mode="json"), "ai_provider": "claude"},
+            headers=HEADERS,
+        )
+        assert response.status_code == 200
+        assert seen == ["ollama"]
+
+
+@pytest.mark.parametrize("operation", ["create", "revise"])
+def test_shared_output_diagnostic_reaches_http_without_changing_saved_data(
+    repository, caplog, operation
+):
+    from test_f2_shared_adapter import SharedSyntheticGeneration
+
+    from app.ai.f2_shared_adapter import SharedDraftAI
+
+    with client_for(repository, ai=SyntheticAI()) as client:
+        save_profile(client)
+        draft = create_draft(client)
+        path = "/drafts/" + draft["draft_id"]
+        edited = client.patch(
+            path, headers=HEADERS, json={"body": "보존할 사용자 편집본", "expected_version": 1}
+        ).json()
+        profile = client.get("/profile", headers=HEADERS).json()
+        generator = SharedSyntheticGeneration("private-model-response-canary not JSON")
+        client.app.state.profile_draft.ai = SharedDraftAI(generator, allow_test_provider=True)
+        failed = (
+            client.post("/drafts", headers=HEADERS, json={"mail_id": "original"})
+            if operation == "create"
+            else client.post(
+                path + "/revise",
+                headers=HEADERS,
+                json={"body": edited["body"], "expected_version": 2, "action": "rewrite"},
+            )
+        )
+        assert failed.status_code == 502
+        assert failed.json()["error"]["code"] == "invalid_ai_output"
+        assert "응답 JSON 형식" in failed.json()["error"]["message"]
+        assert "reason=json_invalid" in caplog.text
+        assert "private-" not in failed.text + caplog.text
+        assert client.get(path, headers=HEADERS).json() == edited
+        assert client.get("/profile", headers=HEADERS).json() == profile
+        with Session(repository.engine) as session:
+            assert len(list(session.scalars(select(DraftRecord)))) == 1

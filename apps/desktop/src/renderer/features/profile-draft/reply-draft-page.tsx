@@ -1,3 +1,6 @@
+import { AIExecutionNotice } from '../ai-settings/ai-execution';
+import { AIChoiceControl } from '../ai-settings/ai-choice';
+import type { AIChoice } from '../../../shared/ai-bridge';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from './controls';
@@ -7,6 +10,7 @@ import { problemText, type Draft, type DraftAction, type Evidence, type F2Client
 
 export interface ReplyDraftPageProps {
   client: F2Client;
+  autoGenerate?: boolean;
   mailId: string;
   draftId?: string;
   onExit(): void;
@@ -19,7 +23,8 @@ const PROFILE_LABELS: Record<string, string> = {
   'profile.greeting': '첫 인사', 'profile.closing': '마무리', 'profile.signature': '서명', 'profile.phrase': '학습 표현',
 };
 
-export function ReplyDraftPage({ client, mailId, draftId, onExit, onOpenMail, onManualReply, confirm = window.confirm.bind(window) }: ReplyDraftPageProps) {
+export function ReplyDraftPage({ client, mailId, draftId, autoGenerate = true, onExit, onOpenMail, onManualReply, confirm = window.confirm.bind(window) }: ReplyDraftPageProps) {
+  const [provider, setProvider] = useState<AIChoice>('default');
   const [original, setOriginal] = useState<MailDetail | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -45,6 +50,10 @@ export function ReplyDraftPage({ client, mailId, draftId, onExit, onOpenMail, on
     setBusy(true); setError(''); setNotice(''); setOriginal(null); setProfile(null); setEvidence([]); setManual(false); setDraft(null); setBody(''); bodyRef.current = ''; edits.current = 0;
     client.mail(mailId).then(mail => { if (active) setOriginal(mail); }).catch(error => { if (active) setError(problemText(error)); });
     client.profile().then(state => { if (active) setProfile(state.profile); }).catch(() => { /* 초안 API가 프로필 준비 부족을 설명한다. */ });
+    if (!draftId && !autoGenerate) {
+      setBusy(false);
+      return () => { active = false; mounted.current = false; lifecycle.current++; };
+    }
     const revision = edits.current;
     // StrictMode의 effect 재실행이 같은 초안을 두 번 생성하지 않게 한다.
     const previous = initialRequest.current;
@@ -59,7 +68,7 @@ export function ReplyDraftPage({ client, mailId, draftId, onExit, onOpenMail, on
       if (edits.current === revision) { setBody(result.body); bodyRef.current = result.body; setEvidence(result.evidence); }
     }).catch(error => { if (active) setError(problemText(error)); }).finally(() => { if (active) setBusy(false); });
     return () => { active = false; mounted.current = false; lifecycle.current++; };
-  }, [client, mailId, draftId]);
+  }, [client, mailId, draftId, autoGenerate]);
 
   useEffect(() => {
     if (!dirty && !(!draft && body)) return;
@@ -91,8 +100,8 @@ export function ReplyDraftPage({ client, mailId, draftId, onExit, onOpenMail, on
     setBusy(true); setError(''); setNotice('');
     try {
       const result = draft
-        ? await client.reviseDraft(draft.draft_id, { action, body: bodyRef.current, expected_version: draft.version, direction })
-        : await client.createDraft({ mail_id: mailId, direction });
+        ? await client.reviseDraft(draft.draft_id, { action, body: bodyRef.current, expected_version: draft.version, direction, ai_provider: provider })
+        : await client.createDraft({ mail_id: mailId, direction, ai_provider: provider });
       if (mounted.current && lifecycle.current === epoch) accept(result, revision);
     } catch (error) { if (mounted.current && lifecycle.current === epoch) setError(problemText(error)); }
     finally { if (mounted.current && lifecycle.current === epoch) setBusy(false); }
@@ -138,13 +147,16 @@ export function ReplyDraftPage({ client, mailId, draftId, onExit, onOpenMail, on
       <div className="flex min-h-11 items-center gap-4 border-b px-6 text-body"><span className="w-16 text-caption text-muted-foreground">받는 사람</span>{original?.from_name || original?.from_addr || '확인 중'}</div>
       <div className="flex min-h-11 items-center gap-4 border-b px-6 text-body"><span className="w-16 text-caption text-muted-foreground">제목</span>{original ? `RE: ${original.subject}` : '확인 중'}</div>
       <div className="flex min-h-16 flex-wrap items-center gap-2 border-b px-6 py-3" aria-label="답장 방향">
+        <AIChoiceControl purpose="draft" value={provider} onChange={setProvider} disabled={busy} />
+        {!draft && <Button disabled={busy} onClick={() => void generate()}>초안 만들기</Button>}
         <h2 className="mr-1 text-body font-semibold text-ai-text">◆ 답장 방향</h2>
         {draft?.directions.map(direction => <button type="button" key={direction} aria-pressed={direction === draft.selected_direction} disabled={busy} onClick={() => void generate('rewrite', direction)} className={`min-h-8 rounded-full border border-ai-border px-3 text-caption focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 ${direction === draft.selected_direction ? 'bg-ai text-ai-foreground' : 'bg-ai-subtle text-ai-text'}`}>{direction}</button>)}
         {profile && <span className="ml-auto text-caption text-muted-foreground">격식 {profile.formality} · 길이 {{ short: '짧게', normal: '보통', long: '자세히' }[profile.reply_length]}</span>}
       </div>
+      <AIExecutionNotice value={draft?.ai_execution} />
       {error && <div role="alert" className="flex flex-wrap items-center gap-3 border-b bg-warning-subtle px-6 py-3 text-caption"><p className="flex-1">{error}</p><Button variant="secondary" disabled={busy} onClick={() => void generate()}>다시 시도</Button><Button variant="secondary" disabled={busy} onClick={() => { setManual(true); onManualReply?.(mailId, bodyRef.current); }}>직접 쓰기</Button></div>}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {busy && !body && !manual ? <div className="p-6"><p className="mb-4 text-body text-ai-text">◆ 답장 초안을 만들고 있어요…</p><Skeleton label="초안 생성 중" /></div>
+        {busy && !body && !manual ? <div className="p-6"><p className="mb-4 text-body text-ai-text">◆ 답장 초안을 만들고 있어요…</p><p className="mb-4 text-caption text-muted-foreground">로컬 AI는 시간이 걸릴 수 있어요. 최대 2분 동안 기다립니다.</p><Skeleton label="초안 생성 중" /></div>
           : <div className="relative min-h-56 flex-1">
             <div ref={mirror} aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-6 py-5 text-[15px] leading-[26px]"><EvidenceBody body={body} evidence={evidence} />{'\n'}</div>
             <textarea aria-label="답장 본문" maxLength={25000} spellCheck={false} value={body} onChange={e => edit(e.target.value)} onScroll={e => { if (mirror.current) mirror.current.scrollTop = e.currentTarget.scrollTop; }} className="relative h-full min-h-56 w-full resize-none whitespace-pre-wrap break-words bg-transparent px-6 py-5 text-[15px] leading-[26px] text-transparent caret-foreground selection:bg-ai-highlight selection:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" />

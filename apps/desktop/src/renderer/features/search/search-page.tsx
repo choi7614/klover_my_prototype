@@ -1,3 +1,6 @@
+import { AIExecutionNotice } from '../ai-settings/ai-execution';
+import { AIChoiceControl } from '../ai-settings/ai-choice';
+import type { AIChoice } from '../../../shared/ai-bridge';
 import { useEffect, useRef, useState, type ComponentProps, type FormEvent } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button as BaseButton } from '@/components/ui/button';
@@ -67,7 +70,8 @@ function ResultCard({ row, highlighted, navigation }: {
 }
 
 function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '', autoSearch = false }: Props) {
-  const { state, recent, recentError, search, reSearch, retry, openRecent } = useSearch(client, identityKey);
+  const [provider, setProvider] = useState<AIChoice>('default');
+  const { state, recent, recentError, search, reSearch, retry, openRecent } = useSearch(client, identityKey, provider);
   const [query, setQuery] = useState(initialQuery);
   const [sort, setSort] = useState('relevance');
   const [start, setStart] = useState('');
@@ -156,7 +160,8 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
 
   return <section className="f3-search-page" aria-label="자연어 검색">
     <header className="f3-search-header">
-      <h1>자연어 검색</h1>
+      <h1>자연어 검색</h1>      <AIExecutionNotice value={state.answer?.ai_execution} />
+      <AIChoiceControl purpose="search" value={provider} onChange={setProvider} disabled={['parsing', 'searching', 'answering'].includes(state.phase)} />
       <form onSubmit={submit} className="f3-query-form">
         <span className="f3-ai" aria-hidden="true">◆</span>
         <label className="sr-only" htmlFor="f3-query">검색 질문</label>

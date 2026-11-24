@@ -1,6 +1,153 @@
 {
   "components": {
     "schemas": {
+      "AIState": {
+        "properties": {
+          "claude_key_set": {
+            "title": "Claude Key Set",
+            "type": "boolean"
+          },
+          "claude_model": {
+            "title": "Claude Model",
+            "type": "string"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/Defaults"
+          },
+          "external_consent": {
+            "title": "External Consent",
+            "type": "boolean"
+          },
+          "local_configured": {
+            "title": "Local Configured",
+            "type": "boolean"
+          },
+          "mode": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "hybrid"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "defaults",
+          "external_consent",
+          "claude_key_set",
+          "local_configured",
+          "claude_model"
+        ],
+        "title": "AIState",
+        "type": "object"
+      },
+      "AIUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "format": "password",
+                "maxLength": 512,
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "claude_model": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9._:/-]{1,200}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claude Model"
+          },
+          "clear_key": {
+            "default": false,
+            "title": "Clear Key",
+            "type": "boolean"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/Defaults"
+          },
+          "external_consent": {
+            "title": "External Consent",
+            "type": "boolean"
+          },
+          "mode": {
+            "default": "local_only",
+            "enum": [
+              "local_only",
+              "hybrid"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "defaults",
+          "external_consent"
+        ],
+        "title": "AIUpdate",
+        "type": "object"
+      },
+      "ActionItem": {
+        "additionalProperties": false,
+        "properties": {
+          "due": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due"
+          },
+          "text": {
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "due"
+        ],
+        "title": "ActionItem",
+        "type": "object"
+      },
+      "AnalysisRetryResult": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_status": {
+            "const": "pending",
+            "title": "Analysis Status",
+            "type": "string"
+          },
+          "mail_id": {
+            "title": "Mail Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mail_id",
+          "analysis_status"
+        ],
+        "title": "AnalysisRetryResult",
+        "type": "object"
+      },
       "ApproveRequest": {
         "additionalProperties": false,
         "properties": {
@@ -317,9 +464,59 @@
         "title": "DateRange",
         "type": "object"
       },
+      "Defaults": {
+        "additionalProperties": false,
+        "properties": {
+          "draft": {
+            "default": "ollama",
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Draft",
+            "type": "string"
+          },
+          "search": {
+            "default": "ollama",
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Search",
+            "type": "string"
+          },
+          "weekly_report": {
+            "default": "ollama",
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Weekly Report",
+            "type": "string"
+          }
+        },
+        "title": "Defaults",
+        "type": "object"
+      },
       "DraftCreate": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "direction": {
             "anyOf": [
               {
@@ -356,6 +553,22 @@
             ],
             "title": "Action",
             "type": "string"
+          },
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
           },
           "body": {
             "maxLength": 25000,
@@ -413,6 +626,18 @@
       "DraftState": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
           "body": {
             "title": "Body",
             "type": "string"
@@ -705,6 +930,22 @@
       "GenerateWeeklyReport": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "end": {
             "anyOf": [
               {
@@ -787,6 +1028,95 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HistoryJobState": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "processed": {
+            "title": "Processed",
+            "type": "integer"
+          },
+          "saved": {
+            "title": "Saved",
+            "type": "integer"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "paused",
+              "failed",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "start",
+          "end",
+          "status",
+          "saved",
+          "skipped",
+          "processed",
+          "error",
+          "created_at"
+        ],
+        "title": "HistoryJobState",
+        "type": "object"
+      },
+      "ImportRange": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "ImportRange",
+        "type": "object"
+      },
       "LocalSession": {
         "properties": {
           "account_id": {
@@ -814,6 +1144,377 @@
           "sync_started_at"
         ],
         "title": "LocalSession",
+        "type": "object"
+      },
+      "MailAnalysisBatch": {
+        "additionalProperties": false,
+        "description": "목록 표시용 묶음 조회 결과. auto_analysis는 지금 자동 분석이 돌 수 있는지 알려 준다.\n\nready=분석 가능, not_configured=AI 미설정, external_blocked=외부 AI라 실제 메일 분석 안 함,\nnot_connected=서버에 자동 분석이 아직 조립되지 않음.",
+        "properties": {
+          "auto_analysis": {
+            "enum": [
+              "ready",
+              "not_configured",
+              "external_blocked",
+              "not_connected"
+            ],
+            "title": "Auto Analysis",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MailAnalysisView"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "auto_analysis"
+        ],
+        "title": "MailAnalysisBatch",
+        "type": "object"
+      },
+      "MailAnalysisDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "action_items": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ActionItem"
+            },
+            "title": "Action Items",
+            "type": "array"
+          },
+          "ai_category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "work_request",
+                  "meeting",
+                  "approval",
+                  "report_share",
+                  "notice",
+                  "external",
+                  "newsletter"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Category"
+          },
+          "analysis_status": {
+            "enum": [
+              "pending",
+              "done",
+              "failed"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
+          "auto_analysis": {
+            "enum": [
+              "ready",
+              "not_configured",
+              "external_blocked",
+              "not_connected"
+            ],
+            "title": "Auto Analysis",
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "work_request",
+                  "meeting",
+                  "approval",
+                  "report_share",
+                  "notice",
+                  "external",
+                  "newsletter"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "evidence_spans": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MailEvidenceSpan"
+            },
+            "title": "Evidence Spans",
+            "type": "array"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Code"
+          },
+          "has_events": {
+            "default": false,
+            "title": "Has Events",
+            "type": "boolean"
+          },
+          "mail_id": {
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "needs_reply": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs Reply"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "high",
+                  "normal",
+                  "low"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "priority_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority Reason"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "user_label": {
+            "anyOf": [
+              {
+                "enum": [
+                  "work_request",
+                  "meeting",
+                  "approval",
+                  "report_share",
+                  "notice",
+                  "external",
+                  "newsletter"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Label"
+          }
+        },
+        "required": [
+          "mail_id",
+          "analysis_status",
+          "auto_analysis"
+        ],
+        "title": "MailAnalysisDetail",
+        "type": "object"
+      },
+      "MailAnalysisView": {
+        "additionalProperties": false,
+        "description": "앱 받은편지함 표시용. 근거 메일은 mail_id로 연결한다. 원문·벡터·모델 정보는 넣지 않는다.\n\ncategory는 화면에 보일 분류(user_label 우선). pending·failed이면 AI 결과 필드는 비어 있다.",
+        "properties": {
+          "action_items": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ActionItem"
+            },
+            "title": "Action Items",
+            "type": "array"
+          },
+          "ai_category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "work_request",
+                  "meeting",
+                  "approval",
+                  "report_share",
+                  "notice",
+                  "external",
+                  "newsletter"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Category"
+          },
+          "analysis_status": {
+            "enum": [
+              "pending",
+              "done",
+              "failed"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "work_request",
+                  "meeting",
+                  "approval",
+                  "report_share",
+                  "notice",
+                  "external",
+                  "newsletter"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "evidence_spans": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MailEvidenceSpan"
+            },
+            "title": "Evidence Spans",
+            "type": "array"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Code"
+          },
+          "has_events": {
+            "default": false,
+            "title": "Has Events",
+            "type": "boolean"
+          },
+          "mail_id": {
+            "title": "Mail Id",
+            "type": "string"
+          },
+          "needs_reply": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs Reply"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "high",
+                  "normal",
+                  "low"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "priority_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority Reason"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "user_label": {
+            "anyOf": [
+              {
+                "enum": [
+                  "work_request",
+                  "meeting",
+                  "approval",
+                  "report_share",
+                  "notice",
+                  "external",
+                  "newsletter"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Label"
+          }
+        },
+        "required": [
+          "mail_id",
+          "analysis_status"
+        ],
+        "title": "MailAnalysisView",
         "type": "object"
       },
       "MailDetail": {
@@ -920,6 +1621,36 @@
           }
         },
         "title": "MailEntities",
+        "type": "object"
+      },
+      "MailEvidenceSpan": {
+        "additionalProperties": false,
+        "description": "표시용 근거 위치(본문 인덱스 [start,end)). F5의 EvidenceSpan과 이름이 겹치지 않게 둔다.",
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "action",
+              "due",
+              "event"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "start",
+          "end"
+        ],
+        "title": "MailEvidenceSpan",
         "type": "object"
       },
       "MailPage": {
@@ -1074,6 +1805,22 @@
       "PreviewRequest": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "profile": {
             "$ref": "#/components/schemas/Profile"
           }
@@ -1087,6 +1834,18 @@
       "PreviewState": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
           "body": {
             "title": "Body",
             "type": "string"
@@ -1104,6 +1863,47 @@
           "evidence"
         ],
         "title": "PreviewState",
+        "type": "object"
+      },
+      "Probe": {
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "title": "Probe",
+        "type": "object"
+      },
+      "ProbeResult": {
+        "properties": {
+          "provider": {
+            "enum": [
+              "ollama",
+              "claude"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "status": {
+            "const": "reachable",
+            "default": "reachable",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "title": "ProbeResult",
         "type": "object"
       },
       "Profile": {
@@ -1901,6 +2701,22 @@
       "SearchRequest": {
         "additionalProperties": false,
         "properties": {
+          "ai_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "default",
+                  "ollama",
+                  "claude"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Provider"
+          },
           "overrides": {
             "$ref": "#/components/schemas/SearchOverrides"
           },
@@ -1932,6 +2748,18 @@
       "SearchResponse": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
           "answer": {
             "anyOf": [
               {
@@ -2659,6 +3487,30 @@
       "WeeklyReportDocument": {
         "additionalProperties": false,
         "properties": {
+          "ai_execution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Execution"
+          },
+          "collection_started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Started At"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -2679,6 +3531,11 @@
             ],
             "title": "Generation",
             "type": "string"
+          },
+          "partial_period": {
+            "default": false,
+            "title": "Partial Period",
+            "type": "boolean"
           },
           "period": {
             "$ref": "#/components/schemas/ReportPeriod"
@@ -3017,7 +3874,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3145,7 +4002,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3281,7 +4138,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3419,7 +4276,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -3512,6 +4369,176 @@
         "summary": "서버 실행 상태 확인",
         "tags": [
           "공통"
+        ]
+      }
+    },
+    "/mail-history": {
+      "get": {
+        "operationId": "listing_mail_history_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryJobState"
+                  },
+                  "title": "Response Listing Mail History Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Listing",
+        "tags": [
+          "과거 메일 가져오기"
+        ]
+      },
+      "post": {
+        "operationId": "create_mail_history_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryJobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "과거 메일 가져오기"
+        ]
+      }
+    },
+    "/mail-history/{job_id}/{action}": {
+      "post": {
+        "operationId": "action_mail_history__job_id___action__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "title": "Action",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryJobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Action",
+        "tags": [
+          "과거 메일 가져오기"
         ]
       }
     },
@@ -3641,6 +4668,98 @@
         "summary": "List Mails",
         "tags": [
           "메일 조회"
+        ]
+      }
+    },
+    "/mails/analysis/batch": {
+      "get": {
+        "operationId": "analysis_batch_mails_analysis_batch_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ids",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "minItems": 1,
+              "title": "Ids",
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailAnalysisBatch"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "메일 목록용 분석 결과 묶음 조회",
+        "tags": [
+          "F1 분류 수정"
         ]
       }
     },
@@ -3842,6 +4961,216 @@
         ]
       }
     },
+    "/mails/{mail_id}/analysis": {
+      "get": {
+        "operationId": "analysis_detail_mails__mail_id__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mail_id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "title": "Mail Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailAnalysisDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "메일 한 건의 분석 결과",
+        "tags": [
+          "F1 분류 수정"
+        ]
+      }
+    },
+    "/mails/{mail_id}/analysis/retry": {
+      "post": {
+        "operationId": "retry_analysis_mails__mail_id__analysis_retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mail_id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "title": "Mail Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisRetryResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "이미 분석 완료"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "AI 미연결"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "분석 다시 시도",
+        "tags": [
+          "F1 분류 수정"
+        ]
+      }
+    },
     "/mails/{mail_id}/category": {
       "patch": {
         "operationId": "update_category_mails__mail_id__category_patch",
@@ -4014,7 +5343,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4138,7 +5467,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4264,7 +5593,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4380,7 +5709,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4494,7 +5823,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4620,7 +5949,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4726,7 +6055,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4846,7 +6175,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -4974,7 +6303,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5098,7 +6427,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5204,7 +6533,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5294,7 +6623,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5325,6 +6654,162 @@
         "summary": "Recent",
         "tags": [
           "F3 검색"
+        ]
+      }
+    },
+    "/settings/ai": {
+      "get": {
+        "operationId": "read_settings_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Read",
+        "tags": [
+          "AI 설정"
+        ]
+      },
+      "put": {
+        "operationId": "update_settings_ai_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Update",
+        "tags": [
+          "AI 설정"
+        ]
+      }
+    },
+    "/settings/ai/check": {
+      "post": {
+        "operationId": "check_settings_ai_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Probe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Check",
+        "tags": [
+          "AI 설정"
         ]
       }
     },
@@ -5404,7 +6889,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5514,7 +6999,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5706,7 +7191,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5823,7 +7308,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -5950,7 +7435,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6077,7 +7562,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6204,7 +7689,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6361,7 +7846,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6475,7 +7960,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {
@@ -6602,7 +8087,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "500": {
             "content": {

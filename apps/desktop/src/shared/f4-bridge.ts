@@ -28,7 +28,7 @@ export function f4Arguments(operation: F4Operation, args: unknown[]): { id?: str
   if (operation === 'get' || operation === 'excluded') return args.length === 1 && validId(args[0]) ? { id: args[0] } : null;
   if (operation === 'generate') {
     if (args.length !== 1 || !validBody(args[0])) return null;
-    const allowed = new Set(['start', 'end', 'template', 'recipient', 'regenerate', 'expected_revision']);
+    const allowed = new Set(['start', 'end', 'template', 'recipient', 'regenerate', 'expected_revision', 'ai_provider']);
     return Object.keys(args[0]).every(key => allowed.has(key)) ? { body: args[0] } : null;
   }
   if (args.length !== 3 || !validId(args[0]) || !Number.isSafeInteger(args[1]) || (args[1] as number) < 1 || !Array.isArray(args[2])) return null;

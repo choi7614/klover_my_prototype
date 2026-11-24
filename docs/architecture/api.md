@@ -1,16 +1,14 @@
 # API 목록
 
-> 최종 수정: 2026-11-19 | 상세 스펙은 서버 실행 후 `http://localhost:8000/docs` (FastAPI 자동 OpenAPI)
+## AI 정책·과거 수신 API (2026-11-24)
 
-이 문서는 **요약 목록**이다. 엔드포인트를 추가·변경하면 여기에 한 줄 반영하고, `packages/api-types`의 타입을 다시 생성한다.
-
-> 구현 상태 (2026-11-19): `/health`와 로컬 운영자용 인증·받은 메일 조회 API를 구현했다.
-> 나머지 업무 API·WebSocket은 설계 목록이다. F4는 내부 메일 조회 서비스·저장소 계약·
-> fixture CLI를 유지하며 보고서 HTTP API를 제공하지 않는다.
-> [서버 실행 안내](../../apps/server/README.md)와 [F4 구현 계획](../dev/F4-weekly-report-plan.md)을 따른다.
->
-> F3의 `/search`, `/search/recent` 경로와 공유 타입은 등록했다. 실제 AI·벡터 제공자와
-> F0 화면 연결은 아직 없으며, 새 자연어 검색은 해석 미연결 503으로 알린다.
+AI 설정에 mode(local_only/hybrid)를 추가한다. 새 설정은 local_only, 기존 모드 없는 저장본은 hybrid로 보존한다.
+생성 결과에 ai_execution(calls/used, fallback, reason)을 붙인다. 검색 스트림은 answer/answer_error에 포함한다.
+자동 preview는 로컬 고정. Claude 연결 검사는 전환하지 않는다.
+`GET /mail-history`는 최근 20개 작업, `POST /mail-history {start,end}`는 명시적 시작,
+`POST /mail-history/{job_id}/{action}`은 pause/resume이다. 기존 loopback/Bearer/Origin 경계를 재사용한다.
+진행 응답에서 내부 Gmail 페이지 토큰·페이지 체크포인트·실행 번호는 제외한다.
+[기간·상한·취소·업데이트 계약](../dev/local-ai-history-run.md)을 따른다.
 
 ## 공통
 
@@ -55,7 +53,7 @@
   cursor는 서버가 준 값 그대로 전달한다. 검색·분류·정렬 변경·다른 편지함은 미지원이며
   목록의 알 수 없거나 중복된 쿼리 인수는 422다.
 - 소유자는 요청에서 받지 않는다. 기존 로컬 운영자·설정된 Gmail 계정·연결 기록으로 한정하고,
-  사용 시작 이후 받은편지함 메일만 읽는다. 다른 계정 메일 ID도 없는 메일과 같이 404다.
+  사용 시작 이후 받은편지함과 명시적 가져오기 메일을 읽는다. 다른 계정 메일 ID도 없는 메일과 같이 404다.
 - 로컬 접속과 허용 Host만 받으며 모든 Origin 헤더를 거부한다. Renderer 직접 fetch 대신
   Electron main의 Node fetch + 제한된 IPC를 사용한다. CORS를 추가해 우회하지 않는다.
 - 인증 실패 401, 외부 출처 403, DB·계정 준비 부족 503. 개인 응답은 `Cache-Control: no-store`다.
@@ -66,10 +64,10 @@
   409 `sync_in_progress`, Gmail·토큰 갱신 실패는 502 `gmail_unavailable`(외부 응답 상세 미포함), DB·계정 준비 부족은 503.
   응답에는 건수만 있고 메일 내용·토큰은 없다. 주기적 자동 수신(WebSocket·작업 큐)은 후속이다.
 
-## F3 검색 API (서버 등록·모델 미연결)
+## F3 검색 API (선택 AI 연결·의미 벡터 미연결)
 
 `app.main`에 경로와 OpenAPI를 등록했고, `run_mail_api`는 기존 로컬 인증과 F3 저장소를
-함께 조립한다. AI·벡터 포트는 기본 미연결이다. 준비 부족을 가짜 검색 성공으로 대체하지 않는다.
+함께 조립한다. PR #37의 SelectedGeneration으로 로컬/Claude 해석·답변을 요청별 선택한다. 벡터 포트는 미연결이다. AI 설정 부족을 가짜 검색 성공으로 대체하지 않는다.
 
 | 메서드 | 경로 | 계약 |
 | --- | --- | --- |
@@ -83,9 +81,9 @@
   전달한다. 스트림 도중 실패는 `error` 프레임이며 HTTP 200이어도 확인해야 한다.
 - `parser_unavailable`/`parse_unavailable`은 503, `parse_failed`/`unsupported_filter`는 422다.
   결과가 있으면 답변 실패는 결과와 함께 `answer_error`로 구분한다.
-- 실제 메일의 외부 AI 전송은 연결하지 않았다. 조직·미회신·분류·첨부 조건은 미지원이다.
+- Claude 선택·동의 시 질문·필요한 결과를 외부 전송할 수 있다. 조직·미회신·분류·첨부 조건은 미지원이다.
 - 최근 검색을 쓰려면 `0003_search_runs` 마이그레이션이 필요하다. 이번 작업에서는
-  합성 테스트 DB에서만 적용·검사했다. 실제 모델 정확도·5초 성능과 F0/F2 연결은 남아 있다.
+  합성 테스트 DB에서만 적용·검사했다. F0/F2 화면 연결은 완료, 실제 모델 정확도·5초 성능은 미검증이다.
 
 세부 계약·검사·연결 요청은 [F3 전달 문서](../dev/F3-search-handoff.md)를 따른다.
 
@@ -116,13 +114,6 @@
 | F0 | DELETE | `/mails/{mail_id}` | 삭제 |
 | F0 | GET·PUT | `/settings/notifications` | 알림·시작 프로그램 설정 |
 | F1 | GET | `/mails/counts` | 스마트 보기·카테고리별 건수 |
-| F2 | GET·PUT | `/profile` | 프로필 조회·저장 |
-| F2 | GET·DELETE | `/profile/style` | 문체 학습 결과 조회·삭제 |
-| F2 | POST | `/profile/preview` | 설정값으로 예시 답장 |
-| F2 | POST | `/drafts` | 답장 초안 생성 |
-| F2 | POST | `/drafts/{draft_id}/revise` | 더 짧게·더 정중하게·다시 쓰기 |
-| F4 | POST | `/reports/weekly` | 주간 보고 생성 |
-| F4 | GET | `/reports/weekly/{report_id}/excluded` | 제외된 메일 |
 | F4 | POST | `/reports/weekly/{report_id}/export` | Word 내보내기 |
 
 ## WebSocket `/ws` (설계·미구현)
@@ -147,7 +138,7 @@ AI 미연결은 503 ai_unavailable이며 합성 결과로 대체하지 않는다
 
 F5 전용 라우터를 공통 앱에 등록하고 로컬 실행 명령에서 기존 인증 계정의 저장소에 연결한다.
 새 DB 이력은 0005_f5이며 기존 계정·메일·Gmail 수신·F2·F3 경로는 유지한다.
-실제 F1 입력 전달·F0 IPC/화면·WebSocket·Calendar HTTP transport는 미연결이다.
+F1 입력 전달·F0 IPC/화면은 #28·#32·#34에서 연결됐다. WebSocket·Calendar HTTP transport는 미연결이다.
 
 | 메서드 | 경로 | 계약 |
 | --- | --- | --- |
@@ -190,4 +181,43 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 응답은 `{mail_id, user_label, effective_category}`, 다른 사용자·없는 메일은 같은 404,
 저장소 미연결은 503이다. 수정은 `f1_mail_analysis.user_label`과 `f1_category_feedback`에
 기록되고 청크의 필터 분류도 갱신한다. 엔진은 run_mail_api가 `app.state.mail_analysis_engine`에
-넣는다. 목록·상세 GET의 AI 필드 확장, `/mails/counts`, 재분석 API는 후속이다.
+넣는다. `/mails/counts`는 후속이다.
+
+## F1 새 메일 자동 분석과 표시용 조회 (patches/F1/05)
+
+- `POST /mails/sync`가 저장을 마치면 F1 자동 분석 작업자에 '분석 시작' 신호만 주고 바로 응답한다
+  (`MailSyncContext.after_sync`). 응답 형식은 그대로다. 작업자는 서버 안에 하나이며 pending 메일을 분석한다.
+  run_mail_api는 자동 분석에 로컬 Ollama를 강제 주입한다. 로컬 모델 미설정이면 pending이다. 수동 기능의 Claude 선택은 자동 분석에 영향을 주지 않는다.
+- 분석이 DB에 확정되면 분석 완료 알림 지점(`analysis_runner.hooks`)이 F5 `AnalysisScanHook`을 불러 제안을 만든다
+  (로컬 AI일 때만, F5 실패는 F1 분석에 영향 없음). 계약은 `docs/dev/F1-handoff.md`·`docs/dev/F5-handoff.md`.
+- 기존 `GET /mails`·`GET /mails/{mail_id}` 응답은 바꾸지 않았다. AI 결과는 F1 전용 경로로 따로 읽는다.
+
+| 메서드 | 경로 | 설명 |
+| --- | --- | --- |
+| GET | `/mails/analysis/batch?ids=…` (1~100개) | 목록 표시용 `{items: MailAnalysisView[], auto_analysis}`. 다른 소유자·없는 메일은 빠진다 |
+| GET | `/mails/{mail_id}/analysis` | 한 건 `MailAnalysisView + auto_analysis`, 없으면 404 |
+| POST | `/mails/{mail_id}/analysis/retry` | failed → pending 후 다시 분석(202). 분석 완료 409, AI 미연결 503 `analysis_unavailable` |
+
+`MailAnalysisView`: `mail_id`, `analysis_status`(pending/done/failed), `category`(user_label 우선),
+`ai_category`, `user_label`, `summary`, `needs_reply`, `action_items[{text,due}]`, `priority`,
+`priority_reason`, `has_events`, `evidence_spans[{kind,start,end}]`, `failure_code`(failed일 때).
+원문·벡터·모델 정보는 넣지 않는다. 운영에서 테스트 대역(mode=test) 결과는 pending으로 보인다.
+`auto_analysis`: `ready` / `not_configured` / `external_blocked` / `not_connected`(작업자 미조립).
+
+## 기능별 AI 설정·요청 (2026-11-20)
+
+- `GET /settings/ai`: 기능별 기본값, 외부 전송 허용 여부, 키 등록 여부, 로컬 모델 설정 여부, Claude 모델 ID. 키 값은 반환하지 않음.
+- `PUT /settings/ai`: `defaults`(draft/search/weekly_report 각각 ollama/claude), `external_consent`, 선택 `api_key`·`claude_model`·`clear_key`. 키 생략/빈 UI 입력은 유지. `clear_key`는 암호화 파일에 저장한 키만 삭제하며 환경 변수 키는 보존.
+- `POST /settings/ai/check`: `{provider: ollama|claude}`. 메일 없는 고정 합성 요청으로 연결 검사(Claude 소량 과금). 실제 기능 품질 검사가 아님.
+- 모두 기존 loopback·Bearer·Origin 차단 경계와 비공개 응답 정책을 사용한다. 기존 연결 계정의 로컬 운영자 설정이다.
+- `POST /drafts`, `/drafts/{id}/revise`, `/profile/preview`, `/search`, `/reports/weekly`에 선택 `ai_provider: default|ollama|claude|null` 추가. 생략/null/default는 저장 기본값(새 설정은 로컬 전용·로컬 기본). `/profile/preview`는 선택과 무관하게 로컬 고정.
+- F3는 해석과 답변이 같은 설정 스냅샷을 사용한다. 요청 간 변경은 다음 요청부터 적용한다.
+- F4는 제공자별 생성 저장 키를 분리해 전환 시 기존 보고서·편집본을 덮어쓰지 않는다. 기존 ID 조회·편집은 유지한다.
+- 첫 주 options는 remaining_days=0, 기본 기간=사용 시작일~오늘. 보고서에 partial_period·collection_started_at 추가(기존 저장본은 기본값으로 호환).
+- 서버 타임아웃: 초안/보고서 120초, 미리보기 30초, 운영 검색 각 AI 단계 120초. 앱 초안/보고서/연결 검사는 150초까지 기다림. 실제 성능 보장과 구분한다.
+
+## 이번 작업 브랜치의 통합 구현
+
+기간 선택 과거 메일 가져오기, Claude→로컬 1회 대체 재시도, 강제 로컬 전용 모드는 통합 작업 브랜치에서 구현·자동 검사했으며 develop 반영 PR #39(사용자 병합 승인 완료)다.
+`/profile/preview`는 서버에서 로컬을 강제한다. 수동 초안·수정의 Claude 선택은 별도이며
+로컬 전용 모드·외부 전송 동의 검사를 통과해야 한다. [setup.md](../dev/setup.md)·[통합 전달 사항](../dev/integration-followups.md)을 따른다.

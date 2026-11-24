@@ -59,6 +59,7 @@ const messages = {
   invalid_request: '요청 내용을 확인해 주세요.',
   invalid_response: '서버 응답을 확인할 수 없어요. 서버 버전을 확인해 주세요.',
   connection: '서버에 연결할 수 없어요. 서버 실행 상태를 확인한 뒤 다시 시도해 주세요.',
+  timeout: '응답 대기 시간이 지났어요. 잠시 뒤 다시 시도해 주세요. 편집한 내용은 보존됩니다.',
   unavailable: '요청을 처리하지 못했어요. 입력한 내용은 보존됩니다. 다시 시도해 주세요.',
 } as const;
 

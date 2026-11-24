@@ -2,9 +2,11 @@
 
 from fastapi import FastAPI
 
+from app.api.ai_settings import register_ai_settings
 from app.api.errors import register_error_handlers
 from app.api.f5 import register_f5_api
 from app.api.health import router as health_router
+from app.api.history_import import register_history_import
 from app.api.mail_analysis import register_mail_analysis
 from app.api.mail_read import register_mail_api
 from app.api.mail_sync import register_mail_sync
@@ -24,6 +26,8 @@ def create_app() -> FastAPI:
         },
     )
     register_error_handlers(application)
+    register_ai_settings(application)
+    register_history_import(application)
     application.include_router(health_router)
     register_mail_api(application)
     register_mail_sync(application)

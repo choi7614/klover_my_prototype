@@ -1,3 +1,43 @@
+# F1 분석·저장 — 현재 상태
+
+## 현재 상태 — 2026-11-25 요약 실패 진단 보완
+
+- 브랜치 `integrate/F1-summary-diagnostics` · 작업 도구 없음(검사 완료·제출) · 기준 `origin/develop 42b319b`(PR #40).
+- 사용자 집계의 invalid_response 24건/provider_error 1건을 확인했다. 과거 세부 원인은 저장되어 있지 않아 미확인이다.
+- 고정 사유 로그·사유별 1회 보정 요청·앱 실패 종류 안내를 구현했다. 기존 엄격 검증·DB/API·로컬 분석 정책 유지.
+- 서버 638 통과/skip 0, 앱 192 통과, Ruff·lint·typecheck 통과. 합성 응답·분리 DB 검사이며 실제 모델 개선은 미검증이다.
+- 2026-11-25 사용자 커밋·Push·PR 생성 및 검사 통과 후 develop 병합 승인. 검토한 11개 파일만 제출한다.
+  최종 커밋·검사·병합 이력은 이 변경을 포함하는 PR에서 확인한다. main과 기존 브랜치는 보존한다.
+- 다음: [진단·검증 기록](F1-summary-diagnostics.md)에 따라 승인·병합 후 맥북에서 실패 메일 한 건 재시도.
+  실제 모델 개선 효과는 미확인. 아래 PR #39 기록은 당시 기록이며 PR #39·#40은 현재 develop 병합 완료다.
+
+## 이전 상태 — 2026-11-24 통합 작업
+
+- 작업: `integrate/local-ai-mail-history` · 작업 도구 없음(제출 완료) · 기준 `origin/develop 5e2b7a7`(PR #38).
+- 명시적으로 가져온 과거 메일을 로컬 분석 작업자가 처리하도록 조회/분석 경계를 맞췄다. 기본 수신 시작 시점·커서는 보존한다. 실제 로컬 모델 품질·속도는 미검증이다.
+- 서버 590개(분리 PostgreSQL, skip 0), 앱 185개, 합성 Chromium 4개 통과. Ruff·lint·typecheck·빌드 결과는 [통합 검증 기록](verification-local-ai-history.md)을 따른다.
+- 실제 사용자 DB·Gmail·Ollama·유료 Claude·네이티브 Electron은 미실행이다.
+- 기존 기능 브랜치·키·메일·설정은 보존했다. 코드 `0a357b3`을 커밋·Push하고 [PR #39](https://github.com/choi7614/klover_my_prototype/pull/39)을 develop 대상으로 제출했다. 사용자 develop 병합 승인도 받았다. 최종 병합 이력은 PR 상태를 따른다. main은 별도 승인이다.
+- 다음 할 일: PR 자동 검사 확인 후 승인된 develop 병합, [맥북 업데이트/실기 확인](local-ai-history-run.md). 이미 반영된 과거 공통 패치는 재적용하지 않는다.
+
+<details>
+<summary>PR #38 당시 요약 — 이번 작업 전 기준</summary>
+
+> 2026-11-24 · 실제 기준 `origin/develop f498d27` · PR #37 병합 확인 · 이번 작업은 문서만 수정
+
+## 현재 구현과 남은 일
+
+- 구현·자동 검사 완료: 0007 저장·분류 수정 API·로컬 Ollama 분석·임베딩·자동 분석 작업자·앱 표시·F5 훅은 연결됨(#30·#34·#37). 자동 분석은 실행 서버에서 로컬로 고정.
+- 남은 일·실환경 제한: 분류 수정 UI·근거 강조·건수·WebSocket·정확도/30초 성능은 미완료 또는 미검증. 실제 모델 검증과 코드 존재를 구분.
+- 새 설치·평소 실행·업데이트는 [setup.md](setup.md), 공통 확인 수준은 [현황판](progress.md)·[이번 검증](verification-2026-11-24.md)을 따른다.
+- 과거의 '미연결/미커밋/승인 대기'는 아래 당시 기록이다. PR #37과 기존 공통 패치는 이미 병합되어 재적용하지 않는다.
+- 확정된 개발 예정: 기간 선택 과거 메일 가져오기, Claude→로컬 1회 자동 재시도, 로컬 전용 모드. 모두 현재 미구현이며 이번에 코드를 변경하지 않는다.
+
+</details>
+
+<details>
+<summary>이전 기능 브랜치·검사·인수인계 기록 (현재 실행 지시 아님)</summary>
+
 # F1 구현·검사 결과
 
 ## 양식 요약
@@ -8,13 +48,57 @@
 | --- | --- |
 | 브랜치 | `feat/F1-mail-analysis` |
 | 작업 도구 | 없음 |
-| 상태 | develop 병합 ([#27](https://github.com/choi7614/klover_my_prototype/pull/27), `d93c3b2`), 공통 패치 01~04 적용 (통합 채팅 `integrate/F1-F3-patches`) |
-| 마지막 커밋 | `7a5d049` 2026-11-19 — [F1] develop 반영과 F3 패치와 겹치지 않도록 02 등록 패치 위치 조정 |
-| 기준 develop | `5971346` (병합 후 `d93c3b2`) |
+| 상태 | develop 병합 ([#33](https://github.com/choi7614/klover_my_prototype/pull/33), `905398b`), 공통 패치 05~07 적용(`integrate/F1-auto-analysis`) — 맥북 실기 확인 남음 |
+| 마지막 커밋 | 2026-11-19 — develop `d9257c0` 로컬 통합 후 F5 호출 모양 맞춤 (git log 참조) |
+| 기준 develop | `905398b` |
 | 미커밋 변경 | 없음 |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
+
+### 공통 패치 05~07 적용 (2026-11-19, Claude, `integrate/F1-auto-analysis`)
+
+- develop `905398b` 위에 `patches/F1/05~07`을 충돌 없이 적용했다. 이제 운영 서버에서 새로고침 뒤 자동 분석 작업자가 돌고,
+  로컬 AI일 때 분석 완료 지점에 F5 `AnalysisScanHook`이 등록되며, 앱 받은편지함에 분류·요약이 보인다(`klover.analysis`).
+- 검사: 서버 ruff 통과, pytest 541 통과(분리 PostgreSQL 16 + pgvector 테스트 DB, skip 0), DB 없이 392 통과/149 skip,
+  `gen:api-types` = 06(추가만), 데스크톱 lint·typecheck 통과·test 25개 파일 169개 통과.
+- 미실행: 실제 Gmail·실제 AI(Ollama)·Electron 실제 창. 맥북 `.env`에 `AI_PROVIDER=ollama` 등을 넣고 확인한다.
+
+### 새 메일 자동 분석·분류·요약 표시 (2026-11-19, Claude, F1+F0)
+
+가짜 제공자와 자동 검사로만 확인했다(맥북·실제 DB·API 키·Ollama 미사용). 실제 Gmail·실제 AI 확인은 맥북에서 한다.
+
+- **자동 분석**(`app/pipeline/auto_analysis.py`): 새로고침(`POST /mails/sync`) 저장 뒤 `after_sync`로 '분석 시작' 신호만 주고
+  바로 응답한다. 서버 안 작업자 스레드 하나가 pending을 분석한다(요청 안에서 분석·앱 별도 요청 방식과 비교해 가장 단순).
+  AI 미설정 → 분석 안 함·pending 유지(가짜 결과 없음). Claude(외부) → 실제 Gmail 본문 전송 안 함·pending 유지.
+  실패 → failed+고정 코드, `POST /mails/{id}/analysis/retry`로 다시 분석. 작업자는 DB 오류에도 죽지 않는다.
+- **분석 완료 알림 지점**(`app/pipeline/analysis_hooks.py`): `hooks.register(on_analyzed, timeout=…)` →
+  `await on_analyzed(mail: AnalysisMail, result: AnalysisResult)` — develop #32의 F5 `AnalysisScanHook`과 같은 모양.
+  DB 확정 뒤 done만, 콜백 오류는 격리. F1 브랜치 코드는 F5를 부르지 않고, 등록은 패치 05에 있다.
+  계약: [F1-handoff.md](F1-handoff.md) '분석 완료 알림 지점'.
+- **표시용 조회**: 이미 등록된 F1 라우터에 `GET /mails/analysis/batch?ids=`, `GET /mails/{id}/analysis`,
+  `POST /mails/{id}/analysis/retry` 추가. 기존 `/mails` 응답 형식은 그대로. 운영에서 테스트 대역 결과는 pending으로 보인다.
+  F5의 `EvidenceSpan`과 이름이 겹치지 않게 표시용 `MailEvidenceSpan`을 따로 두었다(공유 타입 변경은 추가만).
+- **화면**(S03, `renderer/features/mail-analysis/`, F0 `mailbox-page.tsx`·`routes.tsx`): 목록에 ◆ 요약 첫 문장 +
+  분류 태그(카테고리 토큰 색) + `회신 필요`(danger) + `마감 MM/DD`(warning). 읽기 영역에 AI 요약 박스(요약·내가 할 일·
+  마감 MM/DD(요일)·우선순위·이유) + "분류 [태그]". 분석 중 = "AI가 분석하고 있어요…" + 태그 스켈레톤/박스 스켈레톤,
+  AI 미설정·외부 차단 = 이유 문구, 실패 = "요약을 만들지 못했어요 · 다시 시도". 분석 대기 중이면 3초마다 다시 확인
+  (최대 60회, WebSocket 연결 전 임시). 결과는 mail_id가 같은 메일에만 붙인다. 통로가 없으면 기존 미리보기 모양 그대로.
+- 공통 영역은 `patches/F1/05~07`([README](../../patches/F1/README.md)): 05 실행 명령 조립·api.md, 06 공유 타입(추가만),
+  07 main/preload `klover.analysis`(batch·retry)·App 전달.
+- 이번 범위 아님(후속): 분류 변경 드롭다운(`CategorySelect`, 서버 PATCH는 있음), 근거 문장 강조(`EvidenceHighlight`),
+  스마트 보기·카테고리 건수(`/mails/counts`), 중요도순 정렬, WebSocket `mail.analyzed`.
+
+| 검사 (이 환경, 일회용 PostgreSQL 16 + pgvector) | 결과 |
+| --- | --- |
+| 서버 `ruff check`·`ruff format --check` | 통과 |
+| 서버 `pytest` (분리 테스트 DB, develop `d9257c0` 통합 후) | 513 통과 / 28 skip(F5 전용 DB 변수 미지정 등) |
+| 서버 `pytest` (DB 없음, CI와 같은 조건) | 392 통과 / 149 skip |
+| 새 검사 `tests/f1/test_auto_analysis.py` | 20개(F5 `AnalysisScanHook` 호출 모양 확인 포함, 알림 지점·작업자 상태·백그라운드 분석·실패/재시도·외부 차단·조회·HTTP·sync→분석 흐름) |
+| `tests/test_mail_sync_api.py` 추가 | 3개(`after_sync` 성공 뒤에만·오류 격리·Gmail 실패 시 미호출) |
+| 데스크톱 `lint`·`typecheck`·`test` (기능 브랜치) | 통과, 23개 파일 164개 (새 화면 검사 10개) |
+| 패치 05~07 적용 사본 | `git apply --check` 통과(기능 브랜치·develop `d9257c0` 모두), 서버 ruff·pytest 513/28 skip, `gen:api-types` = 06, 데스크톱 lint·typecheck·test 25개 파일 169개 |
+| 실제 Gmail·실제 AI·Electron 실제 창·30초 수신→표시 | **미실행** (맥북 필요) |
 
 ### 공통 패치 적용 (2026-11-19, 통합 채팅, `integrate/F1-F3-patches`)
 
@@ -78,9 +162,9 @@
 
 ## 다음 할 일
 
-1. 통합 채팅: `patches/F1/01~04` 적용, 맥북 DB에 `alembic upgrade head`(0007) 확인.
-2. 맥북에서 로컬 LLM 결정 후 아래 '맥북 확인 명령'으로 Ollama·Claude 실제 호출 확인.
-3. 실제 모델로 합성 23건 정확도 측정, 자동 수신 분석 연결, F0 화면 표시(별도 단위).
+1. 통합 채팅: 이 브랜치 PR을 develop에 병합한 뒤 `patches/F1/05~07` 적용(05에 F5 `AnalysisScanHook` 등록 포함).
+2. 맥북: `.env`에 `AI_PROVIDER=ollama` 등 설정 → 서버·앱 실행 → 새로고침 후 목록에 '분석 중' → 요약·태그가 채워지는지 확인.
+3. 후속 단위: 분류 변경 드롭다운, 근거 문장 강조, 스마트 보기·카테고리 건수, 중요도순 정렬, 실제 모델 정확도 측정.
 
 ## 맥북 확인 명령 (사용자가 직접)
 
@@ -118,7 +202,10 @@ JSON 형식 문제가 반복되면 `OLLAMA_FORMAT=json`, 너무 느리면 더 �
 
 ## 인수인계 메모
 
-- 멈춘 지점: 없음 (단위 완료, develop 병합 #27)
+- 멈춘 지점: 자동 분석·표시 단위 구현·검사 완료, PR [#33](https://github.com/choi7614/klover_my_prototype/pull/33) (2026-11-19)
+- 주의: 자동 분석은 로컬 AI일 때 실제 Gmail 메일도 분석한다(외부 전송 없음). Claude면 분석하지 않는다.
+  작업자는 서버 프로세스 안 스레드이므로 서버를 끄면 진행 중 메일은 pending/잠금 해제 상태로 남고 다음 새로고침 때 이어진다.
+- 이전 메모: 단위 완료, develop 병합 #27
 - 실패 중이거나 미실행인 검사: 실제 Claude·Ollama 호출, 맥북 DB 0007 적용 미실행
 - 주의할 점: `ProviderIdentity.model`은 분석(analysis)용 모델 이름이다. 기능별로 모델을 바꾸면
   다른 기능 결과의 기록 모델과 다를 수 있다. Claude 경로는 F2~F5에서도 같은 제공자를 쓰므로,
@@ -228,3 +315,5 @@ F1 DB 검사만 활성화되며, 둘 다 없으면 DB 검사들이 skip된다. �
 2026-11-19 결과 보고 후 사용자가 커밋·Push·PR 생성과 develop 병합을 승인했다.
 이 승인은 F1 파일을 저장소에 반영하는 범위다. 위에 적은 운영 DB 패치 적용·공통 ORM·
 실제 AI·운영 앱 등록은 별도 후속 구현이며, main 병합은 승인하지 않았다.
+
+</details>

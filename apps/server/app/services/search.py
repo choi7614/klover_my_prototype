@@ -66,7 +66,7 @@ def combine_results(
         for mail in mails
         if mail.user_id == scope.user_id
         and mail.account_id == scope.account_id
-        and mail.received_at >= scope.sync_started_at
+        and (mail.received_at >= scope.sync_started_at or mail.history_imported)
     }
     scores = defaultdict(float)
     sources = defaultdict(list)
@@ -89,7 +89,7 @@ def combine_results(
             mail.mail_id not in scores
             or mail.user_id != scope.user_id
             or mail.account_id != scope.account_id
-            or mail.received_at < scope.sync_started_at
+            or (mail.received_at < scope.sync_started_at and not mail.history_imported)
         ):
             continue
         matches = condition_matches(mail, parsed.filters)
@@ -166,7 +166,7 @@ class SearchService:
         model_timeout: float = 10,
         result_limit: int = 20,
     ):
-        if not 1 <= result_limit <= 100 or not 0 < model_timeout <= 60:
+        if not 1 <= result_limit <= 100 or not 0 < model_timeout <= 120:
             raise ValueError("결과 수와 모델 대기 시간을 확인하세요")
         self.repository, self.recent_repository = repository, recent_repository
         self.parser, self.answerer, self.semantic = parser, answerer, semantic

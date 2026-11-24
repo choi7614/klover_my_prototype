@@ -20,5 +20,5 @@ export function F2ReplyRoute({ client, mailboxPath }: { client: F2Client; mailbo
   if (draftId && !/^[A-Za-z0-9_-]{1,128}$/.test(draftId)) {
     return <p role="alert" className="p-6 text-body">임시 저장된 초안 주소를 확인해 주세요.</p>;
   }
-  return <ReplyDraftPage client={client} mailId={mailId} draftId={draftId} onExit={() => void navigate(mailboxPath)} />;
+  return <ReplyDraftPage autoGenerate={false} client={client} mailId={mailId} draftId={draftId} onExit={() => void navigate(mailboxPath)} />;
 }

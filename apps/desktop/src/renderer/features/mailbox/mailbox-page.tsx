@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Archive, File, Inbox, PenLine, RefreshCw, Send, Settings, SquareCheck, Trash2 } from 'lucide-react';
 import logo from '@brand/klover-logo.svg';
 import mark from '@brand/klover-mark.svg';
@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MailSuggestions } from '../suggestions/mail-suggestions';
 import type { F5Client } from '../suggestions/types';
+import type { MailAnalysisClient } from '../mail-analysis/client';
+import { AiSummaryBox, MailAnalysisLine } from '../mail-analysis/analysis-view';
+import { useMailAnalysis } from '../mail-analysis/use-mail-analysis';
 import { mailFailure, type MailDetail, type MailError, type MailReadBridge, type MailSession, type MailSummary } from '../../../shared/mail-read';
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -18,8 +21,10 @@ const isAuthenticationError = (error: MailError) => ['unauthorized', 'forbidden'
 // 다른 화면(F2·F3)으로의 이동은 해시 경로만 바꾼다. 실제 화면 등록은 공통 App이 맡는다.
 const go = (path: string) => { window.location.hash = path; };
 
-export function MailboxPage({ api, session, onDisconnected, initialMailId = null, suggestions }: {
+export function MailboxPage({ api, session, onDisconnected, initialMailId = null, suggestions, analysis }: {
   api: MailReadBridge; session: MailSession; onDisconnected: (error: MailError) => void;
+  /** F1 분류·요약 통로. 없으면 AI 표시 없이 미리보기만 보여 준다. */
+  analysis?: MailAnalysisClient;
   /** F5 제안·할 일 통로. 없으면 제안 패널 없이 S03 모양만 보여 준다. */
   suggestions?: F5Client;
   /** 검색 결과 등에서 특정 메일을 열고 들어올 때 처음 선택할 메일 */
@@ -43,6 +48,9 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
   const busy = useRef(false);
   const mounted = useRef(true);
   const canSync = typeof api.sync === 'function';
+  // F1: 목록에 보이는 메일과 선택한 메일의 분류·요약. 근거 메일은 mail_id로만 연결한다.
+  const analysisIds = useMemo(() => [...mails.map(mail => mail.mail_id), ...(selected ? [selected] : [])], [mails, selected]);
+  const { views, state: analysisState, retry: retryAnalysis, retryNotice } = useMailAnalysis(analysis, analysisIds);
 
   const loadList = useCallback(async (nextCursor: string | null = null) => {
     if (busy.current) return;
@@ -149,7 +157,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-selected text-selected-foreground" aria-hidden="true">{session.email.slice(0, 1).toUpperCase()}</span>
       </header>
       <div className="border-b bg-muted px-5 py-2 text-caption text-muted-foreground">
-        프로필·알림 설정과 AI 기능은 아직 준비 중입니다. <a className="ml-3 underline underline-offset-2 focus-visible:outline-ring" href="#/onboarding/1">첫 실행 설정 보기</a>
+        프로필과 AI 제공자는 설정에서 변경할 수 있습니다. <a href="#/settings/mail-history" className="underline">과거 메일 가져오기</a> · <a href="#/settings/ai" className="underline">AI 설정</a> · 알림 설정은 준비 중입니다. <a className="ml-3 underline underline-offset-2 focus-visible:outline-ring" href="#/onboarding/1">첫 실행 설정 보기</a>
       </div>
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-[220px] shrink-0 flex-col border-r bg-sidebar p-3" aria-label="메일함">
@@ -184,7 +192,9 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
               className={cn('block w-full border-b border-l-[3px] border-l-background p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring', selected === mail.mail_id && 'border-l-selected-bar bg-selected')}>
               <span className="flex items-start gap-2 text-body"><span className={cn('min-w-0 flex-1 truncate', !mail.is_read && 'font-semibold')}>{!mail.is_read && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-primary" aria-label="안 읽음" />}{mail.from_name || mail.from_addr}</span><time className="shrink-0 text-caption text-muted-foreground" dateTime={mail.received_at}>{timestamp(mail.received_at)}</time></span>
               <span className="mt-1 block truncate text-body font-semibold">{subject(mail.subject)}</span>
-              <span className="mt-1 line-clamp-2 text-caption text-muted-foreground">{mail.preview}</span>
+              {analysis
+                ? <MailAnalysisLine view={views[mail.mail_id]} state={analysisState} preview={mail.preview} />
+                : <span className="mt-1 line-clamp-2 text-caption text-muted-foreground">{mail.preview}</span>}
             </button>)}
             {listError && <div role="alert" className="p-4 text-body text-danger"><p>{listError.message}</p><Button variant="secondary" className="mt-3" onClick={() => void loadList(mails.length ? cursor : null)}>목록 다시 시도</Button></div>}
             {cursor && !listError && <div className="p-4"><Button variant="secondary" className="w-full" disabled={loading} onClick={() => void loadList(cursor)}>{loading ? '불러오는 중…' : '다음 페이지'}</Button></div>}
@@ -199,18 +209,24 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
               className="inline-flex h-8 items-center gap-1.5 rounded-md bg-ai px-3 text-body font-semibold text-ai-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span aria-hidden="true">◆</span>답장 초안 만들기</a>
           </div>}
-          {detail && (suggestions
-            // F5: 제안이 있는 메일만 S04(본문 + 제안 패널)로, 없으면 아래 S03 모양 그대로 보여 준다.
-            ? <MailSuggestions key={detail.mail_id} mailId={detail.mail_id} body={detail.body_text} client={suggestions}
-              header={<MailHead detail={detail} />} fallback={<MailArticle detail={detail} />} />
-            : <MailArticle detail={detail} />)}
+          {detail && (() => {
+            // F1 AI 요약 박스: 이 메일(mail_id)의 분석 결과만 붙인다.
+            const aiBox = analysis
+              ? <AiSummaryBox view={views[detail.mail_id]} state={analysisState} onRetry={id => void retryAnalysis(id)} retryNotice={retryNotice} />
+              : null;
+            return suggestions
+              // F5: 제안이 있는 메일만 S04(본문 + 제안 패널)로, 없으면 아래 S03 모양 그대로 보여 준다.
+              ? <MailSuggestions key={detail.mail_id} mailId={detail.mail_id} body={detail.body_text} client={suggestions}
+                header={<MailHead detail={detail} aiBox={aiBox} />} fallback={<MailArticle detail={detail} aiBox={aiBox} />} />
+              : <MailArticle detail={detail} aiBox={aiBox} />;
+          })()}
         </section>
       </div>
     </main>
   );
 }
 
-function MailHead({ detail }: { detail: MailDetail }) {
+function MailHead({ detail, aiBox }: { detail: MailDetail; aiBox?: ReactNode }) {
   return <>
     <h2 className="break-words text-heading font-bold">{subject(detail.subject)}</h2>
     <div className="my-4 space-y-1 border-b pb-4 text-body">
@@ -219,12 +235,13 @@ function MailHead({ detail }: { detail: MailDetail }) {
       {detail.cc.length > 0 && <p className="break-words text-caption text-muted-foreground">참조: {detail.cc.map(contact => contact.addr).join(', ')}</p>}
       <time className="block text-caption text-muted-foreground" dateTime={detail.received_at}>{timestamp(detail.received_at)} (한국 시간)</time>
     </div>
+    {aiBox}
   </>;
 }
 
-function MailArticle({ detail }: { detail: MailDetail }) {
+function MailArticle({ detail, aiBox }: { detail: MailDetail; aiBox?: ReactNode }) {
   return <article className="mx-auto max-w-[816px] px-7 py-5">
-    <MailHead detail={detail} />
+    <MailHead detail={detail} aiBox={aiBox} />
     <div className="whitespace-pre-wrap break-words text-body leading-7" data-testid="mail-text-body">{detail.body_text || '텍스트 본문이 없습니다.'}</div>
   </article>;
 }

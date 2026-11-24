@@ -1,5 +1,6 @@
 """앱 새로고침용 Gmail 새 받은 메일 가져오기. CLI `gmail_mail sync`와 같은 수신 기능을 쓴다."""
 
+import logging
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -16,6 +17,8 @@ from app.schemas.common import ErrorResponse
 from app.schemas.mail_api import MailSyncResult
 from app.services.gmail_sync import synchronize
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(repr=False)
 class MailSyncContext:
@@ -24,6 +27,8 @@ class MailSyncContext:
     repository: object = field(repr=False)
     client_factory: Callable[[], object] = field(repr=False)
     lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+    # 저장이 끝난 뒤 부르는 후속 작업(예: F1 자동 분석 시작 신호). 기다리지 않는 짧은 함수만 넣는다.
+    after_sync: Callable[[], object] | None = field(default=None, repr=False)
 
 
 router = APIRouter(
@@ -52,7 +57,7 @@ def sync_mails(request: Request, _authorized: Annotated[object, Depends(authoriz
         )
     try:
         with context.client_factory() as client:
-            return MailSyncResult(**synchronize(context.repository, client))
+            result = MailSyncResult(**synchronize(context.repository, client))
     except GoogleConnectionError:
         # 실패한 배치는 저장소가 되돌린다. 외부 응답·메일 내용은 전달하지 않는다.
         return error_response(
@@ -64,6 +69,13 @@ def sync_mails(request: Request, _authorized: Annotated[object, Depends(authoriz
         raise HTTPException(503) from None
     finally:
         context.lock.release()
+    # 새 메일이 없어도 신호를 준다(남은 pending도 이어서 분석). 실패해도 응답은 그대로다.
+    if context.after_sync is not None:
+        try:
+            context.after_sync()
+        except Exception as error:  # noqa: BLE001
+            logger.warning("새 메일 후속 작업 시작 실패: %s", type(error).__name__)
+    return result
 
 
 def register_mail_sync(application):

@@ -107,14 +107,14 @@ describe('F3 독립 검색 화면', () => {
     await waitFor(() => expect(client.requests.at(-1)?.overrides?.topic).toBe('문서-123'));
     await results();
     fireEvent.click(await screen.findByRole('button', { name: '최근 질문' }));
-    await waitFor(() => expect(client.requests.at(-1)).toEqual({ query: '최근 질문' }));
+    await waitFor(() => expect(client.requests.at(-1)).toEqual({ query: '최근 질문', ai_provider: 'default' }));
   });
 
   it('기능 진입의 자동 검색은 F0 라우터 수정 없이 실행할 수 있다', async () => {
     const client = new SyntheticSearchClient();
     render(<SearchPage client={client} identityKey="u:a" initialQuery="지난달 예산" autoSearch />);
     await results();
-    expect(client.requests[0]).toEqual({ query: '지난달 예산' });
+    expect(client.requests[0]).toEqual({ query: '지난달 예산', ai_provider: 'default' });
   });
 
   it('새 결과가 나온 뒤 도착한 이전 성공 응답도 화면을 덮어쓰지 않는다', async () => {
@@ -142,4 +142,16 @@ describe('F3 독립 검색 화면', () => {
     expect(screen.queryByRole('button', { name: '이전 검색 결과 1' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '새 검색 결과 1' })).toBeInTheDocument();
   });
+});
+
+
+it('이번 검색의 제공자를 전달하고 조건 변경·재시도에서도 유지한다', async () => {
+  const client = new SyntheticSearchClient();
+  render(<SearchPage client={client} identityKey="u:a" />);
+  fireEvent.change(screen.getByLabelText('이번 요청의 AI'), { target: { value: 'claude' } });
+  search(); await results();
+  expect(client.requests[0].ai_provider).toBe('claude');
+  fireEvent.click(screen.getByRole('button', { name: '기간 조건 삭제' }));
+  await waitFor(() => expect(client.requests).toHaveLength(2));
+  expect(client.requests[1].ai_provider).toBe('claude');
 });

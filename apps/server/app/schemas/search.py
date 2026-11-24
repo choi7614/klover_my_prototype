@@ -93,6 +93,7 @@ class SearchOverrides(SearchFilters):
 
 
 class SearchRequest(Contract):
+    ai_provider: Literal["default", "ollama", "claude"] | None = None
     query: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
     overrides: SearchOverrides = Field(default_factory=SearchOverrides)
     search_id: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{32}$")] | None = None
@@ -109,6 +110,7 @@ class SearchMail(Contract):
     user_id: Text
     account_id: Text
     received_at: AwareDatetime
+    history_imported: bool = False
     direction: Direction
     from_addr: str
     from_name: str = ""
@@ -165,6 +167,7 @@ class SearchFailure(Contract):
 
 
 class SearchResponse(Contract):
+    ai_execution: dict | None = None
     search_id: str
     parsed: ParsedQuery
     reference_date: date

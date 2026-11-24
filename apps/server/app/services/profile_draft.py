@@ -6,7 +6,14 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
+from app.ai.f2_output_diagnostics import (
+    InvalidDraftOutput,
+    OutputReason,
+    record_rejection,
+    schema_reason,
+)
 from app.ai.f2_port import DraftAI, F2Error, RelatedMailSearch
+from app.ai.selection import execution_info
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.db.repositories.profile_draft import F2Repository, conflict
 from app.schemas.profile_draft import (
@@ -24,12 +31,14 @@ from app.schemas.profile_draft import (
     Reference,
 )
 
-AI_TIMEOUT_SECONDS = 8
-PREVIEW_TIMEOUT_SECONDS = 2
+# 최초 모델 적재·로컬 추론 시간을 허용하되 요청 전체의 대기는 제한한다.
+# 앱 main의 AI 요청 제한(150초)은 서버 제한보다 길어야 한다.
+AI_TIMEOUT_SECONDS = 120
+PREVIEW_TIMEOUT_SECONDS = 30
 
 
-def invalid_output():
-    return F2Error("invalid_ai_output", 502, "AI 결과의 본문과 근거를 확인하지 못했어요.")
+def invalid_output(reason=OutputReason.VALIDATION):
+    return InvalidDraftOutput(reason)
 
 
 def compose(result: GeneratedDraft, request: GenerationInput):
@@ -39,16 +48,18 @@ def compose(result: GeneratedDraft, request: GenerationInput):
     previous_end = 0
     for item in result.evidence:
         start, end = item.span
-        if not 0 <= start < end <= len(result.body) or start < previous_end:
-            raise invalid_output()
+        if not 0 <= start < end <= len(result.body):
+            raise invalid_output(OutputReason.SPAN)
+        if start < previous_end:
+            raise invalid_output(OutputReason.OVERLAP)
         previous_end = end
         if item.source.startswith("mail:"):
             if item.source[5:] not in allowed:
-                raise invalid_output()
+                raise invalid_output(OutputReason.SOURCE)
         elif (
             item.source != "profile.phrase" or result.body[start:end] not in request.learned_phrases
         ):
-            raise invalid_output()
+            raise invalid_output(OutputReason.LEARNED_PHRASE)
 
     if request.profile.greeting:
         body = request.profile.greeting
@@ -96,6 +107,9 @@ class F2Service:
         )
 
     async def _generate(self, request: GenerationInput):
+        operation = (
+            "preview" if request.purpose == "preview" else "revise" if request.action else "create"
+        )
         try:
             timeout = (
                 PREVIEW_TIMEOUT_SECONDS if request.purpose == "preview" else AI_TIMEOUT_SECONDS
@@ -111,17 +125,23 @@ class F2Service:
             raise F2Error(
                 "ai_timeout", 504, "생성 시간이 길어졌어요. 다시 시도해 주세요."
             ) from None
-        except ValidationError:
-            raise invalid_output() from None
+        except ValidationError as error:
+            reason = schema_reason(error)
+            record_rejection(reason, attempt=1, operation=operation)
+            raise invalid_output(reason) from None
         except Exception:
             raise F2Error(
                 "ai_failed", 502, "초안을 만들지 못했어요. 직접 작성할 수 있어요."
             ) from None
-        if request.direction is not None and result.selected_direction != request.direction:
-            raise invalid_output()
-        if any(phrase in result.body for phrase in request.profile.excluded_phrases):
-            raise invalid_output()
-        return result, compose(result, request)
+        try:
+            if request.direction is not None and result.selected_direction != request.direction:
+                raise invalid_output(OutputReason.DIRECTION)
+            if any(phrase in result.body for phrase in request.profile.excluded_phrases):
+                raise invalid_output(OutputReason.EXCLUDED_PHRASE)
+            return result, compose(result, request)
+        except InvalidDraftOutput as error:
+            record_rejection(error.reason, attempt=1, operation=operation)
+            raise
 
     async def preview(self, profile: Profile) -> PreviewState:
         # 저장되지 않은 동의나 표현을 학습 결과에 접근하는 권한으로 사용하지 않는다.
@@ -176,6 +196,7 @@ class F2Service:
         result, (body, evidence) = await self._generate(context)
         self.ensure_current(context, version)
         draft = DraftState(
+            ai_execution=execution_info(),
             draft_id="draft_" + uuid4().hex,
             mail_id=request.mail_id,
             directions=result.directions,
@@ -256,6 +277,7 @@ class F2Service:
                 "version": previous.version + 1,
                 "profile_version": version,
                 "context_status": status,
+                "ai_execution": execution_info(),
             }
         )
         return self.repository.save_draft(

@@ -55,7 +55,7 @@ try {
     nodeAccess: typeof window.require,
     platform: window.klover?.platform,
     exposedKeys: Object.keys(window.klover || {}),
-  })), { nodeAccess: 'undefined', platform: process.platform, exposedKeys: ['platform', 'mail'] });
+  })), { nodeAccess: 'undefined', platform: process.platform, exposedKeys: ['platform', 'ai', 'history', 'mail', 'f2', 'search', 'weeklyReport', 'suggestions', 'analysis'] });
 
   const screenshotPath = resolve(desktopDirectory, '../../artifacts/F0-onboarding-electron.png');
   await mkdir(dirname(screenshotPath), { recursive: true });

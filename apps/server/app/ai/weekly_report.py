@@ -28,6 +28,11 @@ class SharedWeeklyReportGenerator:
             "test_double" if generator.identity.mode == "test" else "ai"
         )
 
+    def cache_key(self):
+        if hasattr(self.generator, "provider_for"):
+            return self.generator.provider_for("weekly_report")
+        return self.generator.identity.provider
+
     async def generate(self, *, source, profile, style, recipient):
         prompt = (Path(__file__).parent / "prompts/weekly_report.md").read_text(encoding="utf-8")
         # 제외된 메일은 외부 호출 입력에 포함하지 않는다.

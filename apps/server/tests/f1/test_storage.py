@@ -316,6 +316,12 @@ def test_gmail_content_needs_explicit_execution_option_and_never_syncs(f1_databa
 
 def test_f4_adapter_real_db_contract_boundaries_and_no_test_success_leak(f1_database):
     repo = seed(f1_database, cases=CASES[:4])
+    # 명시적 가져오기 메일은 계정 시작보다 오래돼도 분석→보고 입력까지 이어진다.
+    with f1_database.begin() as connection:
+        connection.execute(
+            text("UPDATE mail_accounts SET sync_started_at='2027-01-01T00:00:00+00:00'")
+        )
+        connection.execute(text("UPDATE mails SET history_imported=true"))
     adapter = F1ReportMailRepository(repo)
     period = ReportPeriod(start=date(2026, 11, 18), end=date(2026, 11, 18))
     with pytest.raises(ReportInputNotReadyError):

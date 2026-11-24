@@ -123,6 +123,58 @@ class AnalysisOutcome(AnalysisModel):
     attempts: int
 
 
+AutoAnalysisStatus = Literal["ready", "not_configured", "external_blocked", "not_connected"]
+
+
+class MailEvidenceSpan(AnalysisModel):
+    """표시용 근거 위치(본문 인덱스 [start,end)). F5의 EvidenceSpan과 이름이 겹치지 않게 둔다."""
+
+    kind: Literal["action", "due", "event"]
+    start: int
+    end: int
+
+
+class MailAnalysisView(AnalysisModel):
+    """앱 받은편지함 표시용. 근거 메일은 mail_id로 연결한다. 원문·벡터·모델 정보는 넣지 않는다.
+
+    category는 화면에 보일 분류(user_label 우선). pending·failed이면 AI 결과 필드는 비어 있다.
+    """
+
+    mail_id: str
+    analysis_status: Literal["pending", "done", "failed"]
+    category: MailCategory | None = None
+    ai_category: MailCategory | None = None
+    user_label: MailCategory | None = None
+    summary: str | None = None
+    needs_reply: bool | None = None
+    action_items: tuple[ActionItem, ...] = ()
+    priority: Literal["high", "normal", "low"] | None = None
+    priority_reason: str | None = None
+    has_events: bool = False
+    evidence_spans: tuple[MailEvidenceSpan, ...] = ()
+    failure_code: str | None = None
+
+
+class MailAnalysisBatch(AnalysisModel):
+    """목록 표시용 묶음 조회 결과. auto_analysis는 지금 자동 분석이 돌 수 있는지 알려 준다.
+
+    ready=분석 가능, not_configured=AI 미설정, external_blocked=외부 AI라 실제 메일 분석 안 함,
+    not_connected=서버에 자동 분석이 아직 조립되지 않음.
+    """
+
+    items: tuple[MailAnalysisView, ...]
+    auto_analysis: AutoAnalysisStatus
+
+
+class MailAnalysisDetail(MailAnalysisView):
+    auto_analysis: AutoAnalysisStatus
+
+
+class AnalysisRetryResult(AnalysisModel):
+    mail_id: str
+    analysis_status: Literal["pending"]
+
+
 class CategoryUpdate(AnalysisModel):
     category: MailCategory
 

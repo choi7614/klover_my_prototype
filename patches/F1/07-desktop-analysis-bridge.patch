@@ -1,0 +1,305 @@
+diff --git a/apps/desktop/src/main/f1-client.test.ts b/apps/desktop/src/main/f1-client.test.ts
+new file mode 100644
+index 0000000..d034357
+--- /dev/null
++++ b/apps/desktop/src/main/f1-client.test.ts
+@@ -0,0 +1,81 @@
++// @vitest-environment node
++import { afterEach, beforeEach, describe, expect, it } from 'vitest';
++import { mkdtemp, rm, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { createServer, type RequestListener, type Server } from 'node:http';
++import type { AddressInfo } from 'node:net';
++import { F1APIClient } from './f1-client';
++
++const token = 'S'.repeat(43);
++const view = {
++  mail_id: 'mail-1', analysis_status: 'done', category: 'work_request', ai_category: 'work_request', user_label: null,
++  summary: '합성 요약입니다.', needs_reply: true, action_items: [{ text: '자료 송부', due: '2026-10-16' }],
++  priority: 'high', priority_reason: '합성 이유', has_events: false, evidence_spans: [], failure_code: null,
++};
++let directory: string;
++let file: string;
++const servers: Server[] = [];
++async function listen(handler: RequestListener): Promise<string> {
++  const server = createServer(handler);
++  servers.push(server);
++  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
++  return `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
++}
++beforeEach(async () => {
++  directory = await mkdtemp(join(tmpdir(), 'klover-f1-test-'));
++  file = join(directory, 'mail-api-token');
++  await writeFile(file, token + '\n', { mode: 0o600 });
++});
++afterEach(async () => {
++  await Promise.all(servers.splice(0).map(server => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); })));
++  await rm(directory, { recursive: true, force: true });
++});
++
++describe('main 전용 F1 분석 API', () => {
++  it('묶음 조회는 ids를 쿼리로 보내고 예상 밖 필드를 버린다', async () => {
++    const seen: { url?: string; auth?: string; method?: string }[] = [];
++    const base = await listen((request, response) => {
++      seen.push({ url: request.url, auth: request.headers.authorization, method: request.method });
++      response.setHeader('Content-Type', 'application/json');
++      response.end(JSON.stringify({ items: [{ ...view, body_text: '원문' }], auto_analysis: 'ready', token: 'x' }));
++    });
++    const result = await new F1APIClient({ baseURL: base, tokenFile: file }).batch(['mail-1', 'mail-2']);
++    expect(seen).toEqual([{ url: '/mails/analysis/batch?ids=mail-1&ids=mail-2', auth: `Bearer ${token}`, method: 'GET' }]);
++    expect(result.ok && result.data.auto_analysis).toBe('ready');
++    expect(result.ok && result.data.items[0]).not.toHaveProperty('body_text');
++    expect(result.ok && result.data).not.toHaveProperty('token');
++  });
++  it('다시 시도는 POST로 보내고 서버 오류 코드를 화면 오류로 바꾼다', async () => {
++    const statuses: [number, object][] = [
++      [202, { mail_id: 'mail-1', analysis_status: 'pending' }],
++      [503, { error: { code: 'analysis_unavailable', message: 'x' } }],
++      [409, { error: { code: 'already_analyzed', message: 'x' } }],
++      [404, { error: { code: 'not_found', message: 'x' } }],
++      [503, { error: { code: 'service_unavailable', message: 'x' } }],
++    ];
++    const methods: string[] = [];
++    const base = await listen((request, response) => {
++      methods.push(`${request.method} ${request.url}`);
++      const [status, body] = statuses.shift()!;
++      response.statusCode = status;
++      response.setHeader('Content-Type', 'application/json');
++      response.end(JSON.stringify(body));
++    });
++    const client = new F1APIClient({ baseURL: base, tokenFile: file });
++    expect(await client.retry('mail-1')).toEqual({ ok: true, data: { mail_id: 'mail-1', analysis_status: 'pending' } });
++    for (const code of ['analysis_unavailable', 'already_analyzed', 'not_found', 'unavailable']) {
++      expect(await client.retry('mail-1')).toMatchObject({ ok: false, error: { code } });
++    }
++    expect(methods[0]).toBe('POST /mails/mail-1/analysis/retry');
++  });
++  it('잘못된 인수·설정·응답은 서버에 보내지 않거나 거절한다', async () => {
++    const base = await listen((_request, response) => { response.end(JSON.stringify({ items: [{ ...view, mail_id: 'other' }], auto_analysis: 'ready' })); });
++    const client = new F1APIClient({ baseURL: base, tokenFile: file });
++    expect(await client.batch([])).toMatchObject({ ok: false, error: { code: 'invalid_request' } });
++    expect(await client.retry('../x')).toMatchObject({ ok: false, error: { code: 'invalid_request' } });
++    expect(await client.batch(['mail-1'])).toMatchObject({ ok: false, error: { code: 'invalid_response' } });
++    expect(await new F1APIClient({ baseURL: base }).batch(['mail-1'])).toMatchObject({ ok: false, error: { code: 'configuration' } });
++    expect(await new F1APIClient({ baseURL: 'http://127.0.0.1:9', tokenFile: file }).batch(['mail-1'])).toMatchObject({ ok: false, error: { code: 'connection' } });
++  });
++});
+diff --git a/apps/desktop/src/main/f1-client.ts b/apps/desktop/src/main/f1-client.ts
+new file mode 100644
+index 0000000..8641af4
+--- /dev/null
++++ b/apps/desktop/src/main/f1-client.ts
+@@ -0,0 +1,48 @@
++// F1 분석 결과 표시 통로의 main 쪽 HTTP 클라이언트. 토큰은 main에서만 읽고, 응답은 검사기로 새로 만든다.
++import { readLocalAPI, type LocalAPIConfiguration } from './mail-client';
++import { validMailId } from '../shared/mail-read';
++import {
++  analysisFailure, parseAnalysisBatch, parseRetryResult, validBatchIds,
++  type AnalysisResult, type AnalysisRetryResult, type F1Bridge, type MailAnalysisBatch,
++} from '../shared/f1-bridge';
++
++export class F1APIClient implements F1Bridge {
++  constructor(private readonly configuration: LocalAPIConfiguration, private readonly fetcher: typeof fetch = fetch) {}
++
++  private async request<T>(path: string, parse: (value: unknown) => T, method: 'GET' | 'POST' = 'GET'): Promise<AnalysisResult<T>> {
++    const local = await readLocalAPI(this.configuration);
++    if (!local) return analysisFailure('configuration');
++    try {
++      const response = await this.fetcher(new URL(path, local.base), {
++        method, headers: { Authorization: `Bearer ${local.token}`, Accept: 'application/json' },
++        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(10000),
++      });
++      if (!response.ok) {
++        let code: unknown;
++        try { code = ((await response.json()) as { error?: { code?: unknown } })?.error?.code; } catch { code = undefined; }
++        switch (response.status) {
++          case 401: case 403: return analysisFailure('unauthorized');
++          case 404: return analysisFailure('not_found');
++          case 409: return analysisFailure('already_analyzed');
++          case 422: return analysisFailure('invalid_request');
++          case 503: return analysisFailure(code === 'analysis_unavailable' ? 'analysis_unavailable' : 'unavailable');
++          default: return analysisFailure('unavailable');
++        }
++      }
++      try { return { ok: true, data: parse(await response.json()) }; }
++      catch { return analysisFailure('invalid_response'); }
++    } catch { return analysisFailure('connection'); }
++  }
++
++  batch(mailIds: string[]): Promise<AnalysisResult<MailAnalysisBatch>> {
++    if (!validBatchIds(mailIds)) return Promise.resolve(analysisFailure('invalid_request'));
++    const parameters = new URLSearchParams();
++    mailIds.forEach(id => parameters.append('ids', id));
++    return this.request(`/mails/analysis/batch?${parameters}`, value => parseAnalysisBatch(value, mailIds));
++  }
++
++  retry(mailId: string): Promise<AnalysisResult<AnalysisRetryResult>> {
++    if (!validMailId(mailId)) return Promise.resolve(analysisFailure('invalid_request'));
++    return this.request(`/mails/${encodeURIComponent(mailId)}/analysis/retry`, value => parseRetryResult(value, mailId), 'POST');
++  }
++}
+diff --git a/apps/desktop/src/main/f1-ipc.test.ts b/apps/desktop/src/main/f1-ipc.test.ts
+new file mode 100644
+index 0000000..571a996
+--- /dev/null
++++ b/apps/desktop/src/main/f1-ipc.test.ts
+@@ -0,0 +1,46 @@
++// @vitest-environment node
++import { describe, expect, it, vi } from 'vitest';
++import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron';
++import { registerF1IPC } from './f1-ipc';
++import { f1Channels } from '../shared/f1-bridge';
++
++function setup() {
++  const frame = { url: 'file:///app/renderer/index.html#/mail/inbox' };
++  const contents = { mainFrame: frame, isDestroyed: () => false } as unknown as WebContents;
++  const event = { sender: contents, senderFrame: frame } as unknown as IpcMainInvokeEvent;
++  const handlers = new Map<string, (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown>();
++  const ipc = {
++    handle: vi.fn((channel, listener) => handlers.set(channel, listener)),
++    removeHandler: vi.fn(channel => handlers.delete(channel)),
++  } as unknown as Pick<IpcMain, 'handle' | 'removeHandler'>;
++  const client = { batch: vi.fn().mockResolvedValue({ ok: true, data: {} }), retry: vi.fn().mockResolvedValue({ ok: true, data: {} }) };
++  const dispose = registerF1IPC(ipc, contents, 'file:///app/renderer/index.html', client);
++  return { event, handlers, client, dispose, frame };
++}
++
++describe('F1 분석 IPC', () => {
++  it('두 통로만 등록하고 검사한 인수만 전달한다', async () => {
++    const s = setup();
++    expect([...s.handlers.keys()]).toEqual(Object.values(f1Channels));
++    await s.handlers.get(f1Channels.batch)!(s.event, ['mail-1', 'mail-2']);
++    expect(s.client.batch).toHaveBeenCalledWith(['mail-1', 'mail-2']);
++    await s.handlers.get(f1Channels.retry)!(s.event, 'mail-1');
++    expect(s.client.retry).toHaveBeenCalledWith('mail-1');
++    for (const args of [[], [[]], [['../x']], [['a'], 'extra'], ['mail-1']]) {
++      expect(await s.handlers.get(f1Channels.batch)!(s.event, ...args)).toMatchObject({ ok: false, error: { code: 'invalid_request' } });
++    }
++    for (const args of [[], ['../x'], ['a', 'b'], [1]]) {
++      expect(await s.handlers.get(f1Channels.retry)!(s.event, ...args)).toMatchObject({ ok: false, error: { code: 'invalid_request' } });
++    }
++    expect(s.client.batch).toHaveBeenCalledTimes(1);
++    expect(s.client.retry).toHaveBeenCalledTimes(1);
++    s.dispose();
++    expect(s.handlers.size).toBe(0);
++  });
++  it('다른 화면·하위 프레임의 요청은 거절한다', async () => {
++    const s = setup();
++    const outside = { ...s.event, senderFrame: { url: 'https://outside.invalid/' } } as unknown as IpcMainInvokeEvent;
++    expect(await s.handlers.get(f1Channels.batch)!(outside, ['mail-1'])).toMatchObject({ ok: false });
++    expect(s.client.batch).not.toHaveBeenCalled();
++  });
++});
+diff --git a/apps/desktop/src/main/f1-ipc.ts b/apps/desktop/src/main/f1-ipc.ts
+new file mode 100644
+index 0000000..283681c
+--- /dev/null
++++ b/apps/desktop/src/main/f1-ipc.ts
+@@ -0,0 +1,17 @@
++import type { IpcMain, WebContents } from 'electron';
++import { trustedMailSender } from './mail-ipc';
++import { validMailId } from '../shared/mail-read';
++import { analysisFailure, f1Channels, validBatchIds, type F1Bridge } from '../shared/f1-bridge';
++
++/** 신뢰한 화면(main frame)의 요청만, 인수 검사를 통과한 경우에만 서버로 보낸다. */
++export function registerF1IPC(ipc: Pick<IpcMain, 'handle' | 'removeHandler'>, contents: WebContents, rendererURL: string, client: F1Bridge): () => void {
++  ipc.handle(f1Channels.batch, (event, ...args: unknown[]) => {
++    if (!trustedMailSender(event, contents, rendererURL) || args.length !== 1 || !validBatchIds(args[0])) return analysisFailure('invalid_request');
++    return client.batch([...args[0]]);
++  });
++  ipc.handle(f1Channels.retry, (event, ...args: unknown[]) => {
++    if (!trustedMailSender(event, contents, rendererURL) || args.length !== 1 || !validMailId(args[0])) return analysisFailure('invalid_request');
++    return client.retry(args[0]);
++  });
++  return () => Object.values(f1Channels).forEach(channel => ipc.removeHandler(channel));
++}
+diff --git a/apps/desktop/src/main/index.ts b/apps/desktop/src/main/index.ts
+index 8704bcb..8dbc878 100644
+--- a/apps/desktop/src/main/index.ts
++++ b/apps/desktop/src/main/index.ts
+@@ -8,6 +8,8 @@ import { F4APIClient } from './f4-client';
+ import { registerF4IPC } from './f4-ipc';
+ import { F5APIClient } from './f5-client';
+ import { registerF5IPC } from './f5-ipc';
++import { F1APIClient } from './f1-client';
++import { registerF1IPC } from './f1-ipc';
+ import { registerF2IPC } from './f2-ipc';
+ import { localSearchClientFactory, registerSearchIPC } from './search-ipc';
+ 
+@@ -57,7 +59,9 @@ function createOnboardingWindow(): void {
+   const unregisterSearch = registerSearchIPC(ipcMain, window.webContents, rendererURL, localSearchClientFactory(configuration));
+   const unregisterF4 = registerF4IPC(ipcMain, window.webContents, rendererURL, new F4APIClient(configuration));
+   const unregisterF5 = registerF5IPC(ipcMain, window.webContents, rendererURL, new F5APIClient(configuration));
+-  window.once('closed', () => { unregister(); unregisterF2(); unregisterSearch(); unregisterF4(); unregisterF5(); });
++  // F1 분류·요약 표시: 분석 결과 묶음 조회와 실패 다시 시도만 공개한다.
++  const unregisterF1 = registerF1IPC(ipcMain, window.webContents, rendererURL, new F1APIClient(configuration));
++  window.once('closed', () => { unregister(); unregisterF2(); unregisterSearch(); unregisterF4(); unregisterF5(); unregisterF1(); });
+ 
+   if (developmentURL) {
+     void window.loadURL(developmentURL);
+diff --git a/apps/desktop/src/preload/index.ts b/apps/desktop/src/preload/index.ts
+index 90b1737..7cdc221 100644
+--- a/apps/desktop/src/preload/index.ts
++++ b/apps/desktop/src/preload/index.ts
+@@ -3,6 +3,7 @@ import type { MailReadBridge } from '../shared/mail-read';
+ import type { F2Bridge } from '../shared/f2-bridge';
+ import type { F4Bridge } from '../shared/f4-bridge';
+ import type { F5Bridge } from '../shared/f5-bridge';
++import type { F1Bridge } from '../shared/f1-bridge';
+ import type { SearchBridge, SearchMessage } from '../shared/search-bridge';
+ 
+ // 화면에는 필요한 정보와 정해진 통로만 공개한다. Node·파일·임의 IPC 접근은 공개하지 않는다.
+@@ -60,4 +61,9 @@ const suggestions = Object.freeze<F5Bridge>({
+   createTodo: request => ipcRenderer.invoke('klover:suggestions:createTodo', request),
+   updateTodo: (todoId, request) => ipcRenderer.invoke('klover:suggestions:updateTodo', todoId, request),
+ });
+-contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport, suggestions }));
++// F1 분류·요약 표시. 묶음 조회와 실패 다시 시도만 있다. 인수는 main에서 다시 검사한다.
++const analysis = Object.freeze<F1Bridge>({
++  batch: mailIds => ipcRenderer.invoke('klover:analysis:batch', mailIds),
++  retry: mailId => ipcRenderer.invoke('klover:analysis:retry', mailId),
++});
++contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail, f2, search, weeklyReport, suggestions, analysis }));
+diff --git a/apps/desktop/src/renderer/app.tsx b/apps/desktop/src/renderer/app.tsx
+index 9fb33a5..a2b96dd 100644
+--- a/apps/desktop/src/renderer/app.tsx
++++ b/apps/desktop/src/renderer/app.tsx
+@@ -12,6 +12,7 @@ import { WeeklyReportPage } from './features/weekly-report/weekly-report-page';
+ import { createWeeklyReportIPCClient, unavailableWeeklyReportClient } from './features/weekly-report/ipc-client';
+ import { createSuggestionsIPCClient, unavailableSuggestionsClient } from './features/suggestions/ipc-client';
+ import { TodoListPage } from './features/suggestions/todo-list';
++import { createAnalysisIPCClient } from './features/mail-analysis/client';
+ 
+ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchClient?: SearchClient } = {}) {
+   const api = window.klover?.mail;
+@@ -20,6 +21,9 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
+   const searchBridge = window.klover?.search;
+   const weeklyReportBridge = window.klover?.weeklyReport;
+   const suggestionsBridge = window.klover?.suggestions;
++  const analysisBridge = window.klover?.analysis;
++  // F1 통로가 없으면 받은편지함은 AI 표시 없이 미리보기만 보여 준다.
++  const analysis = useMemo(() => analysisBridge ? createAnalysisIPCClient(analysisBridge) : undefined, [analysisBridge]);
+   // F5 통로가 없으면 메일 읽기는 S03 모양 그대로, 할 일 화면은 '준비 중'을 보여 준다.
+   const suggestions = useMemo(() => suggestionsBridge ? createSuggestionsIPCClient(suggestionsBridge) : undefined, [suggestionsBridge]);
+   const weeklyReport = useMemo(() => weeklyReportBridge ? createWeeklyReportIPCClient(weeklyReportBridge) : unavailableWeeklyReportClient, [weeklyReportBridge]);
+@@ -54,7 +58,7 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
+     <HashRouter>
+       <Routes>
+         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
+-        {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} />} />}
++        {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} analysis={analysis} />} />}
+         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
+         {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
+         {session && <Route path="/report/weekly" element={<WeeklyReportPage key={session.account_id} client={weeklyReport} />} />}
+diff --git a/apps/desktop/src/renderer/env.d.ts b/apps/desktop/src/renderer/env.d.ts
+index cadd642..c32e66a 100644
+--- a/apps/desktop/src/renderer/env.d.ts
++++ b/apps/desktop/src/renderer/env.d.ts
+@@ -9,5 +9,6 @@ interface Window {
+     weeklyReport?: import('../shared/f4-bridge').F4Bridge;
+     search?: import('../shared/search-bridge').SearchBridge;
+     suggestions?: import('../shared/f5-bridge').F5Bridge;
++    analysis?: import('../shared/f1-bridge').F1Bridge;
+   }>;
+ }

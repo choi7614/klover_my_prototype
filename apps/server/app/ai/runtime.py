@@ -23,6 +23,15 @@ def _settings(values: Mapping[str, str | None] | None) -> AISettings:
 def load_generation(values: Mapping[str, str | None] | None = None) -> TextGeneration:
     settings = _settings(values)
     if settings.provider == "claude":
+        # 앱에서 저장한 로컬 전용 정책은 환경 변수 기반 CLI에서도 우회하지 않는다.
+        from app.ai.selection import AISettingsStore
+
+        store = AISettingsStore()
+        if (store.directory / "ai-settings.enc").exists() and store.read().get(
+            "mode", "hybrid"
+        ) == "local_only":
+            raise ProvidersNotConfigured("로컬 전용 모드에서는 Claude 호출을 차단합니다.")
+    if settings.provider == "claude":
         from app.ai.claude import ClaudeGeneration
 
         return ClaudeGeneration(settings.claude)

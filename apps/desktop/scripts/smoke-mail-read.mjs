@@ -49,8 +49,8 @@ try {
   await expect(page.getByTestId('mail-text-body')).toContainText('합성 본문 mail-2');
   await expect(page.getByRole('button', { name: '다음 페이지' })).toHaveCount(0);
   const snapshot = await page.evaluate(() => ({ keys: Object.keys(window.klover), methods: Object.keys(window.klover.mail), node: typeof window.require, process: typeof window.process, dom: document.body.textContent }));
-  assert.deepEqual(snapshot.keys, ['platform', 'mail']);
-  assert.deepEqual(snapshot.methods, ['session', 'inbox', 'detail']);
+  assert.deepEqual(snapshot.keys, ['platform', 'ai', 'history', 'mail', 'f2', 'search', 'weeklyReport', 'suggestions', 'analysis']);
+  assert.deepEqual(snapshot.methods, ['session', 'inbox', 'detail', 'sync']);
   assert.equal(snapshot.node, 'undefined');
   assert.equal(snapshot.process, 'undefined');
   assert.equal(snapshot.dom.includes(token), false);

@@ -124,3 +124,39 @@ def test_missing_ai_is_503_or_stream_error_and_never_fake_success():
         frames = [json.loads(line) for line in response.text.splitlines()]
         assert [frame["type"] for frame in frames] == ["error"]
         assert frames[0]["data"]["code"] == "parser_unavailable"
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_request_provider_scope_covers_both_parser_and_answer_and_is_reset(tmp_path, stream):
+    from app.ai.selection import AISettingsStore, AIUpdate, Defaults, SelectedGeneration
+
+    store = AISettingsStore(tmp_path / "ai", values={"OLLAMA_MODEL": "synthetic"})
+    store.update(AIUpdate(mode="hybrid", defaults=Defaults(), external_consent=True))
+    router = SelectedGeneration(store)
+    seen = []
+
+    class Parser(SyntheticParser):
+        async def parse(self, **kwargs):
+            seen.append(("parse", router.provider_for("search")))
+            return await super().parse(**kwargs)
+
+    class Answerer(SyntheticAnswerer):
+        async def answer(self, **kwargs):
+            seen.append(("answer", router.provider_for("search")))
+            return await super().answer(**kwargs)
+
+    with client_for() as client:
+        client.app.state.ai_settings = store
+        client.app.state.search_service.parser = Parser()
+        client.app.state.search_service.answerer = Answerer()
+        headers = {**AUTH, **({"Accept": "application/x-ndjson"} if stream else {})}
+        assert (
+            client.post(
+                "/search", json={"query": "예산", "ai_provider": "claude"}, headers=headers
+            ).status_code
+            == 200
+        )
+        assert seen == [("parse", "claude"), ("answer", "claude")]
+        seen.clear()
+        assert client.post("/search", json={"query": "예산"}, headers=headers).status_code == 200
+        assert seen == [("parse", "ollama"), ("answer", "ollama")]

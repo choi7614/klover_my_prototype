@@ -26,6 +26,35 @@
 
 ---
 
+# F5 AI 스캔 — 현재 상태
+
+## 현재 상태 — 2026-11-24 통합 작업
+
+- 작업: `integrate/local-ai-mail-history` · 작업 도구 없음(제출 완료) · 기준 `origin/develop 5e2b7a7`(PR #38).
+- 과거 메일도 분석 완료 후 기존 로컬 제안 훅에서 처리할 수 있게 소유 계정/날짜 경계를 정비했다. 가져오기·자동 분석·제안만으로 Claude는 호출하지 않는다. Calendar·회신 실행·OS 알림·트레이·S10은 기존 미완료 범위다.
+- 서버 590개(분리 PostgreSQL, skip 0), 앱 185개, 합성 Chromium 4개 통과. Ruff·lint·typecheck·빌드 결과는 [통합 검증 기록](verification-local-ai-history.md)을 따른다.
+- 실제 사용자 DB·Gmail·Ollama·유료 Claude·네이티브 Electron은 미실행이다.
+- 기존 기능 브랜치·키·메일·설정은 보존했다. 코드 `0a357b3`을 커밋·Push하고 [PR #39](https://github.com/choi7614/klover_my_prototype/pull/39)을 develop 대상으로 제출했다. 사용자 develop 병합 승인도 받았다. 최종 병합 이력은 PR 상태를 따른다. main은 별도 승인이다.
+- 다음 할 일: PR 자동 검사 확인 후 승인된 develop 병합, [맥북 업데이트/실기 확인](local-ai-history-run.md). 이미 반영된 과거 공통 패치는 재적용하지 않는다.
+
+<details>
+<summary>PR #38 당시 요약 — 이번 작업 전 기준</summary>
+
+> 2026-11-24 · 실제 기준 `origin/develop f498d27` · PR #37 병합 확인 · 이번 작업은 문서만 수정
+
+## 현재 구현과 남은 일
+
+- 구현·자동 검사 완료: 0005 제안/할 일·승인 경계·S04 패널·할 일 화면·F1 결과 변환과 분석 완료 훅은 연결됨(#20·#28·#32·#34·#37).
+- 남은 일·실환경 제한: 실제 Calendar 전송·회신 제안→초안 실행·OS 알림·트레이·WebSocket·S10은 미구현. Calendar/회신 승인 버튼은 비활성. 실제 로컬 모델 제안 품질은 미검증.
+- 새 설치·평소 실행·업데이트는 [setup.md](setup.md), 공통 확인 수준은 [현황판](progress.md)·[이번 검증](verification-2026-11-24.md)을 따른다.
+- 과거의 '미연결/미커밋/승인 대기'는 아래 당시 기록이다. PR #37과 기존 공통 패치는 이미 병합되어 재적용하지 않는다.
+- 확정된 개발 예정: 기간 선택 과거 메일 가져오기, Claude→로컬 1회 자동 재시도, 로컬 전용 모드. 모두 현재 미구현이며 이번에 코드를 변경하지 않는다.
+
+</details>
+
+<details>
+<summary>이전 기능 브랜치·검사·인수인계 기록 (현재 실행 지시 아님)</summary>
+
 # F5 AI 스캔 — 상태
 
 ## 양식 요약
@@ -36,13 +65,19 @@
 | --- | --- |
 | 브랜치 | `feat/F5-ai-scan` |
 | 작업 도구 | 없음 |
-| 상태 | PR 대기 — F1 결과→F5 제안 변환·생성 단위 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32)) |
+| 상태 | develop 병합 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32), `d9257c0`), F1 분석 완료 지점 연결(F1 패치 05, `integrate/F1-auto-analysis`) — 맥북 실기 확인 남음 |
 | 마지막 구현 커밋 | `06e41f6` — F1 분석 결과로 제안 만들기 |
-| 기준 develop | `2b4cf25` (#31까지 로컬 통합) |
+| 기준 develop | `905398b` |
 | 미커밋 변경 | 없음 (이 현황 갱신도 커밋·Push) |
 | 갱신일 | 2026-11-19 |
 
 ## 현재 상태
+
+### F1 분석 완료 지점 연결 (2026-11-19, Claude, `integrate/F1-auto-analysis`)
+
+- F1 패치 05로 `run_mail_api.py`가 자동 분석 작업자가 ready(로컬 AI)일 때 `AnalysisScanHook`을 분석 완료 지점에 등록한다.
+  새 메일이 분석되면 제안이 자동으로 저장된다(pending, 실행 없음). Claude(외부) 설정이면 분석·제안 모두 하지 않는다.
+- 미실행: 실제 로컬 AI로 새 메일→제안 생성·S04 표시. 맥북에서 확인한다.
 
 ### 이번 단위 (2026-11-19, Claude): F1 분석 결과로 F5 제안 만들기
 
@@ -165,3 +200,5 @@ KLOVER_F5_TEST_DATABASE_URL을 모두 이 DB로 지정했다.
 - 주의: F5 테스트 성공은 실제 Calendar 등록 성공이 아니다. 실행 중 프로세스 종료는 담당자 조정 대상이다.
 - 상세: [계약](F5-ai-scan-contract.md), [최초 분리 개발 기록](F5-ai-scan-report.md),
   [생성 입력/HTTP 계약](f5-contract/openapi.json), [합성 화면](../../apps/desktop/f5-preview/index.html).
+
+</details>

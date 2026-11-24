@@ -1,11 +1,24 @@
 # Klover 문서 지도
 
-사람과 Claude Code가 함께 읽는 기준 문서다. **코드와 문서가 다르면 문서를 먼저 고친 뒤 코드를 맞춘다.**
+현재 기준은 `develop f498d27`(PR #37), 2026-11-24 확인이다. 명세의 목표·과거 기록을 현재 구현으로 소개하지 않는다.
+문서 오류는 실제 코드/PR과 대조해 고치고, 새 개발이 필요한 항목은 계획·통합 요청으로 구분한다.
+
+## 처음 방문한 사람의 순서
+
+1. [루트 README](../README.md): 현재 제공 범위·브랜치·제약
+2. [setup.md](dev/setup.md): **새 설치·평소 실행·종료·업데이트·오류 해결의 단일 기준**
+3. [현황판](dev/progress.md): 구현·실환경 미검증·미구현·확정 예정·보류/장기 목표
+4. [실행 검증](dev/verification-2026-11-24.md) / [통합 전달 사항](dev/integration-followups.md): 근거와 남은 코드 작업
+
+과거 문서/패치의 사용법은 [보관 안내](dev/archive/2026-11-24/README.md)를 먼저 읽는다. 새 설치에 패치를 적용하지 않는다.
+
+- [AI 제공자 선택](dev/ai-provider-selection.md) — 현재 동작·개발 예정·과거 기록 구분
 
 ## product — 무엇을 만드나
 
 | 문서 | 내용 |
 | --- | --- |
+| [features/planned-mail-history-import.md](product/features/planned-mail-history-import.md) | 기간 선택 과거 메일 가져오기 — 확정 개발 예정·미구현 |
 | [overview.md](product/overview.md) | 서비스 개요, 기능 목록, 기능 간 연결, 원칙 |
 | [decisions.md](product/decisions.md) | 결정 사항 로그 |
 | [open-questions.md](product/open-questions.md) | 남은 확인 포인트와 데모 동안의 임시 가정 |
@@ -43,19 +56,19 @@
 | [handoff-prompts.md](dev/handoff-prompts.md) | Codex ↔ Claude 도구 전환용 프롬프트 모음 |
 | [status-template.md](dev/status-template.md) | 기능별 status 문서 양식 |
 | [setup.md](dev/setup.md) | 개발 환경 준비·실행 |
-| [local-database.md](dev/local-database.md) | 맥북 DB 실행·마이그레이션·데이터 유지 확인 |
-| [google-connection.md](dev/google-connection.md) | 맥북 전용 Google 로그인·계정 확인·암호화 저장 |
+| [local-database.md](dev/local-database.md) | DB 참고와 과거 기록. 실행은 setup.md |
+| [google-connection.md](dev/google-connection.md) | Google 연결 참고. 최초 준비/로그인은 setup.md |
 | [gmail-mail-sync.md](dev/gmail-mail-sync.md) | 새 받은 메일 수신·중복 방지 저장·조회·토큰 갱신 |
-| [mail-read-api.md](dev/mail-read-api.md) | 인증된 메일 조회 API·맥북 확인·F0 연결 후 앱 실행 |
+| [mail-read-api.md](dev/mail-read-api.md) | 메일 API 참고. 현재 앱용 명령/토큰 준비는 setup.md |
 | [F0-mail-api-handoff.md](dev/F0-mail-api-handoff.md) | F0 채팅에 그대로 보낼 서버 연결 요청 |
 | [workflow.md](dev/workflow.md) | 1인 개발 채팅 운영, Git 규칙, Codex·Claude 전환 요령 |
 | [F4-weekly-report-plan.md](dev/F4-weekly-report-plan.md) | F4 기반 점검, 작은 작업 단위, 수용 기준 진행 상태 |
-| [F0-mailbox-status.md](dev/F0-mailbox-status.md) | F0 현재 상태·PR #10 대기·다음 할 일 |
-| [F1-analysis-status.md](dev/F1-analysis-status.md) | F1 구현·검사 결과와 남은 연결 |
-| [F2-profile-draft-status.md](dev/F2-profile-draft-status.md) | F2 현재 상태·공통 패치 적용 대기 |
+| [F0-mailbox-status.md](dev/F0-mailbox-status.md) | F0 현재 구현·제약·과거 기록 |
+| [F1-analysis-status.md](dev/F1-analysis-status.md) | F1 분석/표시/훅 연결·남은 UI와 실검증 |
+| [F2-profile-draft-status.md](dev/F2-profile-draft-status.md) | F2 프로필/초안/AI 연결·미리보기 주의 |
 | [F4-weekly-report-status.md](dev/F4-weekly-report-status.md) | F4 현재 상태·다음 단위 |
-| [F5-ai-scan-status.md](dev/F5-ai-scan-status.md) | F5 미착수 |
-| [F3-search-status.md](dev/F3-search-status.md) | F3 구현·서버 등록·검사 결과와 남은 연결 |
+| [F5-ai-scan-status.md](dev/F5-ai-scan-status.md) | F5 제안/할 일/훅 연결·OS/Calendar 미구현 |
+| [F3-search-status.md](dev/F3-search-status.md) | F3 앱/선택 AI 연결·벡터/조건 제한 |
 | [F3-search-handoff.md](dev/F3-search-handoff.md) | F0/F1/F2·공통 서버 연결 계약과 확인 방법 |
 
 ## 기능 정의서 템플릿

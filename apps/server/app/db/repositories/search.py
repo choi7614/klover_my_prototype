@@ -80,8 +80,8 @@ def _scope_query(scope):
             Mail.user_id == scope.user_id,
             Mail.account_id == scope.account_id,
             MailAccount.user_id == scope.user_id,
-            Mail.received_at >= scope.sync_started_at,
-            Mail.received_at >= MailAccount.sync_started_at,
+            or_(Mail.received_at >= scope.sync_started_at, Mail.history_imported.is_(True)),
+            or_(Mail.received_at >= MailAccount.sync_started_at, Mail.history_imported.is_(True)),
             Mail.mailbox.in_(["inbox", "sent", "archive"]),
         )
     )

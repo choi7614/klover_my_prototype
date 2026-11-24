@@ -67,6 +67,10 @@ def test_openapi_describes_only_implemented_api_and_its_response():
     schema = response.json()
     assert set(schema["paths"]) == {
         "/auth/session",
+        "/settings/ai",
+        "/mail-history",
+        "/mail-history/{job_id}/{action}",
+        "/settings/ai/check",
         "/drafts",
         "/drafts/{draft_id}",
         "/drafts/{draft_id}/revise",
@@ -75,6 +79,9 @@ def test_openapi_describes_only_implemented_api_and_its_response():
         "/mails/sync",
         "/mails/{mail_id}",
         "/mails/{mail_id}/category",
+        "/mails/analysis/batch",
+        "/mails/{mail_id}/analysis",
+        "/mails/{mail_id}/analysis/retry",
         "/profile",
         "/profile/preview",
         "/profile/style",
