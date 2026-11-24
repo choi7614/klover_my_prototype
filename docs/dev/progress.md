@@ -1,8 +1,10 @@
 # 개발 현황판
 
-## F4 앱 사용 마무리 검토 (2026-11-25)
+## F4 앱 사용 마무리 제출 (2026-11-25)
 
-- Codex · `feat/F4-weekly-report` · `/workspace/f4-submit` · 최신 develop `7668d94` 로컬 통합. 기존 `565929f` 이력 보존.
+- 제출 완료: `feat/F4-weekly-report` · 작업 도구 없음 · 코드 `1fd848a` 커밋·Push · [PR #43](https://github.com/choi7614/klover_my_prototype/pull/43) develop 대상 열림. 미커밋·미Push 없음. 병합 미실행.
+
+- 작업 도구 없음 · `feat/F4-weekly-report` · `/workspace/f4-submit` · 최신 develop `7668d94` 로컬 통합. 기존 `565929f` 이력 보존.
 - 화면 왕복 편집본 복원·오류 다음 행동·실제 기간 표시 보완. 공통 변경은 `patches/F4/finish/`에만 준비.
 - 사용자 묶음 승인에 따라 기존 F4 브랜치에 develop을 fast-forward로 로컬 통합. 제출 검사 후 커밋·Push·PR 생성 진행. develop/main 병합 금지.
 - 상세: [F4 인수인계와 맥북 절차](F4-app-finish-handoff.md).
