@@ -20,3 +20,12 @@ entities는 projects/orgs/people 배열이며 근거 없는 인물·프로젝트
 evidence_spans는 body_text의 Python 문자열 인덱스 [start,end)와 kind(action/due/event)입니다.
 같은 발신자의 사용자 분류 수정 예시는 분류 판단에 참고하되 원문 근거로 취급하지 마세요.
 빈 배열·null을 사용해 없는 요청·일정을 구별하세요. 입력 메일의 사실을 창작하지 마세요.
+
+필수 항목은 mail_id, category, summary, action_items, needs_reply, priority,
+priority_reason, entities, events, evidence_spans입니다. 필드를 생략하거나 추가하지 마세요.
+entities에는 projects, orgs, people 배열이 모두 필요합니다. action_items 항목은 text와 due,
+events 항목은 title, start, end, location이 필요합니다. 일정의 end와 location을 모르면 null입니다.
+summary에 제목·목록·설명을 덧붙이지 말고 1000자 이내의 한두 줄로 요약하세요.
+근거 인덱스는 바이트 수가 아닌 Python 문자 수이며 공백·줄바꿈도 포함합니다.
+0 <= start < end <= body_text_length를 지키세요. 실제 요청·근거를 임의로 생략하지 마세요.
+repair_instruction이 있으면 해당 형식·검증 오류를 고치되 전체 JSON 객체를 다시 반환하세요.

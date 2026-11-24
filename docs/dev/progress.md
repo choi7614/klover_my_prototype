@@ -1,5 +1,14 @@
 # 개발 현황판
 
+## F1 요약 실패 진단·재요청 보완 진행 (2026-11-25)
+
+- `integrate/F1-summary-diagnostics` · 작업 도구 없음(검사 완료·제출) · 최신 원격 기준 `42b319b`(PR #40 병합 확인).
+- 사용자 집계: done 18 / failed 25, invalid_response 24 / provider_error 1. 사용자 제공 결과이며 DB 직접 접근 없음.
+- 세부 원인은 기존 저장 코드만으로 확인 불가. 고정 세부 사유 로그·사유별 1회 보정·화면 실패 종류 안내 구현.
+- 서버 638/skip 0·앱 192·정적 검사 통과. 실제 모델 개선은 미검증. [검증/맥북 확인 절차](F1-summary-diagnostics.md).
+- 기존 데이터·검증·DB/API 형식을 보존한다. 2026-11-25 사용자 커밋·Push·PR 및 검사 통과 후 develop 병합 승인.
+  최종 상태는 이 변경을 포함하는 PR의 커밋·검사·병합 이력을 따른다. main은 별도 승인이다.
+
 > 갱신: 2026-11-24 · 코드 기준 `origin/develop 5e2b7a7`(PR #38), 통합 코드 `0a357b3`·[PR #39](https://github.com/choi7614/klover_my_prototype/pull/39) 제출 완료 · 갱신 도구: Codex
 
 설치·실행의 기준은 [setup.md](setup.md). 개발 규칙은 [AGENTS.md](../../AGENTS.md).
