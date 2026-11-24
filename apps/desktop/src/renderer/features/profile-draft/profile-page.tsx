@@ -1,5 +1,6 @@
+import { SETTINGS, type SettingsTarget } from '../settings/settings-navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowDown, ArrowUp, GripVertical, User, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Area, Field, Panel, Segmented, Skeleton } from './controls';
 import { EMPTY_STYLE, SECTION_LABELS, problemText, type F2Client, type Preview, type Profile, type ProfileState, type Section } from './contracts';
@@ -7,7 +8,7 @@ import { EMPTY_STYLE, SECTION_LABELS, problemText, type F2Client, type Preview, 
 export interface ProfilePageProps {
   client: F2Client;
   onExit(): void;
-  onNavigate?(target: 'weekly-report' | 'accounts' | 'calendar' | 'notifications' | 'privacy'): void;
+  onNavigate?(target: SettingsTarget | 'home' | 'weekly-report' | 'accounts' | 'notifications'): void;
   confirm?(message: string): boolean | Promise<boolean>;
 }
 
@@ -106,22 +107,21 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
     change('report_sections', order);
   }
 
-  const navigation = [
-    ['weekly-report', '주간 보고'], ['accounts', '메일 계정 연결'], ['calendar', '캘린더 연결'],
-    ['notifications', '알림·시작 프로그램'], ['privacy', '개인정보·학습 데이터'],
-  ] as const;
 
   return <div className="flex h-full min-h-0 bg-background text-foreground" data-testid="profile-page">
     <nav aria-label="설정" className="flex w-[220px] shrink-0 flex-col gap-1 border-r bg-muted p-3">
       <Button variant="secondary" className="mb-3 justify-start" disabled={busy} onClick={() => void leave()}>‹ 받은편지함</Button>
       <span className="px-2 py-2 text-caption text-muted-foreground">설정</span>
-      <div aria-current="page" className="flex h-9 items-center gap-2 rounded-md bg-selected px-3 text-body font-semibold text-selected-foreground"><User className="size-4" />내 프로필·문체</div>
-      {navigation.map(([target, label]) => <button type="button" key={target} disabled={!onNavigate || busy || !['weekly-report', 'calendar', 'privacy'].includes(target)} title={['accounts', 'notifications'].includes(target) ? '준비 중인 설정입니다' : undefined} onClick={() => void leave(target)} className="h-9 rounded-md px-3 text-left text-body text-muted-foreground hover:bg-accent disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-ring">{label}{['accounts', 'notifications'].includes(target) && ' · 준비 중'}</button>)}
+      <button type="button" disabled={!onNavigate || busy} onClick={() => void leave('home')} className="rounded-md px-3 py-2 text-left text-body hover:bg-accent focus-visible:outline-ring">설정 전체</button>
+      {SETTINGS.map(item => item.id === 'profile' ? <div key={item.id} aria-current="page" className="rounded-md bg-selected px-3 py-2 text-body font-semibold text-selected-foreground">{item.label}</div> : <button type="button" key={item.id} disabled={!onNavigate || busy} onClick={() => void leave(item.id)} className="rounded-md px-3 py-2 text-left text-body hover:bg-accent disabled:opacity-40 focus-visible:outline-ring">{item.label}</button>)}
+      <button type="button" disabled={!onNavigate || busy} onClick={() => void leave('weekly-report')} className="rounded-md px-3 py-2 text-left text-body hover:bg-accent focus-visible:outline-ring">주간 보고</button>
+      <button type="button" disabled className="px-3 py-2 text-left text-caption text-muted-foreground">메일 계정 연결 · 준비 중</button>
+      <button type="button" disabled className="px-3 py-2 text-left text-caption text-muted-foreground">알림·시작 프로그램 · 준비 중</button>
     </nav>
     {!draft || !saved ? <div className="flex-1 p-6">{error ? <><p role="alert">{error}</p><Button variant="secondary" onClick={() => setReload(n => n + 1)}>다시 불러오기</Button></> : <Skeleton label="프로필을 불러오고 있어요" />}</div>
       : <form onSubmit={event => void save(event)} className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div data-testid="profile-scroll" className="min-h-0 flex-1 overflow-y-auto">
-        <fieldset disabled={busy} className="grid min-w-0 grid-cols-2 content-start gap-3 px-6 py-4">
+        <fieldset disabled={busy} className="grid min-w-0 grid-cols-1 lg:grid-cols-2 content-start gap-3 px-6 py-4">
           <Panel title="기본 정보">
             <div className="grid grid-cols-2 gap-3"><Field label="이름" required maxLength={100} value={draft.name} onChange={e => change('name', e.target.value)} /><Field label="직급" maxLength={200} value={draft.title} onChange={e => change('title', e.target.value)} /></div>
             <Field label="소속" maxLength={200} value={draft.org} onChange={e => change('org', e.target.value)} />
@@ -141,7 +141,7 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
             <div className="grid grid-cols-2 gap-3"><Field label="첫 인사" maxLength={1000} value={draft.greeting} onChange={e => change('greeting', e.target.value)} /><Field label="마무리" maxLength={1000} value={draft.closing} onChange={e => change('closing', e.target.value)} /></div>
             <Area label="서명" maxLength={2000} rows={2} value={draft.signature} onChange={e => change('signature', e.target.value)} />
           </Panel>
-          <Panel title="◆ 보낸 메일에서 내 문체 학습" className="col-span-2 border-ai-border">
+          <Panel title="◆ 보낸 메일에서 내 문체 학습" className="lg:col-span-2 border-ai-border">
             <div className="flex items-center gap-3 text-caption">
               <span className="flex-1 text-muted-foreground">{`보낸 메일 수집·학습 연결 준비 중 · 기존 분석 기록 ${style.analyzed_count}건`}</span>
               <button type="button" role="switch" aria-checked={draft.style_learning_enabled} aria-label="문체 학습 동의" onClick={() => void toggleLearning()} className="rounded-full border border-input px-3 py-1 text-body focus-visible:ring-2 focus-visible:ring-ring">{draft.style_learning_enabled ? '동의 켬' : '동의 끔'}</button>

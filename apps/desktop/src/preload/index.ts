@@ -68,6 +68,7 @@ const suggestions = Object.freeze<F5Bridge>({
 });
 // F1 분류·요약 표시. 묶음 조회와 실패 다시 시도만 있다. 인수는 main에서 다시 검사한다.
 const analysis = Object.freeze<F1Bridge>({
+  setCategory: (mailId, category) => ipcRenderer.invoke('klover:analysis:setCategory', mailId, category),
   batch: mailIds => ipcRenderer.invoke('klover:analysis:batch', mailIds),
   retry: mailId => ipcRenderer.invoke('klover:analysis:retry', mailId),
 });

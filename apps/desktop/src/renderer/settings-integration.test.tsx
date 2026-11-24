@@ -39,3 +39,30 @@ it.each(['/settings/privacy', '/settings/calendar'])('연결 확인 없이 %s �
   await screen.findByRole('heading', { name: 'Gmail 계정 연결' });
   expect(window.location.hash).toBe('#/onboarding/1');
 });
+
+it('설정 첫 화면에서 다섯 설정을 찾고 공통 메뉴에서 현재 위치를 확인한다', async () => {
+  connected();
+  window.location.hash = '/settings';
+  render(<App f2Client={new SyntheticF2Client()} />);
+  await screen.findByRole('heading', { name: /^설정$/ });
+  for (const path of ['/settings/profile', '/settings/ai', '/settings/calendar', '/settings/mail-history', '/settings/privacy']) {
+    expect(document.querySelector(`main a[href="#${path}"]`)).toBeInTheDocument();
+  }
+  fireEvent.click(document.querySelector('main a[href="#/settings/profile"]')!);
+  await screen.findByDisplayValue('홍길동');
+  fireEvent.click(screen.getByRole('button', { name: '설정 전체' }));
+  await screen.findByRole('heading', { name: /^설정$/ });
+});
+it('프로필 편집 중 다른 설정 이동을 취소하면 편집값이 보존된다', async () => {
+  connected();
+  const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  window.location.hash = '/settings/profile';
+  render(<App f2Client={new SyntheticF2Client()} />);
+  await screen.findByDisplayValue('홍길동');
+  fireEvent.change(screen.getByLabelText('이름'), { target: { value: '저장 전 이름' } });
+  fireEvent.click(screen.getByRole('button', { name: 'AI 설정' }));
+  expect(confirmation).toHaveBeenCalled();
+  expect(window.location.hash).toBe('#/settings/profile');
+  expect(screen.getByLabelText('이름')).toHaveValue('저장 전 이름');
+  confirmation.mockRestore();
+});

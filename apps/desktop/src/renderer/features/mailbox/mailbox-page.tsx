@@ -50,7 +50,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
   const canSync = typeof api.sync === 'function';
   // F1: 목록에 보이는 메일과 선택한 메일의 분류·요약. 근거 메일은 mail_id로만 연결한다.
   const analysisIds = useMemo(() => [...mails.map(mail => mail.mail_id), ...(selected ? [selected] : [])], [mails, selected]);
-  const { views, state: analysisState, retry: retryAnalysis, retryNotice } = useMailAnalysis(analysis, analysisIds);
+  const { setCategory, views, state: analysisState, retry: retryAnalysis, retryNotice } = useMailAnalysis(analysis, analysisIds);
 
   const loadList = useCallback(async (nextCursor: string | null = null) => {
     if (busy.current) return;
@@ -170,7 +170,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
           <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능</p>
           <a href="#/todos" className="mt-1 flex h-[34px] items-center gap-2 rounded-md px-3 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><SquareCheck className="size-4" aria-hidden="true" />할 일</a>
           <a href="#/report/weekly" className="mt-auto rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring">주간 보고</a>
-          <a href="#/settings/profile" className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
+          <a href="#/settings" className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
         </aside>
         <section className="flex w-[360px] shrink-0 flex-col border-r max-[1280px]:w-[320px]" aria-label="받은 메일 목록">
           <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
@@ -212,7 +212,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
           {detail && (() => {
             // F1 AI 요약 박스: 이 메일(mail_id)의 분석 결과만 붙인다.
             const aiBox = analysis
-              ? <AiSummaryBox view={views[detail.mail_id]} state={analysisState} onRetry={id => void retryAnalysis(id)} retryNotice={retryNotice} />
+              ? <AiSummaryBox view={views[detail.mail_id]} state={analysisState} onRetry={id => void retryAnalysis(id)} retryNotice={retryNotice} onCategoryChange={setCategory} />
               : null;
             return suggestions
               // F5: 제안이 있는 메일만 S04(본문 + 제안 패널)로, 없으면 아래 S03 모양 그대로 보여 준다.

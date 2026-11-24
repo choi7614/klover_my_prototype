@@ -329,3 +329,9 @@ corepack pnpm --filter desktop test:e2e
 Playwright Electron 검사는 OS sandbox를 끄므로 OS sandbox 안전성 검증이 아니다. 현재 두 smoke 스크립트에는 옛 IPC/버튼 기대값이 남아 있어 통합 수정·재검증이 필요하다. 이번 환경은 Electron SUID sandbox 오류로 정상 창이 미검증이며 sandbox를 끄는 사용자 우회는 권장하지 않는다. [근거와 전달 사항](integration-followups.md)을 본다.
 `pnpm gen:api-types`는 생성 파일을 쓰는 개발 명령으로 설치·이번 문서 작업에는 필요하지 않다.
 [과거 기록](archive/2026-11-24/README.md)의 개인 경로·과거 명령은 현재 실행 지시로 쓰지 않는다.
+
+## 분류 변경·설정 메뉴 보완 (작업 브랜치)
+
+해당 변경이 포함된 버전에서는 받은편지함의 설정이 설정 첫 화면(`/settings`)으로 이어진다.
+분석 완료 메일은 본문의 메일 분류 선택으로 변경할 수 있다. 새 DB 이력은 없다.
+현재 승인/검증 상태와 확인 절차는 [분류·설정 UI](category-settings-ui.md)를 따른다.

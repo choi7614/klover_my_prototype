@@ -8,7 +8,7 @@ import type { F2Client } from './contracts';
 export function F2ProfileRoute({ client, mailboxPath }: { client: F2Client; mailboxPath: string }) {
   const navigate = useNavigate();
   return <ProfilePage client={client} onExit={() => void navigate(mailboxPath)} onNavigate={target => {
-    const paths = { 'weekly-report': '/report/weekly', privacy: '/settings/privacy', calendar: '/settings/calendar' };
+    const paths = { home: '/settings', ai: '/settings/ai', history: '/settings/mail-history', profile: '/settings/profile', 'weekly-report': '/report/weekly', privacy: '/settings/privacy', calendar: '/settings/calendar' };
     if (target in paths) void navigate(paths[target as keyof typeof paths]);
   }} />;
 }

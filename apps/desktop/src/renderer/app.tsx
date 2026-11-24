@@ -1,3 +1,4 @@
+import { SettingsFrame, SettingsHome } from './features/settings/settings-navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { HistoryPage } from './features/mailbox/history-page';
 import { AISettingsPage } from './features/ai-settings/ai-settings-page';
@@ -60,15 +61,16 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
   return (
     <HashRouter>
       <Routes>
-        {session && <Route path="/settings/mail-history" element={<HistoryPage />} />}
-        {session && <Route path="/settings/ai" element={<AISettingsPage />} />}
+        {session && <Route path="/settings" element={<SettingsHome />} />}
+        {session && <Route path="/settings/mail-history" element={<SettingsFrame current="history"><HistoryPage /></SettingsFrame>} />}
+        {session && <Route path="/settings/ai" element={<SettingsFrame current="ai"><AISettingsPage /></SettingsFrame>} />}
         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
         {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} analysis={analysis} />} />}
         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
-        {session && suggestions?.calendar && <Route path="/settings/calendar" element={<main className="mx-auto max-w-3xl p-6"><nav className="mb-4 flex gap-4"><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필 설정</a></nav><CalendarConnectionPanel key={JSON.stringify([session.user_id, session.account_id])} client={suggestions.calendar} /></main>} />}
+        {session && suggestions?.calendar && <Route path="/settings/calendar" element={<SettingsFrame current="calendar"><main className="mx-auto max-w-3xl p-6"><CalendarConnectionPanel key={JSON.stringify([session.user_id, session.account_id])} client={suggestions.calendar} /></main></SettingsFrame>} />}
         {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
         {session && <Route path="/report/weekly" element={<WeeklyReportPage autoGenerate={false} draftScope={JSON.stringify([session.user_id, session.account_id])} key={JSON.stringify([session.user_id, session.account_id])} client={weeklyReport} />} />}
-        {session && <Route path="/settings/privacy" element={<F2PrivacyRoute key={JSON.stringify([session.user_id, session.account_id])} client={f2} />} />}
+        {session && <Route path="/settings/privacy" element={<SettingsFrame current="privacy"><F2PrivacyRoute key={JSON.stringify([session.user_id, session.account_id])} client={f2} /></SettingsFrame>} />}
         {session && <Route path="/settings/profile" element={<F2ProfileRoute key={JSON.stringify([session.user_id, session.account_id])} client={f2} mailboxPath={mailboxPath} />} />}
         <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2} mailboxPath={mailboxPath} />} />
         <Route path="*" element={<Navigate to={session ? '/mail/inbox' : '/onboarding/1'} replace />} />

@@ -188,6 +188,7 @@ describe('F1 통로 계약', () => {
 
   it('IPC 결과를 화면 오류로 바꾼다', async () => {
     const ipc = createAnalysisIPCClient({
+      setCategory: vi.fn(),
       batch: vi.fn().mockResolvedValue(analysisFailure('connection')),
       retry: vi.fn().mockRejectedValue(new Error('boom')),
     });
@@ -201,4 +202,46 @@ describe('F1 통로 계약', () => {
     expect(firstSentence('첫 문장입니다. 둘째 문장.')).toBe('첫 문장입니다.');
     expect(firstSentence('마침표 없는 요약')).toBe('마침표 없는 요약');
   });
+});
+
+it('분류 저장 성공 후 목록/본문을 갱신하고 실패 시 기존 분류와 원문을 유지한다', async () => {
+  let category: MailAnalysisView['category'] = 'work_request';
+  const analysis = {
+    ...client([]),
+    batch: vi.fn(async () => ({ items: [done('mail-1', { category })], auto_analysis: 'ready' as const })),
+    setCategory: vi.fn(async (id: string, next: import('../../../shared/f1-bridge').AnalysisCategory) => {
+      category = next;
+      return { mail_id: id, user_label: next, effective_category: next };
+    }),
+  };
+  render(<MailboxPage api={api(['mail-1'])} session={session} onDisconnected={vi.fn()} analysis={analysis} />);
+  const first = await row('mail-1'); fireEvent.click(first);
+  const select = await screen.findByRole('combobox', { name: '메일 분류' });
+  fireEvent.change(select, { target: { value: 'notice' } });
+  await screen.findByText(/분류를 저장했어요/);
+  expect(select).toHaveValue('notice');
+  expect(within(first).getByText('공지')).toBeInTheDocument();
+  analysis.setCategory.mockRejectedValueOnce(new Error('private-provider-error'));
+  fireEvent.change(select, { target: { value: 'external' } });
+  expect(await screen.findByRole('alert')).toHaveTextContent('분류를 저장하지 못했어요');
+  expect(select).toHaveValue('notice');
+  expect(screen.getByTestId('mail-text-body')).toHaveTextContent('합성 본문 mail-1');
+  expect(screen.queryByText('private-provider-error')).not.toBeInTheDocument();
+});
+it('분류 저장 중에는 중복 요청을 막고 응답이 와도 다른 메일 선택을 바꾸지 않는다', async () => {
+  let finish: () => void = () => {};
+  const analysis = { ...client([done('mail-1'), done('mail-2')]), setCategory: vi.fn(() => new Promise<import('../../../shared/f1-bridge').CategoryUpdated>(resolve => {
+    finish = () => resolve({ mail_id: 'mail-1', user_label: 'notice', effective_category: 'notice' });
+  })) };
+  render(<MailboxPage api={api()} session={session} onDisconnected={vi.fn()} analysis={analysis} />);
+  fireEvent.click(await row('mail-1'));
+  const select = await screen.findByRole('combobox', { name: '메일 분류' });
+  fireEvent.change(select, { target: { value: 'notice' } });
+  expect(select).toBeDisabled();
+  fireEvent.change(select, { target: { value: 'external' } });
+  expect(analysis.setCategory).toHaveBeenCalledTimes(1);
+  fireEvent.click(await row('mail-2'));
+  await act(async () => { finish(); });
+  expect(screen.getByTestId('mail-text-body')).toHaveTextContent('합성 본문 mail-2');
+  expect(screen.getByRole('combobox', { name: '메일 분류' })).toHaveValue('work_request');
 });

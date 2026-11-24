@@ -79,3 +79,22 @@ describe('main 전용 F1 분석 API', () => {
     expect(await new F1APIClient({ baseURL: 'http://127.0.0.1:9', tokenFile: file }).batch(['mail-1'])).toMatchObject({ ok: false, error: { code: 'connection' } });
   });
 });
+
+it('분류 변경은 검증된 PATCH 본문만 전송하고 잘못된 응답을 거절한다', async () => {
+  const seen: string[] = [];
+  let bad = false;
+  const base = await listen((req, res) => {
+    let text = ''; req.on('data', data => { text += data; }); req.on('end', () => {
+      seen.push(`${req.method} ${req.url} ${text}`);
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ mail_id: bad ? 'other' : 'mail-1', user_label: 'notice', effective_category: 'notice', token: 'private' }));
+    });
+  });
+  const api = new F1APIClient({ baseURL: base, tokenFile: file });
+  expect(await api.setCategory('mail-1', 'notice')).toEqual({ ok: true, data: { mail_id: 'mail-1', user_label: 'notice', effective_category: 'notice' } });
+  expect(seen).toEqual(['PATCH /mails/mail-1/category {"category":"notice"}']);
+  bad = true;
+  expect(await api.setCategory('mail-1', 'notice')).toMatchObject({ ok: false, error: { code: 'invalid_response' } });
+  expect(await api.setCategory('../x', 'notice')).toMatchObject({ ok: false });
+  expect(seen).toHaveLength(2);
+});

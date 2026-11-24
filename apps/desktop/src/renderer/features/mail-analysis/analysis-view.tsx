@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from 'react';
+import { AnalysisClientError } from './client';
 import { cn } from '@/lib/utils';
-import type { AutoAnalysisState, MailAnalysisView } from '../../../shared/f1-bridge';
+import type { AnalysisCategory, AutoAnalysisState, MailAnalysisView } from '../../../shared/f1-bridge';
 import { CATEGORIES, PRIORITY_LABELS, STATUS_TAGS, TAG_BASE } from './categories';
 import type { RetryNotice } from './use-mail-analysis';
 
@@ -84,7 +86,8 @@ export function MailAnalysisLine({ view, state, preview }: { view?: MailAnalysis
 }
 
 /** S03 AI 요약 박스와 분류 줄. 대기·실패 상태도 같은 자리에 보여 준다. 원문은 박스 아래에 그대로 있다. */
-export function AiSummaryBox({ view, state, onRetry, retryNotice }: {
+export function AiSummaryBox({ view, state, onRetry, retryNotice, onCategoryChange }: {
+  onCategoryChange?: (mailId: string, category: AnalysisCategory) => Promise<void>;
   view?: MailAnalysisView; state: AutoAnalysisState | null; onRetry: (mailId: string) => void; retryNotice: RetryNotice | null;
 }) {
   if (!view) return null;
@@ -126,6 +129,31 @@ export function AiSummaryBox({ view, state, onRetry, retryNotice }: {
         {view.priority && <span><span className="text-muted-foreground">우선순위 </span><strong>{PRIORITY_LABELS[view.priority]}</strong>{view.priority_reason && <span className="text-muted-foreground"> · {view.priority_reason}</span>}</span>}
       </p>}
     </section>
-    {view.category && <p className="mt-2 flex items-center gap-2 text-caption text-muted-foreground">분류 <CategoryTag category={view.category} /></p>}
+    {view.category && (onCategoryChange ? <CategoryControl key={view.mail_id} view={view} onChange={onCategoryChange} /> : <p className="mt-2 flex items-center gap-2 text-caption text-muted-foreground">분류 <CategoryTag category={view.category} /></p>)}
+  </div>;
+}
+
+function CategoryControl({ view, onChange }: { view: MailAnalysisView; onChange: (id: string, category: AnalysisCategory) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const active = useRef(true);
+  const inFlight = useRef(false);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
+  async function change(category: AnalysisCategory) {
+    if (inFlight.current || category === view.category) return;
+    inFlight.current = true; setBusy(true); setNotice(''); setError('');
+    try { await onChange(view.mail_id, category); if (active.current) setNotice('분류를 저장했어요. 같은 발신자의 다음 분석에 참고합니다.'); }
+    catch (error) { if (active.current) setError(error instanceof AnalysisClientError ? error.message : '분류를 저장하지 못했어요. 현재 분류를 다시 확인한 뒤 시도해 주세요.'); }
+    finally { inFlight.current = false; if (active.current) setBusy(false); }
+  }
+  return <div className="mt-3 space-y-1 text-caption">
+    <label className="flex flex-wrap items-center gap-2">메일 분류
+      <select aria-label="메일 분류" value={view.category ?? ''} disabled={busy} onChange={e => void change(e.target.value as AnalysisCategory)} className="h-9 rounded-md border border-input bg-background px-3 text-body text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
+        {Object.entries(CATEGORIES).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}
+      </select><span className="text-muted-foreground">{busy ? '저장 중…' : '분류가 다르면 변경해 주세요.'}</span>
+    </label>
+    {notice && <p role="status" className="text-muted-foreground">{notice}</p>}
+    {error && <p role="alert" className="text-danger">{error}</p>}
   </div>;
 }

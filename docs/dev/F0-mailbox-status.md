@@ -1,5 +1,13 @@
 # F0 첫 실행·메일함 — 현재 상태
 
+## 최신 작업 — 2026-11-25 분류·설정 UI
+
+- `integrate/category-settings-ui` · 작업 도구 없음(검사 완료·제출) · 기준 `0fa3dd9`(#45).
+- 기존 분류 PATCH API의 앱 연결과 설정 첫 화면/공통 이동을 구현했다. 서버/DB 변경 없음.
+- 앱214·브라우저8·분리DB 분류API7(skip0), 정적 검사/빌드 통과. 사용자 커밋·Push·PR 및 검사 통과 후 develop 병합 승인. 최종 제출/병합 상태는 해당 PR 이력을 따른다. [검증·맥북 절차](category-settings-ui.md).
+- 아래 기록은 각 작업 당시 상태다. 실제 모델·맥북 동작은 별도 확인이 필요하다.
+
+
 ## 현재 상태 — 2026-11-24 통합 작업
 
 - 작업: `integrate/local-ai-mail-history` · 작업 도구 없음(제출 완료) · 기준 `origin/develop 5e2b7a7`(PR #38).
