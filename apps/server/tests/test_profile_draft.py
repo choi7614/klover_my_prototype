@@ -236,7 +236,9 @@ def test_consent_disable_delete_and_exclusions(repository):
         assert save_profile(client, profile=excluded, version=1).status_code == 200
         assert client.get("/profile/style", headers=HEADERS).json()["phrases"] == ["검토하겠습니다"]
         assert save_profile(client, version=2).status_code == 200
-        assert client.get("/profile/style", headers=HEADERS).json()["phrases"] == []
+        assert client.get("/profile/style", headers=HEADERS).json()["status"] == "disabled"
+        assert client.get("/profile/style", headers=HEADERS).json()["analyzed_count"] == 10
+        assert repository.style(user_id="user-a").phrases == ()
         with Session(repository.engine) as session:
             assert session.get(StyleRecord, "user-a") is not None
         deleted = client.delete("/profile/style", headers=HEADERS)
@@ -554,3 +556,51 @@ def test_shared_output_diagnostic_reaches_http_without_changing_saved_data(
         assert client.get("/profile", headers=HEADERS).json() == profile
         with Session(repository.engine) as session:
             assert len(list(session.scalars(select(DraftRecord)))) == 1
+
+
+def test_privacy_delete_isolated_and_preserves_profile_and_draft(repository):
+    enabled = PROFILE.model_copy(
+        update={"style_learning_enabled": True, "excluded_phrases": ("합성 제외",)}
+    )
+    repository.save_profile(
+        user_id="user-b",
+        request=ProfileUpdate(profile=enabled, expected_version=0, consent_given=True),
+    )
+    with Session(repository.engine) as session, session.begin():
+        for owner in ("user-a", "user-b"):
+            session.add(
+                StyleRecord(
+                    user_id=owner,
+                    payload=StyleState(
+                        enabled=True,
+                        status="ready",
+                        analyzed_count=10,
+                        phrases=("합성 표현",),
+                        traits=("결론 먼저",),
+                    ).model_dump(mode="json"),
+                )
+            )
+    with client_for(repository, ai=SyntheticAI()) as client:
+        assert save_profile(client, profile=enabled, consent=True).status_code == 200
+        draft = client.post("/drafts", headers=HEADERS, json={"mail_id": "original"})
+        assert draft.status_code == 201
+        before = client.get("/profile", headers=HEADERS).json()
+        deleted = client.delete("/profile/style", headers=HEADERS)
+        assert deleted.status_code == 200
+        after = client.get("/profile", headers=HEADERS).json()
+        assert after == deleted.json()
+        assert after["profile"] == {
+            **before["profile"],
+            "style_learning_enabled": False,
+            "excluded_phrases": [],
+        }
+        assert client.get("/profile/style", headers=HEADERS).json() == StyleState().model_dump(
+            mode="json"
+        )
+        assert (
+            client.get(f"/drafts/{draft.json()['draft_id']}", headers=HEADERS).json()
+            == draft.json()
+        )
+        assert repository.profile(user_id="user-b").profile == enabled
+        assert repository.style(user_id="user-b").analyzed_count == 10
+        assert client.delete("/profile/style", headers=HEADERS).status_code == 200
