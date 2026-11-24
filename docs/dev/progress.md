@@ -86,8 +86,8 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 
 ## F5 Calendar 연결·승인 준비 (2026-11-25)
 
-- 작업 도구 Codex · 브랜치 feat/F5-ai-scan · 구현 커밋 `7634286`.
+- 작업 도구 없음(제출 완료) · 브랜치 feat/F5-ai-scan · 구현 `7634286`·통합 `f5046d7`·검사 제출 `b5071c9`, [PR #44](https://github.com/choi7614/klover_my_prototype/pull/44). 문서 제출 커밋도 Push한다.
 - 사용자 승인으로 origin/develop `7668d94`를 기능 브랜치에 로컬 통합했다(`f5046d7`). 공통 Calendar 패치는 적용하지 않는다. develop/main 병합 승인은 없다.
 - 제출 브랜치 자체 서버 650/skip4(공통 OAuth·0009 미적용), 앱195·정적 검사 통과.
 - 최신 develop 사본 + 공통 변경안: 서버 654/skip0·앱195, Ruff/lint/typecheck/생산 빌드·패치 재구성 검사 통과. 실제 Google/맥북/사용자 DB 미검증.
-- 공통 패치 `patches/F5/calendar/03~08`은 미적용. PR 제출 후 통합 채팅에서 적용·재검증이 필요하다. [F5 status](F5-ai-scan-status.md) · [인수인계](F5-calendar-handoff.md).
+- 공통 패치 `patches/F5/calendar/03~08`은 미적용. PR #44 제출 완료. 통합 채팅에서 적용·재검증이 필요하다. [F5 status](F5-ai-scan-status.md) · [인수인계](F5-calendar-handoff.md).
