@@ -1,0 +1,111 @@
+diff --git a/apps/server/app/api/google_connection.py b/apps/server/app/api/google_connection.py
+index 54c36d2..f417758 100644
+--- a/apps/server/app/api/google_connection.py
++++ b/apps/server/app/api/google_connection.py
+@@ -47,7 +47,9 @@ def is_local(request: Request) -> bool:
+         return False
+ 
+ 
+-def create_google_app(settings, connector, repository) -> FastAPI:
++def create_google_app(
++    settings, connector, repository, *, start_url=authorization_url, message=None
++) -> FastAPI:
+     application = create_app()
+     attempts = LoginAttempts()
+ 
+@@ -62,7 +64,11 @@ def create_google_app(settings, connector, repository) -> FastAPI:
+             '<button type="submit">Google 계정 연결</button></form>'
+         )
+         response = page(
+-            "테스트 Gmail 계정의 읽기 권한을 요청합니다. 메일 수신·발송은 아직 실행하지 않습니다.",
++            message
++            or (
++                "테스트 Gmail 계정의 읽기 권한을 요청합니다. "
++                "메일 수신·발송은 아직 실행하지 않습니다."
++            ),
+             form=form,
+         )
+         # no-referrer는 폼 POST의 Origin도 null로 만들어 정상 출처 검증을 막는다.
+@@ -107,7 +113,7 @@ def create_google_app(settings, connector, repository) -> FastAPI:
+         except (ValueError, UnicodeError):
+             return page("연결 요청이 만료됐습니다. 처음 화면에서 다시 시작하세요.", 400)
+         return RedirectResponse(
+-            authorization_url(settings, state, verifier), status_code=303, headers=HEADERS
++            start_url(settings, state, verifier), status_code=303, headers=HEADERS
+         )
+ 
+     @application.get(PATH + "/callback", response_class=HTMLResponse, tags=["로컬 Google 연결"])
+diff --git a/apps/server/app/connectors/gmail_mail.py b/apps/server/app/connectors/gmail_mail.py
+index f0cc43e..e170eb1 100644
+--- a/apps/server/app/connectors/gmail_mail.py
++++ b/apps/server/app/connectors/gmail_mail.py
+@@ -96,14 +96,14 @@ class GmailMailClient:
+                 or type(expires) is not int
+                 or not 0 < expires <= 86400
+                 or not isinstance(scope, str)
+-                or set(scope.split()) != {GMAIL_SCOPE}
++                or GMAIL_SCOPE not in set(scope.split())
+                 or payload.get("token_type", "").lower() != "bearer"
+             ):
+                 raise ValueError
+             return {
+                 "access_token": access,
+                 "refresh_token": refresh,
+-                "scope": GMAIL_SCOPE,
++                "scope": scope,
+                 "expires_at": (datetime.now(UTC) + timedelta(seconds=expires)).isoformat(),
+             }
+         except (httpx.HTTPError, ValueError, TypeError, KeyError, AttributeError):
+diff --git a/apps/server/app/connectors/google_oauth.py b/apps/server/app/connectors/google_oauth.py
+index 17c3b55..4a5da0b 100644
+--- a/apps/server/app/connectors/google_oauth.py
++++ b/apps/server/app/connectors/google_oauth.py
+@@ -55,14 +55,15 @@ def _hash(value: str) -> str:
+     return hashlib.sha256(value.encode()).hexdigest()
+ 
+ 
+-def authorization_url(settings: GoogleSettings, state: str, verifier: str) -> str:
++def authorization_url(settings: GoogleSettings, state: str, verifier: str, *, scopes=None) -> str:
+     challenge = urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip("=")
+     return "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(
+         {
+             "client_id": settings.client_id,
+             "redirect_uri": REDIRECT_URI,
+             "response_type": "code",
+-            "scope": GMAIL_SCOPE,
++            "scope": " ".join(sorted(scopes)) if scopes else GMAIL_SCOPE,
++            **({"include_granted_scopes": "true"} if scopes else {}),
+             "state": state,
+             "code_challenge": challenge,
+             "code_challenge_method": "S256",
+@@ -74,7 +75,8 @@ def authorization_url(settings: GoogleSettings, state: str, verifier: str) -> st
+ 
+ 
+ class GoogleOAuthClient:
+-    def __init__(self, settings: GoogleSettings, transport=None):
++    def __init__(self, settings: GoogleSettings, transport=None, *, scopes=None):
++        self.scopes = frozenset(scopes) if scopes else frozenset({GMAIL_SCOPE})
+         self.settings = settings
+         self.transport = transport
+ 
+@@ -104,7 +106,10 @@ class GoogleOAuthClient:
+                     raise ValueError
+                 if tokens.get("token_type", "").lower() != "bearer":
+                     raise ValueError
+-                if set(tokens.get("scope", "").split()) != {GMAIL_SCOPE}:
++                if not self.scopes <= set(tokens.get("scope", "").split()) or (
++                    self.scopes == {GMAIL_SCOPE}
++                    and set(tokens.get("scope", "").split()) != {GMAIL_SCOPE}
++                ):
+                     raise ValueError
+                 expires = tokens["expires_in"]
+                 if type(expires) is not int or not 0 < expires <= 86400:
+@@ -129,7 +134,7 @@ class GoogleOAuthClient:
+                 safe_tokens = {
+                     "access_token": access,
+                     "refresh_token": refresh,
+-                    "scope": GMAIL_SCOPE,
++                    "scope": tokens["scope"],
+                     "expires_in": expires,
+                 }
+                 json.dumps(safe_tokens)

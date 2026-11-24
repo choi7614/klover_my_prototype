@@ -147,7 +147,7 @@ def register_f5_api(application, service=None):
     async def private_f5_responses(request, call_next):
         private = any(
             request.url.path == prefix or request.url.path.startswith(prefix + "/")
-            for prefix in ("/suggestions", "/todos", "/suggestion-events")
+            for prefix in ("/suggestions", "/todos", "/suggestion-events", "/calendar")
         )
         if not private:
             return await call_next(request)

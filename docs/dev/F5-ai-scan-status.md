@@ -1,3 +1,32 @@
+# F5 Calendar 추가 동의·일정 승인 — 2026-11-25
+
+- 도구: 없음(제출 완료) · 브랜치 `feat/F5-ai-scan` · 구현 `7634286` · 최신 develop 로컬 통합 `f5046d7`.
+- 상태: 구현/합성 검사 완료. 사용자 승인으로 최신 develop `7668d94`를 기능 브랜치에 통합했다. 구현·통합 커밋 Push 완료, [PR #44](https://github.com/choi7614/klover_my_prototype/pull/44) 제출. 구현/검사 제출 커밋 `b5071c9`. 공통 패치는 미적용이며 develop/main 병합은 승인 범위 밖이다. 이 제출 기록의 문서 커밋도 Push하며 최종 HEAD·자동 검사 결과는 PR에서 확인한다.
+- 기능: 계정/소유 캘린더 표시·추가 OAuth 동의·별도 암호화 Calendar 자격 증명/갱신/해제·수정 후 명시적 승인·겹침 조회·고정 event ID·중복/동시 승인/시간 초과 재시도.
+- 기존 Gmail 자격 증명·계정·메일을 보존한다. 생성/분석은 등록을 호출하지 않는다. 초대/메일/OS 알림/트레이/양방향 동기화는 제외다.
+- 공통 미적용 패치: `patches/F5/calendar/03~08` (OAuth·0009·서버·main/preload·설정·생성 타입). 예약 `0009_f5_calendar`, 부모 `0008_history`.
+- 전체 파일 지도·검사·맥북 확인·통합 전달문: [F5-calendar-handoff.md](F5-calendar-handoff.md).
+- 실제 Google Calendar/Gmail·사용자 DB·유료 AI·네이티브 Electron은 미실행/미검증.
+
+## 이번 Calendar 검사 결과
+
+| 검사 | 결과 |
+| --- | --- |
+| 제출 브랜치 (공통 Calendar 패치 미적용) | 서버 **650 통과 / skip 4** (OAuth 확장 3·0009 이력 1, 패치 적용 사본에서 모두 검사) |
+| 최신 develop + 기능 파일 + 공통 변경안, 분리 PostgreSQL/pgvector | 서버 **654 통과 / skip 0** |
+| 같은 사본 앱 전체 | **195 통과**, lint/typecheck 통과 |
+| 서버 Ruff check/format | 통과 (196개 파일) |
+| Electron 생산 빌드 | 통과, 실제 창 미실행 |
+| 기존 S04 Chromium 합성 화면 | 2 통과, 심볼릭 링크 폰트 일부 차단으로 글꼴 품질 미확인 |
+| 패치 03~08 재구성/해시/git apply --check | 통과 (`scripts/f5/verify_calendar_patches.py`) |
+| 실제 계정/Google Calendar/사용자 DB/AI | 미실행·미검증 |
+
+서버 검사는 실제 운영 등록 성공을 의미하지 않는다. MockTransport와 일회용 테스트 DB에서만 승인 영수증을 검사했다.
+
+아래 기록은 이전 단위 당시 상태다. F1 변환/완료 훅·F0 S04는 이미 develop에 연결되어 있다(#32/#34). 이번 Calendar 변경은 위 상태를 따른다.
+
+---
+
 # F5 AI 스캔 — 현재 상태
 
 ## 현재 상태 — 2026-11-24 통합 작업

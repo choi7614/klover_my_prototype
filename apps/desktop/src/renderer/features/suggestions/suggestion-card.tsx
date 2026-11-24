@@ -5,14 +5,14 @@ import type { CalendarOption, CalendarPayload, ConflictResult, Suggestion, Sugge
 
 const inputClass = 'h-9 min-w-0 w-full rounded-md border border-input bg-background px-2 text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40';
 
-function localSeoul(value: string) {
+function localSeoul(value: string, offset = 540) {
   const stamp = new Date(value);
   if (!Number.isFinite(stamp.getTime())) return '';
-  return new Date(stamp.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 16);
+  return new Date(stamp.getTime() + offset * 60 * 1000).toISOString().slice(0, 16);
 }
 
-function fromSeoul(value: string) {
-  return value ? `${value}:00+09:00` : '';
+function fromSeoul(value: string, zone = '+09:00') {
+  return value ? `${value}:00${zone}` : '';
 }
 
 const label = { calendar: '일정 등록', todo: '할 일', reply: '회신' };
@@ -29,6 +29,10 @@ function verifiedComplete(row: Suggestion) {
 function errorMessage(code: unknown) {
   const key = code instanceof Error ? code.message : '';
   return {
+    calendar_permission_expired: '캘린더 권한이 만료됐어요. 추가 동의를 확인해 주세요.',
+    calendar_registration_failed: '일정 등록이 거절됐어요. 내용을 확인한 뒤 다시 승인해 주세요.',
+    calendar_connection_failed: '캘린더 연결에 실패했어요. 다시 확인해 주세요.',
+    calendar_selection_required: '현재 계정이 소유한 캘린더를 선택해 주세요.',
     calendar_not_connected: '캘린더 연결을 확인해 주세요. 아직 등록하지 않았어요.',
     calendar_scope_required: '캘린더 쓰기 권한을 확인해 주세요. 아직 등록을 확인하지 못했어요.',
     calendar_result_unknown: '등록 결과를 확인하지 못했어요. 내용을 바꾸지 말고 다시 확인해 주세요.',
@@ -46,6 +50,8 @@ export function SuggestionCard({ suggestion, client, onChange, onActive, calenda
   calendars?: CalendarOption[];
 }) {
   const row = suggestion;
+  const [zone, setZone] = useState('+09:00');
+  const zoneOffset = (zone.startsWith('-') ? -1 : 1) * (Number(zone.slice(1, 3)) * 60 + Number(zone.slice(4)));
   const [draft, setDraft] = useState<SuggestionPayload>(row.payload);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -126,13 +132,18 @@ export function SuggestionCard({ suggestion, client, onChange, onActive, calenda
               onChange={event => edit({ ...draft, title: event.target.value })} />
           </label>}
           {row.type === 'calendar' && 'start' in draft && <>
-            <label className="mb-2 grid gap-1 text-caption text-muted-foreground">시작 (한국 시간)
-              <input type="datetime-local" className={inputClass} value={localSeoul(draft.start)} disabled={!canEdit}
-                onChange={event => edit({ ...draft, start: fromSeoul(event.target.value) })} />
+            <label className="mb-2 grid gap-1 text-caption text-muted-foreground">시간대 (UTC 차이)
+              <select className={inputClass} value={zone} disabled={!canEdit} onChange={event => setZone(event.target.value)}>
+                {['-12:00', '-08:00', '-07:00', '-05:00', '-04:00', '+00:00', '+01:00', '+02:00', '+05:30', '+08:00', '+09:00', '+10:00', '+12:00', '+14:00'].map(x => <option key={x} value={x}>UTC{x}</option>)}
+              </select>
             </label>
-            <label className="mb-2 grid gap-1 text-caption text-muted-foreground">종료 (한국 시간)
-              <input type="datetime-local" className={inputClass} value={localSeoul(draft.end)} disabled={!canEdit}
-                onChange={event => edit({ ...draft, end: fromSeoul(event.target.value) })} />
+            <label className="mb-2 grid gap-1 text-caption text-muted-foreground">시작
+              <input type="datetime-local" className={inputClass} value={localSeoul(draft.start, zoneOffset)} disabled={!canEdit}
+                onChange={event => edit({ ...draft, start: fromSeoul(event.target.value, zone) })} />
+            </label>
+            <label className="mb-2 grid gap-1 text-caption text-muted-foreground">종료
+              <input type="datetime-local" className={inputClass} value={localSeoul(draft.end, zoneOffset)} disabled={!canEdit}
+                onChange={event => edit({ ...draft, end: fromSeoul(event.target.value, zone) })} />
             </label>
             <label className="mb-2 grid gap-1 text-caption text-muted-foreground">장소
               <input className={inputClass} value={draft.location ?? ''} disabled={!canEdit} maxLength={1000}

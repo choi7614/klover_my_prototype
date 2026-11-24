@@ -79,6 +79,7 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 | 0006 | 주간 보고 스냅샷 | F4 | 적용(develop, #23), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0006_weekly_reports.py` (revision `0006_f4`, 부모 `0005_f5`) |
 | 0007 | F1 분석·청크·분류 피드백 저장 | F1 | 적용(develop, #30), 운영 DB 적용 미확인 (pgvector 필요) | `apps/server/migrations/versions/0007_f1_analysis.py` (revision `0007_f1`, 부모 `0006_f4`) |
 | 0008 | 명시적 과거 메일 표시·가져오기 작업 | 공통 | 분리 테스트 DB 검증 완료·PR #39(사용자 병합 승인) | 0008_history_import.py (부모 0007_f1) |
+| 0009 | Calendar 별도 암호화 자격 증명 | F5 | 예약·공통 패치 미적용 | `patches/F5/calendar/04-database.patch`, 부모 `0008_history` |
 
 
 ## 검사 해석
@@ -92,3 +93,11 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 - 브랜치 `feat/F2-local-draft-stability` · 작업 도구 없음(제출 완료) · 기준 `origin/develop fff7993`(PR #39 병합).
 - 합성 응답 재현 검사부터 추가하고 형식/근거/방향 실패를 비밀 정보 없는 고정 사유로 구분한다. 기존 대기 상한·편집본/프로필·검증 경계를 유지한다.
 - 구현·검사 완료, 서버 620/skip 0·F2 선택 54·앱 F2 29 통과. 2026-11-25 사용자 커밋·Push·PR 생성 및 develop 병합 승인. 코드 `69e195e` 커밋·Push 및 [PR #40](https://github.com/choi7614/klover_my_prototype/pull/40) 제출 완료. 검사/최종 병합 이력은 PR 상태를 따른다. main은 별도 승인이다. [검증/진단](F2-local-draft-stability.md).
+
+## F5 Calendar 연결·승인 준비 (2026-11-25)
+
+- 작업 도구 없음(제출 완료) · 브랜치 feat/F5-ai-scan · 구현 `7634286`·통합 `f5046d7`·검사 제출 `b5071c9`, [PR #44](https://github.com/choi7614/klover_my_prototype/pull/44). 문서 제출 커밋도 Push한다.
+- 사용자 승인으로 origin/develop `7668d94`를 기능 브랜치에 로컬 통합했다(`f5046d7`). 공통 Calendar 패치는 적용하지 않는다. develop/main 병합 승인은 없다.
+- 제출 브랜치 자체 서버 650/skip4(공통 OAuth·0009 미적용), 앱195·정적 검사 통과.
+- 최신 develop 사본 + 공통 변경안: 서버 654/skip0·앱195, Ruff/lint/typecheck/생산 빌드·패치 재구성 검사 통과. 실제 Google/맥북/사용자 DB 미검증.
+- 공통 패치 `patches/F5/calendar/03~08`은 미적용. PR #44 제출 완료. 통합 채팅에서 적용·재검증이 필요하다. [F5 status](F5-ai-scan-status.md) · [인수인계](F5-calendar-handoff.md).
