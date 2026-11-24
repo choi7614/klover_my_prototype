@@ -2,7 +2,7 @@
 
 2026-11-25 · Codex · `feat/F2-privacy-data` · 기준 develop `7668d94aa5f251541d95e17c9ed238fabc52b418`.
 PR #40(F2 안정화)·#41(F1 진단)의 병합 상태와 최신 develop을 확인했다.
-이 단위는 미커밋·미Push이고 새 PR은 없다. 경로 `/workspace/klover_my_prototype`.
+기능 코드 `e4bb3ed` 커밋·Push 완료, [PR #42](https://github.com/choi7614/klover_my_prototype/pull/42) 제출. 제출 기록 문서도 같은 브랜치에 커밋·Push한다. develop/main 미병합. 경로 `/workspace/klover_my_prototype`.
 기존 초기 work 브랜치와 모든 원격 기능 브랜치를 보존했다. 동명 privacy 브랜치가 없어 fetch 후 새로 만들었다.
 
 ## 구현
@@ -41,7 +41,7 @@ PR #40(F2 안정화)·#41(F1 진단)의 병합 상태와 최신 develop을 확�
 
 ## 통합 채팅에 붙여넣기
 
-F2 개인정보·학습 데이터 구현은 feat/F2-privacy-data, 기준 develop 7668d94입니다. 현재 로컬 미커밋·미Push이며 새 PR은 없습니다. 저장 프로필/학습 동의/기존 기록·제외 표현 조회, 명시적 동의 변경, 삭제 대상·영향 확인, 삭제 후 재조회와 실패 복구를 구현했습니다. 실제 수집/학습은 준비 중으로 안내합니다. 기존 프로필/초안/메일/토큰/키 삭제는 하지 않습니다. 분리 PostgreSQL F2 42/skip 0, 앱 전체 199, Ruff·타입·lint·빌드·패치 검사 통과입니다. 공통 App/설정 진입은 patches/F2/privacy-data/01→02→03을 함께 검사/적용해야 하며 현재 실제 앱 경로 통합은 미완료입니다. main/preload·공유 타입·DB 이력 변경은 필요 없습니다. progress.md에는 이번 상태와 검사 건수를 통합 채팅에서 반영해 주세요. 커밋·Push·PR은 결과 보고 후 묶음 승인 대기이고 develop/main 병합은 이번 요청에서 금지입니다.
+F2 개인정보·학습 데이터 구현은 feat/F2-privacy-data, 기준 develop 7668d94입니다. 기능 코드 e4bb3ed 커밋·Push와 PR #42(https://github.com/choi7614/klover_my_prototype/pull/42) 제출을 완료했습니다. 제출 기록 문서도 같은 브랜치에 커밋·Push합니다. 저장 프로필/학습 동의/기존 기록·제외 표현 조회, 명시적 동의 변경, 삭제 대상·영향 확인, 삭제 후 재조회와 실패 복구를 구현했습니다. 실제 수집/학습은 준비 중으로 안내합니다. 기존 프로필/초안/메일/토큰/키 삭제는 하지 않습니다. 분리 PostgreSQL F2 42/skip 0, 앱 전체 199, Ruff·타입·lint·빌드·패치 검사 통과입니다. 공통 App/설정 진입은 patches/F2/privacy-data/01→02→03을 함께 검사/적용해야 하며 현재 실제 앱 경로 통합은 미완료입니다. main/preload·공유 타입·DB 이력 변경은 필요 없습니다. progress.md에는 이번 상태와 검사 건수를 통합 채팅에서 반영해 주세요. 사용자 묶음 승인으로 커밋·Push·PR 생성을 완료했으며 develop/main 병합은 진행하지 않았습니다. PR의 CI 결과는 로컬 검사와 별도로 확인해야 합니다.
 
 ## 맥북 확인 절차 (통합 후, 합성 계정·분리 DB 사용)
 

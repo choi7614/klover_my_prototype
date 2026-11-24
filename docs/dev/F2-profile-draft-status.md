@@ -5,7 +5,7 @@
 - 작업 브랜치 `feat/F2-privacy-data`, 기준 develop `7668d94` (#41), Codex. 기존 #40 병합 확인.
 - 저장 프로필·학습 동의·보관 기록/제외 표현 조회, 명시적 동의 변경·삭제 확인·삭제 후 재조회 구현. 실제 학습/보낸 메일 수집은 준비 중.
 - 공통 App·설정 진입은 `patches/F2/privacy-data/` 미적용 패치. main/preload·공유 타입·DB 이력 변경 없음. 실제 앱 통합 미완료.
-- 현재 변경은 미커밋·미Push이며 새 PR 없음. 기존 브랜치·사용자 데이터 보존.
+- 사용자 승인으로 기능 코드 `e4bb3ed` 커밋·Push 및 [PR #42](https://github.com/choi7614/klover_my_prototype/pull/42) 제출 완료. 문서 제출 기록도 같은 브랜치에 커밋·Push한다. develop/main 미병합. 기존 브랜치·사용자 데이터 보존.
 - 검사와 맥북 절차: [F2 개인정보 인수인계](F2-privacy-data.md). progress.md 변경 요청은 패치 README에 남김.
 
 
