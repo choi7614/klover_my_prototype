@@ -16,7 +16,11 @@ from app.schemas.f5 import (
 from app.services.f5_errors import CalendarError
 
 WRITE_SCOPES = frozenset(
-    {"https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar"}
+    {
+        "https://www.googleapis.com/auth/calendar.events.owned",
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/calendar",
+    }
 )
 BUSY_SCOPES = frozenset(
     {
@@ -66,10 +70,12 @@ class CalendarStoredEvent:
 class CalendarTransportError(Exception):
     """transport는 원문 대신 고정 오류 종류로 변환해야 한다."""
 
-    def __init__(self, kind: Literal["auth", "permission", "unavailable", "timeout", "conflict"]):
+    def __init__(
+        self, kind: Literal["auth", "permission", "unavailable", "timeout", "conflict", "rejected"]
+    ):
         self.kind = (
             kind
-            if kind in {"auth", "permission", "unavailable", "timeout", "conflict"}
+            if kind in {"auth", "permission", "unavailable", "timeout", "conflict", "rejected"}
             else "unavailable"
         )
         super().__init__(self.kind)
@@ -144,7 +150,14 @@ class GoogleCalendarAdapter:
                     return self._receipt(existing, request)
                 raise CalendarError("calendar_result_unknown", uncertain=True) from None
             if error.kind in {"auth", "permission"}:
-                raise CalendarError("calendar_scope_required", blocked=True) from None
+                raise CalendarError(
+                    "calendar_permission_expired"
+                    if error.kind == "auth"
+                    else "calendar_scope_required",
+                    blocked=True,
+                ) from None
+            if error.kind == "rejected":
+                raise CalendarError("calendar_registration_failed") from None
             # find 실패는 쓰기 전, insert 타임아웃은 이미 등록됐을 수도 있다.
             uncertain = inserting and error.kind in {"timeout", "unavailable"}
             raise CalendarError(

@@ -1,5 +1,10 @@
 # 데이터 모델
 
+> 2026-11-25 Calendar 공통 통합: `0009_f5_calendar`(부모 `0008_history`)의 별도 암호화 자격 증명 표와
+> 인증된 `GET /calendar/connection`, `POST /calendar/disconnect`, 제한된 앱 동의 IPC를 추가했다.
+> 기존 Gmail 자격 증명은 보존한다. [통합 검증·제약](../dev/settings-calendar-integration.md)을 따른다.
+
+
 ## 0008_history (2026-11-24)
 
 `mails.history_imported` boolean NOT NULL default false: 명시적 수집만 true로 저장한다.

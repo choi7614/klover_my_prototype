@@ -1,5 +1,21 @@
 # F2 프로필·답장 초안 — 현재 상태
 
+## 최신 통합 — 2026-11-25
+
+- `integrate/settings-calendar`에서 기능 코드와 미적용 공통 연결을 통합했다. 작업 도구 없음(통합 제출).
+- [통합 검사·맥북 업데이트 안내](settings-calendar-integration.md)를 따른다. 실제 Google/모델/맥북은 미검증이다.
+- 사용자 develop 반영 승인. 최종 제출/병합 상태는 통합 PR을 따른다. 아래 미통합 설명은 제출 당시 기록이다.
+
+
+## 개인정보·학습 데이터 화면 (2026-11-25)
+
+- 작업 브랜치 `feat/F2-privacy-data`, 기준 develop `7668d94` (#41), Codex. 기존 #40 병합 확인.
+- 저장 프로필·학습 동의·보관 기록/제외 표현 조회, 명시적 동의 변경·삭제 확인·삭제 후 재조회 구현. 실제 학습/보낸 메일 수집은 준비 중.
+- 공통 App·설정 진입은 `patches/F2/privacy-data/` 미적용 패치. main/preload·공유 타입·DB 이력 변경 없음. 실제 앱 통합 미완료.
+- 사용자 승인으로 기능 코드 `e4bb3ed` 커밋·Push 및 [PR #42](https://github.com/choi7614/klover_my_prototype/pull/42) 제출 완료. 문서 제출 기록도 같은 브랜치에 커밋·Push한다. develop/main 미병합. 기존 브랜치·사용자 데이터 보존.
+- 검사와 맥북 절차: [F2 개인정보 인수인계](F2-privacy-data.md). progress.md 변경 요청은 패치 README에 남김.
+
+
 ## 현재 작업 — F2 로컬 초안 안정화 (2026-11-24)
 
 - 브랜치 `feat/F2-local-draft-stability` · 작업 도구 없음(제출 완료) · 기준 `origin/develop fff7993`(PR #39 **병합 완료**).

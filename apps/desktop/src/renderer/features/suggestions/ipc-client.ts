@@ -13,6 +13,11 @@ async function unwrap<T>(pending: Promise<F5BridgeResult<T>>): Promise<T> {
 
 export function createSuggestionsIPCClient(bridge: SuggestionsIPC): F5Client {
   return {
+    ...(bridge.calendarStatus && bridge.disconnectCalendar ? { calendar: {
+      calendarStatus: () => unwrap(bridge.calendarStatus!()),
+      ...(bridge.connectCalendar ? { connectCalendar: () => unwrap(bridge.connectCalendar!()) } : {}),
+      disconnectCalendar: () => unwrap(bridge.disconnectCalendar!()),
+    } } : {}),
     list: query => unwrap(bridge.list(query)),
     get: id => unwrap(bridge.get(id)),
     approve: (id, request) => unwrap(bridge.approve(id, request)),

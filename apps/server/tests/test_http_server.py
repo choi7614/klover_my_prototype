@@ -91,6 +91,8 @@ def test_openapi_describes_only_implemented_api_and_its_response():
         "/reports/weekly/{report_id}/excluded",
         "/search",
         "/search/recent",
+        "/calendar/connection",
+        "/calendar/disconnect",
         "/suggestions",
         "/suggestions/{suggestion_id}",
         "/suggestions/{suggestion_id}/approve",

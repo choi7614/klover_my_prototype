@@ -47,7 +47,9 @@ def is_local(request: Request) -> bool:
         return False
 
 
-def create_google_app(settings, connector, repository) -> FastAPI:
+def create_google_app(
+    settings, connector, repository, *, start_url=authorization_url, message=None
+) -> FastAPI:
     application = create_app()
     attempts = LoginAttempts()
 
@@ -62,7 +64,11 @@ def create_google_app(settings, connector, repository) -> FastAPI:
             '<button type="submit">Google 계정 연결</button></form>'
         )
         response = page(
-            "테스트 Gmail 계정의 읽기 권한을 요청합니다. 메일 수신·발송은 아직 실행하지 않습니다.",
+            message
+            or (
+                "테스트 Gmail 계정의 읽기 권한을 요청합니다. "
+                "메일 수신·발송은 아직 실행하지 않습니다."
+            ),
             form=form,
         )
         # no-referrer는 폼 POST의 Origin도 null로 만들어 정상 출처 검증을 막는다.
@@ -107,7 +113,7 @@ def create_google_app(settings, connector, repository) -> FastAPI:
         except (ValueError, UnicodeError):
             return page("연결 요청이 만료됐습니다. 처음 화면에서 다시 시작하세요.", 400)
         return RedirectResponse(
-            authorization_url(settings, state, verifier), status_code=303, headers=HEADERS
+            start_url(settings, state, verifier), status_code=303, headers=HEADERS
         )
 
     @application.get(PATH + "/callback", response_class=HTMLResponse, tags=["로컬 Google 연결"])

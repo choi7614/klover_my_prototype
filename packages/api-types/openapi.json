@@ -207,6 +207,55 @@
         "title": "CalendarConflict",
         "type": "object"
       },
+      "CalendarConnection": {
+        "properties": {
+          "calendars": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarOption"
+            },
+            "title": "Calendars",
+            "type": "array"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "email",
+          "calendars"
+        ],
+        "title": "CalendarConnection",
+        "type": "object"
+      },
+      "CalendarOption": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "timezone"
+        ],
+        "title": "CalendarOption",
+        "type": "object"
+      },
       "CalendarPayload": {
         "additionalProperties": false,
         "properties": {
@@ -3799,6 +3848,98 @@
         "summary": "Current Session",
         "tags": [
           "메일 조회"
+        ]
+      }
+    },
+    "/calendar/connection": {
+      "get": {
+        "operationId": "connection_calendar_connection_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarConnection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Connection",
+        "tags": [
+          "F5 Calendar"
+        ]
+      }
+    },
+    "/calendar/disconnect": {
+      "post": {
+        "operationId": "disconnect_calendar_disconnect_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarConnection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Disconnect",
+        "tags": [
+          "F5 Calendar"
         ]
       }
     },

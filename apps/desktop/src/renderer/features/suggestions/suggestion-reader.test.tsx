@@ -21,7 +21,7 @@ describe('S04 기능 전용 제안 화면', () => {
     expect(client.calls).toEqual([]);
     const card = within(screen.getByTestId('suggestion-calendar'));
     fireEvent.change(card.getByLabelText('제목'), { target: { value: '수정한 합성 제목' } });
-    fireEvent.change(card.getByLabelText('시작 (한국 시간)'), { target: { value: '2026-11-20T14:30' } });
+    fireEvent.change(card.getByLabelText('시작'), { target: { value: '2026-11-20T14:30' } });
     fireEvent.change(card.getByLabelText('장소'), { target: { value: '바꾼 합성 장소' } });
     fireEvent.click(card.getByRole('button', { name: '캘린더에 추가' }));
     await screen.findByText('테스트 실행을 확인했어요. 실제 캘린더에는 등록하지 않았어요.');
@@ -87,7 +87,7 @@ describe('S04 기능 전용 제안 화면', () => {
     render(<Harness client={client} />);
     fireEvent.click(screen.getByRole('button', { name: '겹치는 일정 확인' }));
     await screen.findByText('같은 시간에 1건의 일정이 있습니다.');
-    fireEvent.change(screen.getByLabelText('시작 (한국 시간)'), { target: { value: '2026-11-20T14:30' } });
+    fireEvent.change(screen.getByLabelText('시작'), { target: { value: '2026-11-20T14:30' } });
     expect(screen.queryByText('같은 시간에 1건의 일정이 있습니다.')).not.toBeInTheDocument();
     expect(client.calls.every(call => call.action === 'conflicts')).toBe(true);
   });
@@ -149,4 +149,18 @@ describe('S04 기능 전용 제안 화면', () => {
     expect(screen.getByText('✓ 할 일에 추가했어요')).toBeVisible();
     expect(client.calls).toEqual([]);
   });
+});
+
+
+it('시간대와 종료 시각을 명시해 승인한다', async () => {
+  const client = new SyntheticSuggestionsClient();
+  render(<Harness client={client} />);
+  const card = within(screen.getByTestId('suggestion-calendar'));
+  fireEvent.change(card.getByLabelText('시간대 (UTC 차이)'), { target: { value: '+00:00' } });
+  fireEvent.change(card.getByLabelText('시작'), { target: { value: '2026-11-20T10:00' } });
+  fireEvent.change(card.getByLabelText('종료'), { target: { value: '2026-11-20T11:00' } });
+  expect(client.calls).toHaveLength(0);
+  fireEvent.click(card.getByRole('button', { name: '캘린더에 추가' }));
+  await screen.findByText('테스트 실행을 확인했어요. 실제 캘린더에는 등록하지 않았어요.');
+  expect(client.calls[0].payload).toMatchObject({ start: '2026-11-20T10:00:00+00:00', end: '2026-11-20T11:00:00+00:00' });
 });

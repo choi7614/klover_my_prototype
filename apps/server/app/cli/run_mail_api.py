@@ -116,8 +116,19 @@ def main():
             F2Repository(engine), ai=SharedDraftAI(generator)
         )
         application.state.weekly_reports = WeeklyReportRuntime(engine, generator=generator)
-        # 실제 Calendar transport는 별도 승인·권한 확인 전까지 차단한다.
-        application.state.f5_service = F5Service(F5Repository(engine))
+        from app.db.repositories.f5_calendar import CalendarConnectionRepository
+        from app.services.f5_calendar import ConnectedCalendar
+
+        calendar = ConnectedCalendar(
+            CalendarConnectionRepository(engine, settings.encryption_key), settings
+        )
+        from app.api.f5_calendar_consent import consent_app
+
+        consent = consent_app(settings, calendar.repository)
+        for route in consent.routes:
+            if getattr(route, "path", "").startswith("/auth/google"):
+                application.router.routes.append(route)
+        application.state.f5_service = F5Service(F5Repository(engine), calendar)
         print(f"메일 조회 API 실행: http://127.0.0.1:{args.port}")
         print("터미널을 켜두세요. 종료는 Control+C입니다.")
         uvicorn.run(

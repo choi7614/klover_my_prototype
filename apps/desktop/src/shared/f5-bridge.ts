@@ -3,14 +3,17 @@
 import type { SuggestionsIPC } from '../renderer/features/suggestions/types';
 
 export type F5Bridge = Readonly<SuggestionsIPC>;
-export type F5Operation = 'list' | 'get' | 'approve' | 'dismiss' | 'conflicts' | 'todos' | 'createTodo' | 'updateTodo';
+export type F5Operation = 'list' | 'get' | 'approve' | 'dismiss' | 'conflicts' | 'todos' | 'createTodo' | 'updateTodo' | 'calendarStatus' | 'disconnectCalendar' | 'connectCalendar';
 export type F5Result = { ok: true; data: unknown } | { ok: false; error: { code: string; message: string } };
 export type F5Request = { id?: string; query?: string; body?: Record<string, unknown> };
-export const f5Operations: F5Operation[] = ['list', 'get', 'approve', 'dismiss', 'conflicts', 'todos', 'createTodo', 'updateTodo'];
+export const f5Operations: F5Operation[] = ['list', 'get', 'approve', 'dismiss', 'conflicts', 'todos', 'createTodo', 'updateTodo', 'calendarStatus', 'disconnectCalendar', 'connectCalendar'];
 export const f5Channel = (operation: F5Operation) => `klover:suggestions:${operation}`;
 
 const suggestion = (id?: string) => `/suggestions/${encodeURIComponent(id ?? '')}`;
 export const f5Routes: Record<F5Operation, { method: 'GET' | 'POST' | 'PATCH'; path: (request: F5Request) => string; page?: true }> = {
+  connectCalendar: { method: 'POST', path: () => '/calendar/connect' },
+  calendarStatus: { method: 'GET', path: () => '/calendar/connection' },
+  disconnectCalendar: { method: 'POST', path: () => '/calendar/disconnect' },
   list: { method: 'GET', path: ({ query }) => `/suggestions${query ? `?${query}` : ''}`, page: true },
   get: { method: 'GET', path: ({ id }) => suggestion(id) },
   approve: { method: 'POST', path: ({ id }) => `${suggestion(id)}/approve` },
@@ -73,6 +76,9 @@ function listQuery(value: unknown, statuses: string[], extra: string[] = []): st
 /** IPC 인수를 동작별로 검사한다. 맞지 않으면 null(서버를 호출하지 않는다). */
 export function f5Arguments(operation: F5Operation, args: unknown[]): F5Request | null {
   switch (operation) {
+    case 'connectCalendar':
+    case 'calendarStatus':
+    case 'disconnectCalendar': return args.length === 0 ? {} : null;
     case 'list': {
       const query = args.length === 1 ? listQuery(args[0], ['pending', 'approved', 'dismissed'], ['mail_id']) : null;
       return query === null ? null : { query };

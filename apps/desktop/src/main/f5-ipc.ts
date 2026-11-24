@@ -1,3 +1,4 @@
+import { shell } from 'electron';
 import type { IpcMain, WebContents } from 'electron';
 import { trustedMailSender } from './mail-ipc';
 import { f5Arguments, f5Channel, f5Failure, f5Operations, type F5Operation, type F5Request, type F5Result } from '../shared/f5-bridge';
@@ -12,6 +13,10 @@ export function registerF5IPC(ipc: Pick<IpcMain, 'handle' | 'removeHandler'>, co
       if (!trustedMailSender(event, contents, rendererURL)) return f5Failure();
       const parsed = f5Arguments(operation, args);
       if (!parsed) return f5Failure();
+      if (operation === 'connectCalendar') {
+        return shell.openExternal('http://localhost:8000/auth/google').then(
+          () => ({ ok: true, data: { status: 'opened' } }), () => f5Failure('connection'));
+      }
       return client.call(operation, parsed);
     });
   }

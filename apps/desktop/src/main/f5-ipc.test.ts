@@ -1,5 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
+import { shell } from 'electron';
+vi.mock('electron', () => ({ shell: { openExternal: vi.fn(async () => {}) } }));
 import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron';
 import { registerF5IPC } from './f5-ipc';
 import { f5Arguments, f5Channel, f5Operations, f5Routes } from '../shared/f5-bridge';
@@ -23,6 +25,12 @@ describe('F5 제안·할 일 통로', () => {
     expect(await handlers.get(f5Channel('approve'))!(subframe, 'id', { version: 1 })).toMatchObject({ ok: false });
     expect(await handlers.get(f5Channel('approve'))!(event, 'id', {})).toMatchObject({ ok: false });
     expect(client.call).toHaveBeenCalledTimes(1);
+    expect(await handlers.get(f5Channel('connectCalendar'))!(other)).toMatchObject({ ok: false });
+    expect(shell.openExternal).not.toHaveBeenCalled();
+    expect(await handlers.get(f5Channel('connectCalendar'))!(event, 'https://outside.invalid')).toMatchObject({ ok: false });
+    expect(shell.openExternal).not.toHaveBeenCalled();
+    await handlers.get(f5Channel('connectCalendar'))!(event);
+    expect(shell.openExternal).toHaveBeenCalledWith('http://localhost:8000/auth/google');
     dispose(); expect(handlers.size).toBe(0);
   });
   it('승인·무시는 version이 있어야 하고 정해진 필드만 보낸다', () => {
