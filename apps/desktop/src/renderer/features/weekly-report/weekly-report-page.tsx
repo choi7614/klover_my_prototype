@@ -10,6 +10,11 @@ import type {
   WeeklyReportClient, WeeklyReportDocument, WeeklyReportOptions,
 } from './types';
 
+// 본문은 디스크에 쓰지 않고 연결 포트와 인증 계정별 메모리에만 보관한다.
+type Draft = { report: WeeklyReportDocument; sections: ReportSection[]; period: ReportPeriod;
+  template: ReportTemplate; recipient: string; provider: AIChoice };
+const drafts = new WeakMap<WeeklyReportClient, Map<string, Draft>>();
+
 const inputClass = 'h-9 rounded-md border border-input bg-background px-3 text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40';
 const cloneSections = (sections: ReportSection[]) => sections.map((section) => ({
   ...section, items: section.items.map((item) => ({ ...item, evidence: [...item.evidence] })),
@@ -47,8 +52,9 @@ function MailContents({ mail }: { mail: ReportMail }) {
   </>;
 }
 
-export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard = (text) => navigator.clipboard.writeText(text) }: {
+export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard = (text) => navigator.clipboard.writeText(text), draftScope }: {
   client: WeeklyReportClient;
+  draftScope?: string; // 공통 라우터에서 인증된 사용자·계정 조합을 전달한다.
   autoGenerate?: boolean;
   writeClipboard?: (text: string) => Promise<void>;
 }) {
@@ -93,11 +99,21 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
     setPreview(null); setExcluded(null); setConfirm(null); setSelected(null);
     setMessage(''); setExcludedLoading(false);
     async function initialize() {
+      const retained = draftScope ? drafts.get(client)?.get(draftScope) : undefined;
+      if (retained) {
+        setReport(retained.report); setSections(cloneSections(retained.sections));
+        setPeriod(retained.period); setTemplate(retained.template); setRecipient(retained.recipient);
+        setProvider(retained.provider); setMessage('화면 이동 전 편집본을 복원했습니다. 저장하거나 복사해 주세요.');
+      }
       try {
         const next = await client.options();
         if (!live) return;
         setOptions(next); setPeriod(next.default_period);
         setRecipient(next.profile?.report_recipient || ''); setTemplate('profile');
+        if (retained) {
+          setPeriod(retained.period); setTemplate(retained.template); setRecipient(retained.recipient);
+          return;
+        }
         if (autoGenerate && next.profile && next.profile.report_recipient.trim()) {
           const document = await client.generate({ ...next.default_period, template: 'profile', recipient: next.profile.report_recipient });
           if (live) display(document);
@@ -107,7 +123,15 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
     }
     void initialize();
     return () => { live = false; mounted.current = false; };
-  }, [client, autoGenerate]);
+  }, [client, autoGenerate, draftScope]);
+
+  useEffect(() => {
+    if (!draftScope || !report) return;
+    let accountDrafts = drafts.get(client);
+    if (!accountDrafts) { accountDrafts = new Map(); drafts.set(client, accountDrafts); }
+    if (dirty) accountDrafts.set(draftScope, { report, sections: cloneSections(sections), period, template, recipient, provider });
+    else accountDrafts.delete(draftScope);
+  }, [client, draftScope, report, sections, dirty, period, template, recipient, provider]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -160,6 +184,7 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
 
   return <section aria-label="주간 보고" className="flex min-h-[720px] min-w-0 flex-1 flex-col bg-background">
     <div className="flex flex-wrap items-end gap-3 border-b px-6 py-4">
+      <nav aria-label="주간 보고 이동" className="flex gap-3 text-caption"><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필·보고 양식 설정</a><a href="#/settings/ai" className="underline">AI 설정</a></nav>
       <div className="mr-2 flex items-center gap-2 pb-2 text-title font-semibold"><FileText className="size-5 text-primary" />주간 보고</div>
       <AIChoiceControl purpose="weekly_report" value={provider} onChange={setProvider} disabled={busy} />
       <fieldset className="flex gap-2" disabled={busy}>
@@ -175,7 +200,7 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
         <Button variant="secondary" className="border-ai-border bg-ai text-ai-foreground hover:bg-ai-text" disabled={!mayGenerate} onClick={() => requestGeneration('regenerate')}><RefreshCw />다시 만들기</Button>
       </div>
     </div>
-    <p className="border-b px-6 py-2 text-caption text-muted-foreground">첫 주에도 현재까지 수집된 자료로 생성합니다. 선택 기간 중 수집 전 자료는 포함하지 않습니다.</p>
+    <p className="border-b px-6 py-2 text-caption text-muted-foreground">첫 주에도 현재까지 수집된 자료로 생성합니다. 선택 기간에 확보된 메일만 반영하며, 가져온 과거 메일도 분석 완료 후 포함됩니다.</p>
     {options?.generation === 'test_double' && <p className="border-b border-warning-border bg-warning-subtle px-6 py-2 text-caption text-warning">검토용 테스트 대역 · 가짜 메일만 사용합니다. 실제 AI 생성 결과가 아닙니다.</p>}
     <AIExecutionNotice value={report?.ai_execution} />
     {error && <div role="alert" className="border-b border-warning-border bg-warning-subtle px-6 py-3 text-body text-warning">{error}</div>}
@@ -183,18 +208,19 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <main aria-label="보고서 본문" className="min-w-0 flex-1 px-8 py-6" aria-busy={busy}>
         {!options && busy && <Loading sections={['금주 주요 업무', '진행 중인 업무', '이슈·요청사항', '차주 계획']} />}
-        {options && !options.profile && <Empty title="주간 보고 프로필이 없습니다" description="프로필과 보고 양식을 연결한 뒤 다시 열어 주세요." />}
+        {options && !options.profile && <Empty title="주간 보고 프로필이 없습니다" description="위의 프로필·보고 양식 설정에서 저장한 뒤 주간 보고로 돌아와 주세요." />}
         {options?.profile && !report && busy && <Loading sections={options.profile.report_sections} />}
         {options?.profile && !busy && !report && (recipient.trim()
           ? <Empty title={error ? "보고서를 아직 만들지 못했어요" : "보고서를 만들 준비가 됐어요"} description="AI와 기간을 선택한 뒤 보고서 열기를 눌러 주세요." />
           : <Empty title="보고 대상을 입력해 주세요" description="위 입력란에 보고 대상을 적은 뒤 보고서 열기를 눌러 주세요." />)}
         {report && <>
-          {report.partial_period && <p className="mb-3 text-caption text-muted-foreground">일부 기간 자료 · 사용 시작 이후 현재까지 확보된 메일을 반영했습니다. 대상 {report.period.start} ~ {report.period.end} · 조회 {report.scope.total}건</p>}
+          <p className="mb-2 text-caption text-muted-foreground">대상 기간: {report.period.start} ~ {report.period.end} · 조회 {report.scope.total}건</p>
+          {report.partial_period && <p className="mb-3 text-caption text-muted-foreground">일부 기간 자료 · 선택 기간에 현재까지 확보된 메일을 반영했습니다. 대상 {report.period.start} ~ {report.period.end} · 조회 {report.scope.total}건</p>}
           <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-heading font-bold">{report.title}</h1><span className="text-caption text-muted-foreground">{dirty ? '저장하지 않은 수정 있음' : `저장본 · 버전 ${report.revision}`}</span></div>
           <p className="mt-2 text-caption text-muted-foreground">{report.subtitle} · {report.generation === 'test_double' ? '테스트 대역 결과' : report.generation === 'ai' ? '◆ AI 작성' : '업무 메일 없음'} — 내용을 바로 고칠 수 있어요</p>
           <p className="mt-1 text-caption text-muted-foreground">보고 대상: {report.recipient} · {report.style === 'bullet' ? '개조식' : '서술형'}</p>
           {busy && <p role="status" className="mt-4 text-caption text-ai-text">보고서를 처리하고 있어요. 현재 내용은 결과 확인 전까지 유지합니다.</p>}
-          {report.status === 'empty' && <Empty title="이 기간에 주고받은 업무 메일이 없어요" description="다른 기간을 선택하거나 제외된 메일 목록을 확인해 주세요." />}
+          {report.status === 'empty' && <Empty title="이 기간에 주고받은 업무 메일이 없어요" description="받은편지함에서 수신·분석 상태를 확인하거나 다른 기간과 제외 목록을 확인해 주세요." />}
           {sections.map((section, sectionIndex) => <section key={section.name} className="mt-5">
             <h2 className="mb-2 border-b pb-2 text-title font-bold">{sectionIndex + 1}. {section.name}</h2>
             {!section.items.length && <p className="px-2 py-3 text-caption text-muted-foreground">연결된 보고 항목이 없습니다.</p>}
@@ -241,7 +267,7 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
     </div>
     <footer className="flex flex-wrap items-center gap-3 border-t px-6 py-3">
       <Button variant="secondary" disabled={!report || !valid || busy} onClick={() => void copy()}><Copy />복사</Button>
-      <span className="text-caption text-muted-foreground">{dirty && !valid ? '항목 내용과 근거를 1건 이상 연결해 주세요.' : '본문을 고친 뒤 Enter 또는 저장을 누르세요.'}</span>
+      <span className="text-caption text-muted-foreground">{dirty && !valid ? '항목 내용과 근거를 1건 이상 연결해 주세요.' : '본문을 고친 뒤 Enter 또는 저장을 누르세요. 앱 종료 전에는 저장해 주세요.'}</span>
       <Button className="ml-auto" disabled={!dirty || !valid || busy} onClick={() => void save()}><Save />변경 내용 저장</Button>
     </footer>
     {confirm && <Modal title={confirm === 'regenerate' ? '다시 만들기 전 확인' : '다른 보고서를 열기 전 확인'} close={() => setConfirm(null)}>

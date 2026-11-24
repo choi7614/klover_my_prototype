@@ -1,0 +1,33 @@
+--- a/apps/desktop/src/renderer/app.tsx
++++ b/apps/desktop/src/renderer/app.tsx
+@@ -65,7 +65,7 @@
+         {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} analysis={analysis} />} />}
+         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
+         {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
+-        {session && <Route path="/report/weekly" element={<WeeklyReportPage autoGenerate={false} key={session.account_id} client={weeklyReport} />} />}
++        {session && <Route path="/report/weekly" element={<WeeklyReportPage autoGenerate={false} draftScope={JSON.stringify([session.user_id, session.account_id])} key={session.account_id} client={weeklyReport} />} />}
+         <Route path="/settings/profile" element={<F2ProfileRoute client={f2} mailboxPath={mailboxPath} />} />
+         <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2} mailboxPath={mailboxPath} />} />
+         <Route path="*" element={<Navigate to={session ? '/mail/inbox' : '/onboarding/1'} replace />} />
+--- a/apps/desktop/src/renderer/features/profile-draft/routes.tsx
++++ b/apps/desktop/src/renderer/features/profile-draft/routes.tsx
+@@ -6,7 +6,7 @@
+ /** 공통 라우터에 적용 전 패치로만 연결한다. 실제 메일함 경로는 F0가 제공한다. */
+ export function F2ProfileRoute({ client, mailboxPath }: { client: F2Client; mailboxPath: string }) {
+   const navigate = useNavigate();
+-  return <ProfilePage client={client} onExit={() => void navigate(mailboxPath)} />;
++  return <ProfilePage client={client} onExit={() => void navigate(mailboxPath)} onNavigate={target => { if (target === 'weekly-report') void navigate('/report/weekly'); }} />;
+ }
+ 
+ export function F2ReplyRoute({ client, mailboxPath }: { client: F2Client; mailboxPath: string }) {
+--- a/apps/desktop/src/renderer/features/ai-settings/ai-settings-page.tsx
++++ b/apps/desktop/src/renderer/features/ai-settings/ai-settings-page.tsx
+@@ -29,7 +29,7 @@
+     finally { setBusy(false); }
+   }
+   return <main className="mx-auto max-w-3xl space-y-5 p-8 text-body text-foreground">
+-    <nav className="flex gap-4"><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필 설정</a></nav>
++    <nav className="flex gap-4"><a href="#/report/weekly" className="underline">주간 보고</a><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필 설정</a></nav>
+     <h1 className="text-heading font-bold">AI 설정</h1>
+     <p>자동 분류·태그·요약·임베딩·할 일 제안은 로컬 AI로 처리합니다. 아래 기능만 제공자를 선택합니다.</p>
+     {!state ? <p role="status">{message || '설정을 불러오는 중…'}</p> : <>

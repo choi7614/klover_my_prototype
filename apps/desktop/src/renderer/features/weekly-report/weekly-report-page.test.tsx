@@ -215,3 +215,40 @@ it('앱에서는 보고서 화면 진입만으로 외부 AI를 호출하지 않�
   fireEvent.click(screen.getByRole('button', { name: '보고서 열기' }));
   await waitFor(() => expect(api.generate).toHaveBeenCalledWith(expect.objectContaining({ ai_provider: 'claude' })));
 });
+
+it('화면을 나갔다 돌아오면 같은 계정 편집본을 복원하고 다른 계정에는 노출하지 않는다', async () => {
+  const api = client();
+  const view = render(<WeeklyReportPage client={api} draftScope="user:account-a" />);
+  fireEvent.change(await ready(), { target: { value: '이동 전 편집 내용' } });
+  view.unmount();
+  const other = render(<WeeklyReportPage client={api} draftScope="user:account-b" autoGenerate={false} />);
+  await screen.findByText('보고서를 만들 준비가 됐어요');
+  expect(screen.queryByDisplayValue('이동 전 편집 내용')).not.toBeInTheDocument();
+  other.unmount();
+  render(<WeeklyReportPage client={api} draftScope="user:account-a" autoGenerate={false} />);
+  expect(await ready()).toHaveValue('이동 전 편집 내용');
+  expect(api.generate).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: '변경 내용 저장' }));
+  await screen.findByText('편집한 내용을 저장했습니다.');
+});
+
+it('보고서에서 프로필·AI 설정과 받은편지함으로 이동할 수 있다', async () => {
+  render(<WeeklyReportPage client={client()} autoGenerate={false} />);
+  await screen.findByText('보고서를 만들 준비가 됐어요');
+  expect(screen.getByRole('link', { name: '프로필·보고 양식 설정' })).toHaveAttribute('href', '#/settings/profile');
+  expect(within(screen.getByRole('navigation', { name: '주간 보고 이동' })).getByRole('link', { name: 'AI 설정' })).toHaveAttribute('href', '#/settings/ai');
+  expect(screen.getByRole('link', { name: '받은편지함' })).toHaveAttribute('href', '#/mail/inbox');
+});
+
+it('복귀 시 옵션 조회 실패에도 근거 없는 편집 항목을 보존하고 저장을 막는다', async () => {
+  const api = client();
+  const view = render(<WeeklyReportPage client={api} draftScope="offline:account" />);
+  await ready();
+  fireEvent.click(screen.getAllByRole('button', { name: '항목 추가' })[0]);
+  view.unmount();
+  api.options.mockRejectedValue(new WeeklyReportClientError('unreachable'));
+  render(<WeeklyReportPage client={api} draftScope="offline:account" autoGenerate={false} />);
+  await screen.findByText(/화면 이동 전 편집본을 복원/);
+  await waitFor(() => expect(screen.getByRole('button', { name: '변경 내용 저장' })).toBeDisabled());
+  expect(screen.getAllByRole('textbox', { name: /^항목 내용/ })).toHaveLength(document.sections.flatMap(s => s.items).length + 1);
+});
