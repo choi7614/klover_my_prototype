@@ -36,6 +36,17 @@ function waitingText(state: AutoAnalysisState | null): string {
   return 'AI 연결 전이라 분석을 기다리고 있어요';
 }
 
+function failureText(code: string | null): string {
+  // 서버가 보낸 임의 문자열은 화면에 노출하지 않고 고정 안내만 사용한다.
+  switch (code) {
+    case 'invalid_response': return 'AI 응답의 형식 또는 근거 위치를 검증하지 못했어요.';
+    case 'provider_error': return '로컬 AI 호출에 실패했어요. 연결 또는 응답 시간을 확인해 주세요.';
+    case 'embedding_error': return '검색용 데이터 생성에 실패했어요. 로컬 임베딩 모델 설정을 확인해 주세요.';
+    case 'input_too_large': return '메일이 자동 분석 길이 제한을 초과했어요. 원문은 그대로 읽을 수 있어요.';
+    default: return '분석 실패 원인을 확인하지 못했어요. 원문은 그대로 읽을 수 있어요.';
+  }
+}
+
 export function CategoryTag({ category }: { category: keyof typeof CATEGORIES }) {
   const item = CATEGORIES[category];
   return <span className={cn(TAG_BASE, item.tag)}>{item.label}</span>;
@@ -87,6 +98,7 @@ export function AiSummaryBox({ view, state, onRetry, retryNotice }: {
           title={canRetry ? undefined : 'AI가 연결되면 다시 시도할 수 있어요'}
           className="font-semibold text-ai-text underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline focus-visible:outline-ring">다시 시도</button>
       </p>
+      <p className="mt-2 text-caption text-muted-foreground">{failureText(view.failure_code)}</p>
       {retryNotice?.mailId === view.mail_id && <p role="alert" className="mt-2 text-caption text-danger">{retryNotice.message}</p>}
     </div>;
   }

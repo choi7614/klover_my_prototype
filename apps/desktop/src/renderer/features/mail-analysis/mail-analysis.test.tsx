@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MailboxPage } from '../mailbox/mailbox-page';
 import { AnalysisClientError, createAnalysisIPCClient, type MailAnalysisClient } from './client';
-import { dayDate, firstSentence, shortDate } from './analysis-view';
+import { AiSummaryBox, dayDate, firstSentence, shortDate } from './analysis-view';
 import { POLL_MS } from './use-mail-analysis';
 import {
   analysisFailure, parseAnalysisBatch, parseRetryResult, validBatchIds,
@@ -43,6 +43,21 @@ const row = (id: string) => screen.findByRole('button', { name: new RegExp(`합�
 afterEach(() => { vi.useRealTimers(); });
 
 describe('F1 받은편지함 분류·요약 표시 (합성 응답)', () => {
+  it.each([
+    ['invalid_response', 'AI 응답의 형식 또는 근거 위치를 검증하지 못했어요.'],
+    ['provider_error', '로컬 AI 호출에 실패했어요. 연결 또는 응답 시간을 확인해 주세요.'],
+    ['embedding_error', '검색용 데이터 생성에 실패했어요. 로컬 임베딩 모델 설정을 확인해 주세요.'],
+    ['input_too_large', '메일이 자동 분석 길이 제한을 초과했어요. 원문은 그대로 읽을 수 있어요.'],
+    ['private-provider-response', '분석 실패 원인을 확인하지 못했어요. 원문은 그대로 읽을 수 있어요.'],
+    ['__proto__', '분석 실패 원인을 확인하지 못했어요. 원문은 그대로 읽을 수 있어요.'],
+    [null, '분석 실패 원인을 확인하지 못했어요. 원문은 그대로 읽을 수 있어요.'],
+  ])('실패 사유 %s는 고정 안내로 표시하고 임의 응답은 노출하지 않는다', (code, text) => {
+    render(<AiSummaryBox view={{ ...waiting('mail-1', 'failed'), failure_code: code }} state="ready" onRetry={vi.fn()} retryNotice={null} />);
+    expect(screen.getByTestId('ai-summary-failed')).toHaveTextContent(text!);
+    expect(screen.queryByText('private-provider-response')).not.toBeInTheDocument();
+    expect(screen.queryByText('__proto__')).not.toBeInTheDocument();
+  });
+
   it('목록에 ◆ 요약 첫 문장과 분류·회신 필요·마감 태그를, 읽기 영역에 AI 요약 박스를 보여 준다', async () => {
     const analysis = client([done('mail-1'), done('mail-2', { category: 'newsletter', needs_reply: false, action_items: [] })]);
     render(<MailboxPage api={api()} session={session} onDisconnected={vi.fn()} analysis={analysis} />);
