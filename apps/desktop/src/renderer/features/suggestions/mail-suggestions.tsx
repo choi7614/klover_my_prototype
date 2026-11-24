@@ -1,4 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { CalendarConnectionPanel } from './calendar-connection';
+import type { CalendarConnection } from './types';
 import { SuggestionReader } from './suggestion-reader';
 import type { F5Client, Suggestion } from './types';
 
@@ -11,6 +13,7 @@ export function MailSuggestions({ mailId, body, client, header, fallback }: {
   mailId: string; body: string; client: F5Client; header?: ReactNode; fallback: ReactNode;
 }) {
   const [rows, setRows] = useState<Suggestion[] | null>(null);
+  const [calendar, setCalendar] = useState<CalendarConnection>();
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     let active = true;
@@ -29,6 +32,7 @@ export function MailSuggestions({ mailId, body, client, header, fallback }: {
       {fallback}
     </>;
   }
-  return <SuggestionReader mailId={mailId} body={body} suggestions={rows} client={client} header={header}
-    onChange={row => setRows(current => (current ?? []).map(item => item.suggestion_id === row.suggestion_id ? row : item))} />;
+  return <>{client.calendar && <CalendarConnectionPanel client={client.calendar} onChange={setCalendar} />}
+    <SuggestionReader calendarReady={calendar?.status === 'connected'} calendars={calendar?.calendars ?? []} mailId={mailId} body={body} suggestions={rows} client={client} header={header}
+    onChange={row => setRows(current => (current ?? []).map(item => item.suggestion_id === row.suggestion_id ? row : item))} /></>;
 }

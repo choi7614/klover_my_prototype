@@ -17,7 +17,7 @@
 | F2 프로필·답장 초안 | `feat/F2-profile-draft` | 없음 | develop 병합 (#13), 공통 패치(#16)·IPC(#19)·AI 연결([#31](https://github.com/choi7614/klover_my_prototype/pull/31)) | `c7bfb65` 2026-11-19 | 맥북 실제 AI로 초안 확인, 관련 메일 검색(related) 연결, 초안→보내기(F0) | [F2-profile-draft-status.md](F2-profile-draft-status.md) | 2026-11-19 |
 | F3 자연어 검색 | `feat/F3-search` | 없음 | develop 병합 ([#24](https://github.com/choi7614/klover_my_prototype/pull/24)), 공통 패치 01 적용 ([#30](https://github.com/choi7614/klover_my_prototype/pull/30)) | `1478e70` 2026-11-19 | 맥북 실제 제공자로 검색 확인, 의미 검색(bge-m3) 연결, 보낸 메일 열기 계약 | [F3-search-status.md](F3-search-status.md) | 2026-11-19 |
 | F4 주간 보고 | `feat/F4-weekly-report` | 없음 | develop 병합 ([#22](https://github.com/choi7614/klover_my_prototype/pull/22)), 공통 패치 01~05 적용 ([#23](https://github.com/choi7614/klover_my_prototype/pull/23)) | `565929f` 2026-11-19 | 맥북 0006 설치·진입 확인, F1 저장(0007)·실제 AI 연결 후 생성 확인 | [F4-weekly-report-status.md](F4-weekly-report-status.md) | 2026-11-19 |
-| F5 AI 스캔 | `feat/F5-ai-scan` | 없음 | PR 대기 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32)) — F1 결과→제안 변환·생성 | `06e41f6` 2026-11-19 | 통합 채팅: F1 on_analyzed에 `AnalysisScanHook` 연결, 맥북 fixture 메일로 제안 생성·S04 확인, 알림·트레이(S10) | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-19 |
+| F5 AI 스캔 | `feat/F5-ai-scan` | Codex | Calendar 구현·합성 검사 완료 / 승인 대기 | `b85e2eb` 유지, 이번 변경 미커밋 | develop `7668d94` 로컬 통합 및 Calendar 공통 패치 03~08 적용은 묶음 승인 후. 서버 654/skip0·앱195. 실제 Google/맥북 미검증 | [F5-ai-scan-status.md](F5-ai-scan-status.md) | 2026-11-25 |
 
 ## 공통·통합 작업
 
@@ -47,6 +47,7 @@
 | 0005 | AI 제안·할 일·알림 outbox | F5 | 적용(develop, #20), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0005_f5_suggestions.py` (부모 `0004_f2`) |
 | 0006 | 주간 보고 스냅샷 | F4 | 적용(develop, #23), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0006_weekly_reports.py` (revision `0006_f4`, 부모 `0005_f5`) |
 | 0007 | F1 분석·청크·분류 피드백 저장 | F1 | 적용(develop, #30), 운영 DB 적용 미확인 (pgvector 필요) | `apps/server/migrations/versions/0007_f1_analysis.py` (revision `0007_f1`, 부모 `0006_f4`) |
+| 0009 | F5 Calendar 별도 암호화 자격 증명 | F5 | 예약·공통 패치 미적용, 최신 develop 기준 부모 `0008_history` | `patches/F5/calendar/04-database.patch` |
 
 ## 이 표를 갱신하는 때
 
@@ -54,3 +55,8 @@
 - 이어받은 직후(작업 도구 → 자신)
 - `[WIP] 인수인계` 커밋 직후(상태 → `WIP 저장`)
 - PR 생성·병합 직후(상태·마지막 커밋)
+
+## F5 Calendar 진행 (2026-11-25)
+
+- 작업 도구 Codex, feat/F5-ai-scan 재사용. 원격 develop `7668d94` 사본 기준 검사. 로컬 통합·커밋·Push·PR은 보고 후 승인 대기. 서버 654/skip 0, 앱 195, lint/typecheck/Ruff/생산 빌드·패치 적용 검사 통과.
+- 0009 예약: F5 Calendar 별도 암호화 자격 증명. 부모 `0008_history`. 공통 적용은 patches/F5/calendar/04-database.patch. 최신 통합 시 재확인.

@@ -1,0 +1,312 @@
+diff --git a/packages/api-types/openapi.json b/packages/api-types/openapi.json
+index 0f030f3..69b540f 100644
+--- a/packages/api-types/openapi.json
++++ b/packages/api-types/openapi.json
+@@ -207,6 +207,55 @@
+         "title": "CalendarConflict",
+         "type": "object"
+       },
++      "CalendarConnection": {
++        "properties": {
++          "calendars": {
++            "items": {
++              "$ref": "#/components/schemas/CalendarOption"
++            },
++            "title": "Calendars",
++            "type": "array"
++          },
++          "email": {
++            "title": "Email",
++            "type": "string"
++          },
++          "status": {
++            "title": "Status",
++            "type": "string"
++          }
++        },
++        "required": [
++          "status",
++          "email",
++          "calendars"
++        ],
++        "title": "CalendarConnection",
++        "type": "object"
++      },
++      "CalendarOption": {
++        "properties": {
++          "id": {
++            "title": "Id",
++            "type": "string"
++          },
++          "label": {
++            "title": "Label",
++            "type": "string"
++          },
++          "timezone": {
++            "title": "Timezone",
++            "type": "string"
++          }
++        },
++        "required": [
++          "id",
++          "label",
++          "timezone"
++        ],
++        "title": "CalendarOption",
++        "type": "object"
++      },
+       "CalendarPayload": {
+         "additionalProperties": false,
+         "properties": {
+@@ -3802,6 +3851,98 @@
+         ]
+       }
+     },
++    "/calendar/connection": {
++      "get": {
++        "operationId": "connection_calendar_connection_get",
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/CalendarConnection"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "요청 형식 오류"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Connection",
++        "tags": [
++          "F5 Calendar"
++        ]
++      }
++    },
++    "/calendar/disconnect": {
++      "post": {
++        "operationId": "disconnect_calendar_disconnect_post",
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/CalendarConnection"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "요청 형식 오류"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Disconnect",
++        "tags": [
++          "F5 Calendar"
++        ]
++      }
++    },
+     "/drafts": {
+       "post": {
+         "operationId": "create_draft_drafts_post",
+diff --git a/packages/api-types/src/schema.d.ts b/packages/api-types/src/schema.d.ts
+index d8fb1ad..11d7cbd 100644
+--- a/packages/api-types/src/schema.d.ts
++++ b/packages/api-types/src/schema.d.ts
+@@ -24,6 +24,40 @@ export interface paths {
+         patch?: never;
+         trace?: never;
+     };
++    "/calendar/connection": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Connection */
++        get: operations["connection_calendar_connection_get"];
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/calendar/disconnect": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        /** Disconnect */
++        post: operations["disconnect_calendar_disconnect_post"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+     "/drafts": {
+         parameters: {
+             query?: never;
+@@ -688,6 +722,24 @@ export interface components {
+             /** Title */
+             title?: string | null;
+         };
++        /** CalendarConnection */
++        CalendarConnection: {
++            /** Calendars */
++            calendars: components["schemas"]["CalendarOption"][];
++            /** Email */
++            email: string;
++            /** Status */
++            status: string;
++        };
++        /** CalendarOption */
++        CalendarOption: {
++            /** Id */
++            id: string;
++            /** Label */
++            label: string;
++            /** Timezone */
++            timezone: string;
++        };
+         /** CalendarPayload */
+         CalendarPayload: {
+             /** Calendar Id */
+@@ -2041,6 +2093,82 @@ export interface operations {
+             };
+         };
+     };
++    connection_calendar_connection_get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["CalendarConnection"];
++                };
++            };
++            /** @description 요청 형식 오류 */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    disconnect_calendar_disconnect_post: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["CalendarConnection"];
++                };
++            };
++            /** @description 요청 형식 오류 */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
+     create_draft_drafts_post: {
+         parameters: {
+             query?: never;

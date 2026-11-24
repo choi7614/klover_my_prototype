@@ -34,6 +34,9 @@ export type Page<T> = { items: T[]; next_cursor?: string | null };
 // main/preload가 공개하는 F5 통로 모양. 결과는 성공/실패 봉투로만 받는다(토큰·주소 없음).
 export type F5BridgeResult<T> = { ok: true; data: T } | { ok: false; error: { code: string; message: string } };
 export interface SuggestionsIPC {
+  connectCalendar?(): Promise<F5BridgeResult<{ status: string }>>;
+  calendarStatus?(): Promise<F5BridgeResult<CalendarConnection>>;
+  disconnectCalendar?(): Promise<F5BridgeResult<CalendarConnection>>;
   list(query: SuggestionListQuery): Promise<F5BridgeResult<Page<Suggestion>>>;
   get(suggestionId: string): Promise<F5BridgeResult<Suggestion>>;
   approve(suggestionId: string, request: { version: number; payload?: SuggestionPayload }): Promise<F5BridgeResult<Suggestion>>;
@@ -46,8 +49,16 @@ export interface SuggestionsIPC {
 
 // 앱 화면이 쓰는 전체 F5 호출. 실패는 Error(message=오류 코드)로 던진다.
 export interface F5Client extends SuggestionsClient {
+  calendar?: CalendarClient;
   list(query: SuggestionListQuery): Promise<Page<Suggestion>>;
   todos(query: TodoListQuery): Promise<Page<Todo>>;
   createTodo(request: TodoCreateRequest): Promise<Todo>;
   updateTodo(todoId: string, request: TodoUpdateRequest): Promise<Todo>;
+}
+
+export type CalendarConnection = { status: string; email: string; calendars: (CalendarOption & { timezone: string })[] };
+export interface CalendarClient {
+  connectCalendar?(): Promise<{ status: string }>;
+  calendarStatus(): Promise<CalendarConnection>;
+  disconnectCalendar(): Promise<CalendarConnection>;
 }

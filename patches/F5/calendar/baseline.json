@@ -1,0 +1,41 @@
+{
+  "base": "7668d94aa5f251541d95e17c9ed238fabc52b418",
+  "common_files": {
+    "apps/server/app/connectors/google_oauth.py": "37b629920744dca1eee81562c40d43cc788bf2689d205a3b42bec0850d5d0ca6",
+    "apps/server/app/api/google_connection.py": "4e7f8cf3be1a3a7192212eb9e2063689cd7aca08c7342132ac2cb8715f1f275e",
+    "apps/server/app/connectors/gmail_mail.py": "6fa3b3f126b7261ef6223db0c32099e4f7bce7a4d422b9e15db88f828cedde70",
+    "apps/server/app/db/f1_models.py": "1d88ed0497929d3a9b7ca886b6e648da8a850670e90b947d7259726f23e02aab",
+    "apps/server/migrations/versions/0009_f5_calendar.py": null,
+    "apps/server/tests/f1/test_pending_migration.py": "abad301d47c4274021146fafcf68945c726ba68847e972e40fdfbeb4ccc41e2b",
+    "apps/server/app/main.py": "a872e4eba496920203b0b98a77f4430e490a90e56265ee72b31d00bc163ebdf2",
+    "apps/server/app/cli/run_mail_api.py": "7972785e590b916a22cf5793bcb84dcdf2931bb756fae908b4742415082455a5",
+    "apps/server/tests/test_http_server.py": "70357c72299055b60d3a070103ee2b4dfbc71e9782850c5a6a616aa1d2805ba1",
+    "apps/desktop/src/shared/f5-bridge.ts": "ed3072c1d28f1f621f29ba1ccd996bbc2342f17cb91c61b2acf3e957577d6682",
+    "apps/desktop/src/preload/index.ts": "10d0a6c5df380cb4254ced92077d326f0758bd08d75f4a6460daa65ccb7f9aa5",
+    "apps/desktop/src/main/f5-ipc.ts": "7c5fe74b814dc9c57cef757aa8c1e0155856660d2459fe302015a6a97b8efe3b",
+    "apps/desktop/src/main/f5-ipc.test.ts": "3b234daedbfb760a4d5a19d1695680d08961ba7c439359616b4c2f4ed001fbe4",
+    "apps/desktop/src/renderer/app.tsx": "c190572fe5066872d2b1d386828b75897106e518d9b97d33780696d8f802c289",
+    "apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx": "0d1b13b4538a434ed1c29a40c2721a9f47a7a420f3fb3d5ea7d93c0e4d6e757e",
+    "packages/api-types/openapi.json": "a4e7554380e78dc35ed4865a199d260cff31e5f2231d94033221c64d2cf7d734",
+    "packages/api-types/src/schema.d.ts": "02ee368f27f2a9d0413a43986c66b80603fa9d9502facd8f76fe7e3e56bfffab"
+  },
+  "feature_files": [
+    "apps/desktop/src/renderer/features/suggestions/calendar-connection.test.tsx",
+    "apps/desktop/src/renderer/features/suggestions/calendar-connection.tsx",
+    "apps/server/app/api/f5_calendar.py",
+    "apps/server/app/api/f5_calendar_consent.py",
+    "apps/server/app/cli/run_calendar_connection.py",
+    "apps/server/app/connectors/google_calendar.py",
+    "apps/server/app/db/repositories/f5_calendar.py",
+    "apps/server/app/services/f5_calendar.py",
+    "apps/server/tests/f5/test_calendar_live.py",
+    "apps/server/tests/f5/test_calendar_migration.py",
+    "apps/desktop/src/renderer/features/suggestions/ipc-client.ts",
+    "apps/desktop/src/renderer/features/suggestions/mail-suggestions.tsx",
+    "apps/desktop/src/renderer/features/suggestions/suggestion-card.tsx",
+    "apps/desktop/src/renderer/features/suggestions/suggestion-reader.test.tsx",
+    "apps/desktop/src/renderer/features/suggestions/types.ts",
+    "apps/server/app/api/f5.py",
+    "apps/server/app/services/calendar.py"
+  ]
+}
