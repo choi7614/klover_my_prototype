@@ -1,5 +1,14 @@
 # 개발 현황판
 
+## F2·F4·F5 설정·Calendar 통합 (2026-11-25)
+
+- `integrate/settings-calendar` · 작업 도구 없음(통합 제출) · 기준 `7668d94`.
+- PR #42/#43/#44를 로컬 통합하고 공통 패치를 조립·검사한다. 기존 브랜치는 보존한다.
+- 사용자가 검사·필요 수정·커밋·Push·PR·문제없을 때 develop 병합을 승인했다. main 제외.
+- 서버 655/skip0·앱209·브라우저6·정적 검사/빌드 통과. [통합 결과·맥북 절차](settings-calendar-integration.md).
+- 실제 사용자 DB·Gmail·Calendar·유료 AI에는 접근하지 않았다. 최종 반영 상태는 통합 PR을 따른다.
+
+
 ## F4 앱 사용 마무리 제출 (2026-11-25)
 
 - 제출 완료: `feat/F4-weekly-report` · 작업 도구 없음 · 코드 `1fd848a` 커밋·Push · [PR #43](https://github.com/choi7614/klover_my_prototype/pull/43) develop 대상 열림. 미커밋·미Push 없음. 병합 미실행.
@@ -79,7 +88,7 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 | 0006 | 주간 보고 스냅샷 | F4 | 적용(develop, #23), 운영 DB 적용 미확인 | `apps/server/migrations/versions/0006_weekly_reports.py` (revision `0006_f4`, 부모 `0005_f5`) |
 | 0007 | F1 분석·청크·분류 피드백 저장 | F1 | 적용(develop, #30), 운영 DB 적용 미확인 (pgvector 필요) | `apps/server/migrations/versions/0007_f1_analysis.py` (revision `0007_f1`, 부모 `0006_f4`) |
 | 0008 | 명시적 과거 메일 표시·가져오기 작업 | 공통 | 분리 테스트 DB 검증 완료·PR #39(사용자 병합 승인) | 0008_history_import.py (부모 0007_f1) |
-| 0009 | Calendar 별도 암호화 자격 증명 | F5 | 예약·공통 패치 미적용 | `patches/F5/calendar/04-database.patch`, 부모 `0008_history` |
+| 0009 | Calendar 별도 암호화 자격 증명 | F5 | 통합 브랜치 적용·분리 DB 검증 완료 | `patches/F5/calendar/04-database.patch`, 부모 `0008_history` |
 
 
 ## 검사 해석

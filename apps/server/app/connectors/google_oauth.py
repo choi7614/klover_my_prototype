@@ -55,14 +55,15 @@ def _hash(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
 
 
-def authorization_url(settings: GoogleSettings, state: str, verifier: str) -> str:
+def authorization_url(settings: GoogleSettings, state: str, verifier: str, *, scopes=None) -> str:
     challenge = urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip("=")
     return "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(
         {
             "client_id": settings.client_id,
             "redirect_uri": REDIRECT_URI,
             "response_type": "code",
-            "scope": GMAIL_SCOPE,
+            "scope": " ".join(sorted(scopes)) if scopes else GMAIL_SCOPE,
+            **({"include_granted_scopes": "true"} if scopes else {}),
             "state": state,
             "code_challenge": challenge,
             "code_challenge_method": "S256",
@@ -74,7 +75,8 @@ def authorization_url(settings: GoogleSettings, state: str, verifier: str) -> st
 
 
 class GoogleOAuthClient:
-    def __init__(self, settings: GoogleSettings, transport=None):
+    def __init__(self, settings: GoogleSettings, transport=None, *, scopes=None):
+        self.scopes = frozenset(scopes) if scopes else frozenset({GMAIL_SCOPE})
         self.settings = settings
         self.transport = transport
 
@@ -104,7 +106,10 @@ class GoogleOAuthClient:
                     raise ValueError
                 if tokens.get("token_type", "").lower() != "bearer":
                     raise ValueError
-                if set(tokens.get("scope", "").split()) != {GMAIL_SCOPE}:
+                if not self.scopes <= set(tokens.get("scope", "").split()) or (
+                    self.scopes == {GMAIL_SCOPE}
+                    and set(tokens.get("scope", "").split()) != {GMAIL_SCOPE}
+                ):
                     raise ValueError
                 expires = tokens["expires_in"]
                 if type(expires) is not int or not 0 < expires <= 86400:
@@ -129,7 +134,7 @@ class GoogleOAuthClient:
                 safe_tokens = {
                     "access_token": access,
                     "refresh_token": refresh,
-                    "scope": GMAIL_SCOPE,
+                    "scope": tokens["scope"],
                     "expires_in": expires,
                 }
                 json.dumps(safe_tokens)

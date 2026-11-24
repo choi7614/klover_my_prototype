@@ -116,7 +116,7 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
       <Button variant="secondary" className="mb-3 justify-start" disabled={busy} onClick={() => void leave()}>‹ 받은편지함</Button>
       <span className="px-2 py-2 text-caption text-muted-foreground">설정</span>
       <div aria-current="page" className="flex h-9 items-center gap-2 rounded-md bg-selected px-3 text-body font-semibold text-selected-foreground"><User className="size-4" />내 프로필·문체</div>
-      {navigation.map(([target, label]) => <button type="button" key={target} disabled={!onNavigate || busy} onClick={() => void leave(target)} className="h-9 rounded-md px-3 text-left text-body text-muted-foreground hover:bg-accent disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-ring">{label}</button>)}
+      {navigation.map(([target, label]) => <button type="button" key={target} disabled={!onNavigate || busy || !['weekly-report', 'calendar', 'privacy'].includes(target)} title={['accounts', 'notifications'].includes(target) ? '준비 중인 설정입니다' : undefined} onClick={() => void leave(target)} className="h-9 rounded-md px-3 text-left text-body text-muted-foreground hover:bg-accent disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-ring">{label}{['accounts', 'notifications'].includes(target) && ' · 준비 중'}</button>)}
     </nav>
     {!draft || !saved ? <div className="flex-1 p-6">{error ? <><p role="alert">{error}</p><Button variant="secondary" onClick={() => setReload(n => n + 1)}>다시 불러오기</Button></> : <Skeleton label="프로필을 불러오고 있어요" />}</div>
       : <form onSubmit={event => void save(event)} className="flex min-h-0 min-w-0 flex-1 flex-col">

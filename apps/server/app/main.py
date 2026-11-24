@@ -36,6 +36,9 @@ def create_app() -> FastAPI:
     register_search_api(application)
     register_weekly_report_api(application)
     register_f5_api(application)
+    from app.api.f5_calendar import router as calendar_router
+
+    application.include_router(calendar_router)
     return application
 
 

@@ -96,14 +96,14 @@ class GmailMailClient:
                 or type(expires) is not int
                 or not 0 < expires <= 86400
                 or not isinstance(scope, str)
-                or set(scope.split()) != {GMAIL_SCOPE}
+                or GMAIL_SCOPE not in set(scope.split())
                 or payload.get("token_type", "").lower() != "bearer"
             ):
                 raise ValueError
             return {
                 "access_token": access,
                 "refresh_token": refresh,
-                "scope": GMAIL_SCOPE,
+                "scope": scope,
                 "expires_at": (datetime.now(UTC) + timedelta(seconds=expires)).isoformat(),
             }
         except (httpx.HTTPError, ValueError, TypeError, KeyError, AttributeError):

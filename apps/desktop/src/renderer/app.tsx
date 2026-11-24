@@ -6,13 +6,14 @@ import { OnboardingStartPage } from './features/onboarding/onboarding-start-page
 import { MailboxRoute, SearchRoute, unavailableSearchClient } from './features/mailbox/routes';
 import { Button } from './components/ui/button';
 import { mailFailure, type MailError, type MailSession } from '../shared/mail-read';
-import { F2ProfileRoute, F2ReplyRoute, unavailableF2Client, type F2Client } from './features/profile-draft';
+import { F2PrivacyRoute, F2ProfileRoute, F2ReplyRoute, unavailableF2Client, type F2Client } from './features/profile-draft';
 import type { SearchClient } from './features/search/contracts';
 import { createF2IPCClient } from './bridges/f2-ipc-client';
 import { createSearchIPCClient } from './bridges/search-ipc-client';
 import { WeeklyReportPage } from './features/weekly-report/weekly-report-page';
 import { createWeeklyReportIPCClient, unavailableWeeklyReportClient } from './features/weekly-report/ipc-client';
 import { createSuggestionsIPCClient, unavailableSuggestionsClient } from './features/suggestions/ipc-client';
+import { CalendarConnectionPanel } from './features/suggestions/calendar-connection';
 import { TodoListPage } from './features/suggestions/todo-list';
 import { createAnalysisIPCClient } from './features/mail-analysis/client';
 
@@ -64,9 +65,11 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
         {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} analysis={analysis} />} />}
         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
+        {session && suggestions?.calendar && <Route path="/settings/calendar" element={<main className="mx-auto max-w-3xl p-6"><nav className="mb-4 flex gap-4"><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필 설정</a></nav><CalendarConnectionPanel key={JSON.stringify([session.user_id, session.account_id])} client={suggestions.calendar} /></main>} />}
         {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
-        {session && <Route path="/report/weekly" element={<WeeklyReportPage autoGenerate={false} key={session.account_id} client={weeklyReport} />} />}
-        <Route path="/settings/profile" element={<F2ProfileRoute client={f2} mailboxPath={mailboxPath} />} />
+        {session && <Route path="/report/weekly" element={<WeeklyReportPage autoGenerate={false} draftScope={JSON.stringify([session.user_id, session.account_id])} key={JSON.stringify([session.user_id, session.account_id])} client={weeklyReport} />} />}
+        {session && <Route path="/settings/privacy" element={<F2PrivacyRoute key={JSON.stringify([session.user_id, session.account_id])} client={f2} />} />}
+        {session && <Route path="/settings/profile" element={<F2ProfileRoute key={JSON.stringify([session.user_id, session.account_id])} client={f2} mailboxPath={mailboxPath} />} />}
         <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2} mailboxPath={mailboxPath} />} />
         <Route path="*" element={<Navigate to={session ? '/mail/inbox' : '/onboarding/1'} replace />} />
       </Routes>

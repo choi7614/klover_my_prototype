@@ -1,5 +1,12 @@
 # F5 Calendar 추가 동의·일정 승인 — 2026-11-25
 
+## 최신 통합 — 2026-11-25
+
+- `integrate/settings-calendar`에서 기능 코드와 미적용 공통 연결을 통합했다. 작업 도구 없음(통합 제출).
+- [통합 검사·맥북 업데이트 안내](settings-calendar-integration.md)를 따른다. 실제 Google/모델/맥북은 미검증이다.
+- 사용자 develop 반영 승인. 최종 제출/병합 상태는 통합 PR을 따른다. 아래 미통합 설명은 제출 당시 기록이다.
+
+
 - 도구: 없음(제출 완료) · 브랜치 `feat/F5-ai-scan` · 구현 `7634286` · 최신 develop 로컬 통합 `f5046d7`.
 - 상태: 구현/합성 검사 완료. 사용자 승인으로 최신 develop `7668d94`를 기능 브랜치에 통합했다. 구현·통합 커밋 Push 완료, [PR #44](https://github.com/choi7614/klover_my_prototype/pull/44) 제출. 구현/검사 제출 커밋 `b5071c9`. 공통 패치는 미적용이며 develop/main 병합은 승인 범위 밖이다. 이 제출 기록의 문서 커밋도 Push하며 최종 HEAD·자동 검사 결과는 PR에서 확인한다.
 - 기능: 계정/소유 캘린더 표시·추가 OAuth 동의·별도 암호화 Calendar 자격 증명/갱신/해제·수정 후 명시적 승인·겹침 조회·고정 event ID·중복/동시 승인/시간 초과 재시도.

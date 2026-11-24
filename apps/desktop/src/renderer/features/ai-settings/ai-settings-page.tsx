@@ -29,7 +29,7 @@ export function AISettingsPage() {
     finally { setBusy(false); }
   }
   return <main className="mx-auto max-w-3xl space-y-5 p-8 text-body text-foreground">
-    <nav className="flex gap-4"><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필 설정</a></nav>
+    <nav className="flex gap-4"><a href="#/report/weekly" className="underline">주간 보고</a><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필 설정</a></nav>
     <h1 className="text-heading font-bold">AI 설정</h1>
     <p>자동 분류·태그·요약·임베딩·할 일 제안은 로컬 AI로 처리합니다. 아래 기능만 제공자를 선택합니다.</p>
     {!state ? <p role="status">{message || '설정을 불러오는 중…'}</p> : <>

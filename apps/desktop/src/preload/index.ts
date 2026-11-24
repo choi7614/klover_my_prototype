@@ -61,6 +61,9 @@ const suggestions = Object.freeze<F5Bridge>({
   conflicts: (suggestionId, payload) => ipcRenderer.invoke('klover:suggestions:conflicts', suggestionId, payload),
   todos: query => ipcRenderer.invoke('klover:suggestions:todos', query),
   createTodo: request => ipcRenderer.invoke('klover:suggestions:createTodo', request),
+  calendarStatus: () => ipcRenderer.invoke('klover:suggestions:calendarStatus'),
+  disconnectCalendar: () => ipcRenderer.invoke('klover:suggestions:disconnectCalendar'),
+  connectCalendar: () => ipcRenderer.invoke('klover:suggestions:connectCalendar'),
   updateTodo: (todoId, request) => ipcRenderer.invoke('klover:suggestions:updateTodo', todoId, request),
 });
 // F1 분류·요약 표시. 묶음 조회와 실패 다시 시도만 있다. 인수는 main에서 다시 검사한다.

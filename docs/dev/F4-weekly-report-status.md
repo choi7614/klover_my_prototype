@@ -1,5 +1,12 @@
 # F4 주간 보고 — 현재 상태
 
+## 최신 통합 — 2026-11-25
+
+- `integrate/settings-calendar`에서 기능 코드와 미적용 공통 연결을 통합했다. 작업 도구 없음(통합 제출).
+- [통합 검사·맥북 업데이트 안내](settings-calendar-integration.md)를 따른다. 실제 Google/모델/맥북은 미검증이다.
+- 사용자 develop 반영 승인. 최종 제출/병합 상태는 통합 PR을 따른다. 아래 미통합 설명은 제출 당시 기록이다.
+
+
 ## 2026-11-25 앱 마무리 제출
 
 - 제출 완료: 코드 `1fd848a` 커밋·Push, [PR #43](https://github.com/choi7614/klover_my_prototype/pull/43) 열림. 작업 도구 없음. 제출 폴더 미커밋·미Push 없음(문서 최종 커밋 포함 여부는 git log 확인). develop/main 병합 미실행.

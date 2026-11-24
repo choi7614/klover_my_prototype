@@ -27,6 +27,7 @@ from sqlalchemy.dialects.postgresql.base import ischema_names
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import UserDefinedType
 
+from app.db.repositories.f5_calendar import CalendarCredential  # noqa: F401
 from app.db.repositories.f5_schema import F5Base
 
 CATEGORIES = "'work_request','meeting','approval','report_share','notice','external','newsletter'"

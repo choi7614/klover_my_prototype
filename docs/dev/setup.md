@@ -257,7 +257,7 @@ uv run --locked --directory apps/server python -m app.cli.check_database
 
 기존 `.env`·`.local-secrets`·DB 볼륨·Compose 프로젝트명·모델 차원을 유지한다.
 비밀번호·키·계정을 다시 만들지 않는다. PR #37 자체에는 새 DB 이력이 없지만 이전 사용자는
-`0008_history`까지 필요하다. 재실행 후 `check_mail_api`와 7절의 합성 메일 흐름을 확인한다.
+`0009_f5_calendar`까지 필요하다. Calendar 연결은 [설정·Calendar 통합 안내](settings-calendar-integration.md)를 따른다. 재실행 후 `check_mail_api`와 7절의 합성 메일 흐름을 확인한다.
 자동 검사 성공은 본인의 DB·재로그인·모델 품질 성공을 보장하지 않는다.
 
 ## 10. 데이터와 암호화 키 백업

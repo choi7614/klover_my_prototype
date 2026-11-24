@@ -19,3 +19,9 @@ main/preload·서버 등록·DB·공유 타입·잠금 파일 변경 없음. 기
 실제 공통 파일에는 적용하지 않았다. 별도 /workspace/f4-patch-check에서만 적용 검증했다.
 메모리 보존은 앱 실행 중 같은 연결 포트·같은 사용자/계정 복귀에 한정된다.
 앱 종료/새로고침 전에는 서버 저장이 필요하며 기존 beforeunload 확인을 유지한다.
+
+## 2026-11-25 통합 적용 기록
+
+`integrate/settings-calendar`에서 실제 연결을 적용했다. 겹치는 App/routes는 통합 수정했으며
+생성 타입은 공통 생성 명령으로 재생성했다. 이 폴더는 원본 제안 기록이므로 재적용하지 않는다.
+최종 develop 반영 상태와 검사는 통합 PR 및 `docs/dev/settings-calendar-integration.md`를 따른다.

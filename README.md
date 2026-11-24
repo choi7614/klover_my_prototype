@@ -1,5 +1,10 @@
 # Klover
 
+설정의 주간 보고·개인정보/학습 데이터·Calendar 연결을 통합했습니다.
+업데이트에는 `0009_f5_calendar` DB 갱신이 필요합니다. [업데이트·확인 절차](docs/dev/settings-calendar-integration.md)를 따르세요.
+실제 Google Calendar와 맥북 전체 흐름은 별도 실기 확인이 남습니다.
+
+
 ## 로컬 정책·과거 메일 가져오기 (2026-11-24)
 
 자동 프로필 미리보기는 로컬만 사용합니다. AI 로컬 전용 모드와 Claude 실패 후 로컬 1회 전환,

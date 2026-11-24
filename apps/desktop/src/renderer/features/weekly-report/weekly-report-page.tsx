@@ -75,8 +75,11 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
   const [excludedLoading, setExcludedLoading] = useState(false);
   const mounted = useRef(true);
   const activeClient = useRef(client);
+  const activeScope = useRef(draftScope);
+  const [reportContext, setReportContext] = useState({ client, scope: draftScope });
   activeClient.current = client;
-  const isCurrentClient = () => mounted.current && activeClient.current === client;
+  activeScope.current = draftScope;
+  const isCurrentClient = () => mounted.current && activeClient.current === client && activeScope.current === draftScope;
   const dirty = !!report && JSON.stringify(sections) !== JSON.stringify(report.sections);
   const valid = !!report && draftIsValid(report, sections);
   const activeItem = sections.flatMap((section) => section.items).find((item) => item.item_id === selected);
@@ -93,6 +96,8 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
     mounted.current = true;
     setBusy(true);
     setError('');
+    setReportContext({ client, scope: draftScope });
+    setProvider('default');
     setReport(null);
     setSections([]);
     setOptions(null);
@@ -126,12 +131,13 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
   }, [client, autoGenerate, draftScope]);
 
   useEffect(() => {
-    if (!draftScope || !report) return;
+    // 계정/연결 변경 직후 이전 렌더의 편집본이 새 계정 캐시에 들어가지 않도록 한다.
+    if (!draftScope || !report || reportContext.client !== client || reportContext.scope !== draftScope) return;
     let accountDrafts = drafts.get(client);
     if (!accountDrafts) { accountDrafts = new Map(); drafts.set(client, accountDrafts); }
     if (dirty) accountDrafts.set(draftScope, { report, sections: cloneSections(sections), period, template, recipient, provider });
     else accountDrafts.delete(draftScope);
-  }, [client, draftScope, report, sections, dirty, period, template, recipient, provider]);
+  }, [client, draftScope, reportContext, report, sections, dirty, period, template, recipient, provider]);
 
   useEffect(() => {
     if (!dirty) return;

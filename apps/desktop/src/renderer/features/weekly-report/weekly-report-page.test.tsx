@@ -252,3 +252,14 @@ it('복귀 시 옵션 조회 실패에도 근거 없는 편집 항목을 보존�
   await waitFor(() => expect(screen.getByRole('button', { name: '변경 내용 저장' })).toBeDisabled());
   expect(screen.getAllByRole('textbox', { name: /^항목 내용/ })).toHaveLength(document.sections.flatMap(s => s.items).length + 1);
 });
+
+it('같은 화면에서 계정이 바뀌어도 이전 편집본을 새 계정 캐시에 저장하지 않는다', async () => {
+  const api = client();
+  const view = render(<WeeklyReportPage client={api} draftScope="switch:account-a" />);
+  fireEvent.change(await ready(), { target: { value: '이전 계정 비공개 편집본' } });
+  view.rerender(<WeeklyReportPage client={api} draftScope="switch:account-b" autoGenerate={false} />);
+  await screen.findByText('보고서를 만들 준비가 됐어요');
+  view.unmount();
+  render(<WeeklyReportPage client={api} draftScope="switch:account-b" autoGenerate={false} />);
+  await waitFor(() => expect(screen.queryByDisplayValue('이전 계정 비공개 편집본')).not.toBeInTheDocument());
+});

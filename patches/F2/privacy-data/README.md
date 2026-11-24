@@ -15,3 +15,9 @@ DELETE /profile/style은 현재 사용자의 문체 결과와 제외 표현만 �
 실제 수집·학습 작업자는 없고 화면은 항상 준비 중으로 표시한다.
 
 통합 시 공통 API 문서에 위 조회 의미를 기록한다. progress.md에는 이번 기능과 미적용 패치·검사 결과를 반영한다.
+
+## 2026-11-25 통합 적용 기록
+
+`integrate/settings-calendar`에서 실제 연결을 적용했다. 겹치는 App/routes는 통합 수정했으며
+생성 타입은 공통 생성 명령으로 재생성했다. 이 폴더는 원본 제안 기록이므로 재적용하지 않는다.
+최종 develop 반영 상태와 검사는 통합 PR 및 `docs/dev/settings-calendar-integration.md`를 따른다.
