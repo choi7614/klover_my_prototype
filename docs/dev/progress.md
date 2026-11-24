@@ -70,6 +70,6 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 
 ## F2 로컬 초안 안정화 진행
 
-- 브랜치 `feat/F2-local-draft-stability` · Codex · 기준 `origin/develop fff7993`(PR #39 병합).
+- 브랜치 `feat/F2-local-draft-stability` · 작업 도구 없음(제출 완료) · 기준 `origin/develop fff7993`(PR #39 병합).
 - 합성 응답 재현 검사부터 추가하고 형식/근거/방향 실패를 비밀 정보 없는 고정 사유로 구분한다. 기존 대기 상한·편집본/프로필·검증 경계를 유지한다.
-- 구현·검사 완료, 서버 620/skip 0·F2 선택 54·앱 F2 29 통과. 2026-11-25 사용자 커밋·Push·PR 생성 및 develop 병합 승인. 제출 절차 진행, main은 별도 승인이다. [검증/진단](F2-local-draft-stability.md).
+- 구현·검사 완료, 서버 620/skip 0·F2 선택 54·앱 F2 29 통과. 2026-11-25 사용자 커밋·Push·PR 생성 및 develop 병합 승인. 코드 `69e195e` 커밋·Push 및 [PR #40](https://github.com/choi7614/klover_my_prototype/pull/40) 제출 완료. 검사/최종 병합 이력은 PR 상태를 따른다. main은 별도 승인이다. [검증/진단](F2-local-draft-stability.md).
