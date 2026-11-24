@@ -179,9 +179,9 @@ describe('새로고침: Gmail 새 메일 가져오기 → 목록 다시 읽기 (
 });
 
 describe('F2·F3 화면 진입 (S03)', () => {
-  it('사이드바 설정은 프로필 화면으로, 메일 읽기의 답장 초안 버튼은 해당 메일 초안 화면으로 간다', async () => {
+  it('사이드바 설정은 설정 첫 화면으로, 메일 읽기의 답장 초안 버튼은 해당 메일 초안 화면으로 간다', async () => {
     render(<MailboxPage api={api()} session={session} onDisconnected={vi.fn()} />);
-    expect(screen.getByRole('link', { name: '설정' })).toHaveAttribute('href', '#/settings/profile');
+    expect(screen.getByRole('link', { name: '설정' })).toHaveAttribute('href', '#/settings');
     expect(screen.queryByRole('link', { name: /답장 초안 만들기/ })).not.toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: /합성 제목 mail-1/ }));
     expect(await screen.findByRole('link', { name: /답장 초안 만들기/ })).toHaveAttribute('href', '#/reply/mail-1');

@@ -13,13 +13,13 @@ function setup() {
     handle: vi.fn((channel, listener) => handlers.set(channel, listener)),
     removeHandler: vi.fn(channel => handlers.delete(channel)),
   } as unknown as Pick<IpcMain, 'handle' | 'removeHandler'>;
-  const client = { batch: vi.fn().mockResolvedValue({ ok: true, data: {} }), retry: vi.fn().mockResolvedValue({ ok: true, data: {} }) };
+  const client = { setCategory: vi.fn().mockResolvedValue({ ok: true, data: {} }), batch: vi.fn().mockResolvedValue({ ok: true, data: {} }), retry: vi.fn().mockResolvedValue({ ok: true, data: {} }) };
   const dispose = registerF1IPC(ipc, contents, 'file:///app/renderer/index.html', client);
   return { event, handlers, client, dispose, frame };
 }
 
 describe('F1 분석 IPC', () => {
-  it('두 통로만 등록하고 검사한 인수만 전달한다', async () => {
+  it('제한 통로만 등록하고 검사한 인수만 전달한다', async () => {
     const s = setup();
     expect([...s.handlers.keys()]).toEqual(Object.values(f1Channels));
     await s.handlers.get(f1Channels.batch)!(s.event, ['mail-1', 'mail-2']);
@@ -34,6 +34,12 @@ describe('F1 분석 IPC', () => {
     }
     expect(s.client.batch).toHaveBeenCalledTimes(1);
     expect(s.client.retry).toHaveBeenCalledTimes(1);
+    await s.handlers.get(f1Channels.setCategory)!(s.event, 'mail-1', 'notice');
+    expect(s.client.setCategory).toHaveBeenCalledWith('mail-1', 'notice');
+    for (const args of [[], ['../x', 'notice'], ['mail-1', 'custom'], ['mail-1', 'notice', { user_id: 'other' }]]) {
+      expect(await s.handlers.get(f1Channels.setCategory)!(s.event, ...args)).toMatchObject({ ok: false });
+    }
+    expect(s.client.setCategory).toHaveBeenCalledTimes(1);
     s.dispose();
     expect(s.handlers.size).toBe(0);
   });
@@ -41,6 +47,8 @@ describe('F1 분석 IPC', () => {
     const s = setup();
     const outside = { ...s.event, senderFrame: { url: 'https://outside.invalid/' } } as unknown as IpcMainInvokeEvent;
     expect(await s.handlers.get(f1Channels.batch)!(outside, ['mail-1'])).toMatchObject({ ok: false });
+    expect(await s.handlers.get(f1Channels.setCategory)!(outside, 'mail-1', 'notice')).toMatchObject({ ok: false });
+    expect(s.client.setCategory).not.toHaveBeenCalled();
     expect(s.client.batch).not.toHaveBeenCalled();
   });
 });

@@ -1,11 +1,12 @@
 // F1 분석 표시용 화면 어댑터. main/preload 통로(patches/F1/06) 전에는 없고, 없으면 AI 표시 없이 원래 목록을 보여 준다.
-import type { AnalysisErrorCode, AnalysisRetryResult, F1Bridge, MailAnalysisBatch } from '../../../shared/f1-bridge';
+import type { AnalysisCategory, CategoryUpdated, AnalysisErrorCode, AnalysisRetryResult, F1Bridge, MailAnalysisBatch } from '../../../shared/f1-bridge';
 
 export class AnalysisClientError extends Error {
   constructor(readonly code: AnalysisErrorCode | 'connection', message: string) { super(message); }
 }
 
 export interface MailAnalysisClient {
+  setCategory?(mailId: string, category: AnalysisCategory): Promise<CategoryUpdated>;
   batch(mailIds: string[]): Promise<MailAnalysisBatch>;
   retry(mailId: string): Promise<AnalysisRetryResult>;
 }
@@ -21,6 +22,7 @@ async function unwrap<T>(pending: Promise<{ ok: true; data: T } | { ok: false; e
 
 export function createAnalysisIPCClient(bridge: F1Bridge): MailAnalysisClient {
   return {
+    setCategory: (mailId, category) => unwrap(bridge.setCategory(mailId, category)),
     batch: mailIds => unwrap(bridge.batch(mailIds)),
     retry: mailId => unwrap(bridge.retry(mailId)),
   };

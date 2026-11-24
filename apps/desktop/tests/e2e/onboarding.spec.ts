@@ -20,6 +20,7 @@ test('첫 실행 화면에서 연결을 건너뛰지 못하고 새로 열어도 
 
 test('설정 창 크기에서 글꼴·레이아웃·비활성 버튼이 올바르게 표시된다', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Gmail 계정 연결' })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
 
   const layout = await page.evaluate(() => ({

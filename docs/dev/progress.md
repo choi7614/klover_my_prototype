@@ -1,5 +1,12 @@
 # 개발 현황판
 
+## 분류 변경·설정 UI (2026-11-25)
+
+- `integrate/category-settings-ui` · 작업 도구 없음(검사 완료·제출) · 기준 `0fa3dd9` (#45).
+- 기존 분류 API를 제한 IPC로 연결하고 설정 진입·복귀를 통일했다. 앱214·브라우저8·서버 분류API7(skip0), lint/typecheck/빌드 통과.
+- 사용자 커밋·Push·PR 및 문제없을 때 develop 병합 승인. 최종 상태는 이 변경을 포함하는 PR 이력을 따른다. [변경/검증/맥북 절차](category-settings-ui.md). 실제 계정·모델·맥북 미검증.
+
+
 ## F2·F4·F5 설정·Calendar 통합 (2026-11-25)
 
 - `integrate/settings-calendar` · 작업 도구 없음(통합 제출) · 기준 `7668d94`.

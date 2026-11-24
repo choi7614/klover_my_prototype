@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { MAX_BATCH, type AutoAnalysisState, type MailAnalysisView } from '../../../shared/f1-bridge';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { MAX_BATCH, type AnalysisCategory, type AutoAnalysisState, type MailAnalysisView } from '../../../shared/f1-bridge';
 import { AnalysisClientError, type MailAnalysisClient } from './client';
 
 /** 분석 대기 메일이 있고 자동 분석이 켜져 있을 때만 다시 확인한다(WebSocket 연결 전 임시 방식). */
@@ -9,6 +9,8 @@ export const MAX_POLLS = 60;
 export type RetryNotice = { mailId: string; message: string };
 
 export function useMailAnalysis(client: MailAnalysisClient | undefined, mailIds: string[]) {
+  const revision = useRef(0);
+  const currentClient = useRef(client); currentClient.current = client;
   const key = [...new Set(mailIds)].join(',');
   const [views, setViews] = useState<Record<string, MailAnalysisView>>({});
   const [state, setState] = useState<AutoAnalysisState | null>(null);
@@ -24,10 +26,11 @@ export function useMailAnalysis(client: MailAnalysisClient | undefined, mailIds:
     const groups: string[][] = [];
     for (let index = 0; index < ids.length; index += MAX_BATCH) groups.push(ids.slice(index, index + MAX_BATCH));
     const load = async () => {
+      const started = revision.current;
       let batches;
       try { batches = await Promise.all(groups.map(group => client.batch(group))); }
       catch { return; } // 불러오지 못하면 지금 보이는 내용을 그대로 두고 다시 묻지 않는다.
-      if (!active) return;
+      if (!active || started !== revision.current) return;
       const items = batches.flatMap(batch => batch.items);
       const auto = batches[0]?.auto_analysis ?? null;
       setViews(previous => {
@@ -57,5 +60,16 @@ export function useMailAnalysis(client: MailAnalysisClient | undefined, mailIds:
     }
   }, [client]);
 
-  return { views, state, retry, retryNotice };
+  const setCategory = useCallback(async (mailId: string, category: AnalysisCategory) => {
+    if (!client?.setCategory) throw new Error('category_unavailable');
+    revision.current += 1;
+    try {
+      const result = await client.setCategory(mailId, category);
+      if (currentClient.current !== client) return;
+      revision.current += 1;
+      setViews(previous => previous[mailId] ? { ...previous, [mailId]: { ...previous[mailId], category: result.effective_category } } : previous);
+    } finally { if (currentClient.current === client) setRound(value => value + 1); }
+  }, [client]);
+
+  return { setCategory: client?.setCategory ? setCategory : undefined, views, state, retry, retryNotice };
 }

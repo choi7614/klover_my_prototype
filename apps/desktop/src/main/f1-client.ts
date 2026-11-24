@@ -2,19 +2,19 @@
 import { readLocalAPI, type LocalAPIConfiguration } from './mail-client';
 import { validMailId } from '../shared/mail-read';
 import {
-  analysisFailure, parseAnalysisBatch, parseRetryResult, validBatchIds,
+  analysisFailure, validCategory, parseCategoryUpdated, type AnalysisCategory, type CategoryUpdated, parseAnalysisBatch, parseRetryResult, validBatchIds,
   type AnalysisResult, type AnalysisRetryResult, type F1Bridge, type MailAnalysisBatch,
 } from '../shared/f1-bridge';
 
 export class F1APIClient implements F1Bridge {
   constructor(private readonly configuration: LocalAPIConfiguration, private readonly fetcher: typeof fetch = fetch) {}
 
-  private async request<T>(path: string, parse: (value: unknown) => T, method: 'GET' | 'POST' = 'GET'): Promise<AnalysisResult<T>> {
+  private async request<T>(path: string, parse: (value: unknown) => T, method: 'GET' | 'POST' | 'PATCH' = 'GET', body?: object): Promise<AnalysisResult<T>> {
     const local = await readLocalAPI(this.configuration);
     if (!local) return analysisFailure('configuration');
     try {
       const response = await this.fetcher(new URL(path, local.base), {
-        method, headers: { Authorization: `Bearer ${local.token}`, Accept: 'application/json' },
+        method, body: body ? JSON.stringify(body) : undefined, headers: { Authorization: `Bearer ${local.token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
         redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(10000),
       });
       if (!response.ok) {
@@ -32,6 +32,11 @@ export class F1APIClient implements F1Bridge {
       try { return { ok: true, data: parse(await response.json()) }; }
       catch { return analysisFailure('invalid_response'); }
     } catch { return analysisFailure('connection'); }
+  }
+
+  setCategory(mailId: string, category: AnalysisCategory): Promise<AnalysisResult<CategoryUpdated>> {
+    if (!validMailId(mailId) || !validCategory(category)) return Promise.resolve(analysisFailure('invalid_request'));
+    return this.request(`/mails/${encodeURIComponent(mailId)}/category`, value => parseCategoryUpdated(value, mailId, category), 'PATCH', { category });
   }
 
   batch(mailIds: string[]): Promise<AnalysisResult<MailAnalysisBatch>> {

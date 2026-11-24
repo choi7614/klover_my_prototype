@@ -26,7 +26,7 @@ export function HistoryPage() {
     finally { setBusy(false); }
   }
   return <main className="mx-auto max-w-3xl space-y-4 p-8 text-body">
-    <a href="#/mail/inbox" className="underline">받은편지함</a><h1 className="text-heading font-bold">과거 메일 가져오기</h1>
+    <h1 className="text-heading font-bold">과거 메일 가져오기</h1>
     <p>선택한 한국 날짜 범위의 현재 Gmail 받은편지함(INBOX)만 가져옵니다. 보낸 메일·보관함·스팸은 포함하지 않습니다. 최대 366일·작업당 10,000건입니다.</p>
     <p>기존 메일은 중복 저장하지 않습니다. 일반 수신 시작 시점·커서는 보존합니다. 로컬 분석 뒤 검색·보고서에 사용할 수 있으며, 이 작업으로 Claude를 호출하지 않습니다.</p>
     <label className="block">시작일 <input aria-label="가져오기 시작일" type="date" value={start} onChange={e => setStart(e.target.value)} className="rounded border bg-background p-2" /></label>

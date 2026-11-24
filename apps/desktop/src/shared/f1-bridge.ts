@@ -25,14 +25,17 @@ export type AnalysisErrorCode = 'invalid_request' | 'invalid_response' | 'connec
   'analysis_unavailable' | 'already_analyzed' | 'unavailable' | 'configuration';
 export type AnalysisResult<T> = { ok: true; data: T } | { ok: false; error: { code: AnalysisErrorCode; message: string } };
 
+export type CategoryUpdated = { mail_id: string; user_label: AnalysisCategory; effective_category: AnalysisCategory };
+
 export interface F1Bridge {
+  setCategory(mailId: string, category: AnalysisCategory): Promise<AnalysisResult<CategoryUpdated>>;
   /** 목록에 보이는 메일들의 분석 결과(최대 100건). 다른 소유자·없는 메일은 빠진다. */
   batch(mailIds: string[]): Promise<AnalysisResult<MailAnalysisBatch>>;
   /** 실패한 분석 다시 시도. AI가 연결되지 않았으면 analysis_unavailable. */
   retry(mailId: string): Promise<AnalysisResult<AnalysisRetryResult>>;
 }
 
-export const f1Channels = { batch: 'klover:analysis:batch', retry: 'klover:analysis:retry' } as const;
+export const f1Channels = { batch: 'klover:analysis:batch', retry: 'klover:analysis:retry', setCategory: 'klover:analysis:setCategory' } as const;
 export const MAX_BATCH = 100;
 
 const messages: Record<AnalysisErrorCode, string> = {
@@ -117,4 +120,13 @@ export function parseRetryResult(value: unknown, mailId: string): AnalysisRetryR
   const row = record(value);
   if (row.mail_id !== mailId || row.analysis_status !== 'pending') throw new Error('response');
   return { mail_id: mailId, analysis_status: 'pending' };
+}
+
+export function validCategory(value: unknown): value is AnalysisCategory {
+  return typeof value === 'string' && categories.includes(value);
+}
+export function parseCategoryUpdated(value: unknown, mailId: string, category: AnalysisCategory): CategoryUpdated {
+  const row = record(value);
+  if (row.mail_id !== mailId || row.user_label !== category || row.effective_category !== category) throw new Error('response');
+  return { mail_id: mailId, user_label: category, effective_category: category };
 }
