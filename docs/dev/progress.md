@@ -67,3 +67,9 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 - 이번 명령·결과는 [통합 검증 기록](verification-local-ai-history.md)에 둔다. 이전 문서 작업은 [기존 검증 기록](verification-2026-11-24.md)에 보존한다. 과거 575/182 등의 건수와 구분한다.
 - 이전 사용자 macOS의 DB·Google·CLI·일부 초안 성공 보고는 신규 사용자 전체 검증이 아니다.
 - Google 로그인·실제 Gmail·Ollama·유료 Claude·Windows/macOS 전체 실행은 이번에 하지 않는다.
+
+## F2 로컬 초안 안정화 진행
+
+- 브랜치 `feat/F2-local-draft-stability` · Codex · 기준 `origin/develop fff7993`(PR #39 병합).
+- 합성 응답 재현 검사부터 추가하고 형식/근거/방향 실패를 비밀 정보 없는 고정 사유로 구분한다. 기존 대기 상한·편집본/프로필·검증 경계를 유지한다.
+- 구현·검사 완료, 서버 620/skip 0·F2 선택 54·앱 F2 29 통과. 2026-11-25 사용자 커밋·Push·PR 생성 및 develop 병합 승인. 제출 절차 진행, main은 별도 승인이다. [검증/진단](F2-local-draft-stability.md).
