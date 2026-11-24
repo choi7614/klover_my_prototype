@@ -73,7 +73,7 @@ def save_profile(request: ProfileUpdate, api: Service):
 
 @router.get("/profile/style", response_model=StyleState)
 def style(api: Service):
-    return api.repository.style(user_id=api.owner.user_id)
+    return api.repository.style(user_id=api.owner.user_id, include_inactive=True)
 
 
 @router.delete("/profile/style", response_model=ProfileState)

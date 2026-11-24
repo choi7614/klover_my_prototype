@@ -88,7 +88,7 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
   }
 
   async function deleteLearning() {
-    if (!await confirm('문체 학습 기록과 제외 표현을 삭제하고 학습 동의를 끌까요?')) return;
+    if (!await confirm('현재 사용자의 문체 학습 결과(분석 건수·표현·문장 특징)와 제외 표현을 모두 삭제하고 학습 동의를 끕니다. 되돌릴 수 없어요. 기본 정보·문체·서명·보고 양식, 기존 초안·메일·OAuth 토큰·Claude 키는 유지합니다. 삭제할까요?')) return;
     setBusy(true); setError('');
     try {
       const state = await client.deleteStyle();
@@ -143,7 +143,7 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
           </Panel>
           <Panel title="◆ 보낸 메일에서 내 문체 학습" className="col-span-2 border-ai-border">
             <div className="flex items-center gap-3 text-caption">
-              <span className="flex-1 text-muted-foreground">{style.status === 'ready' ? `사용 시작 후 보낸 메일 ${style.analyzed_count}건 분석` : '보낸 메일 수집·학습 연결 준비 중 · 분석한 메일 0건'}</span>
+              <span className="flex-1 text-muted-foreground">{`보낸 메일 수집·학습 연결 준비 중 · 기존 분석 기록 ${style.analyzed_count}건`}</span>
               <button type="button" role="switch" aria-checked={draft.style_learning_enabled} aria-label="문체 학습 동의" onClick={() => void toggleLearning()} className="rounded-full border border-input px-3 py-1 text-body focus-visible:ring-2 focus-visible:ring-ring">{draft.style_learning_enabled ? '동의 켬' : '동의 끔'}</button>
               <button type="button" className="text-danger underline" onClick={() => void deleteLearning()}>학습 기록 삭제</button>
             </div>
@@ -151,9 +151,9 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
               {style.phrases.length || draft.excluded_phrases.length ? [...new Set([...style.phrases, ...draft.excluded_phrases])].map(phrase => {
                 const excluded = draft.excluded_phrases.includes(phrase);
                 return <button type="button" key={phrase} className="rounded-full border border-ai-border px-3 py-1 text-ai-text" onClick={() => change('excluded_phrases', excluded ? draft.excluded_phrases.filter(p => p !== phrase) : [...draft.excluded_phrases, phrase])}>{phrase} {excluded ? '제외됨 · 되돌리기' : '×'}</button>;
-              }) : <span className="text-muted-foreground">보낸 메일이 쌓이면 자주 쓰는 표현이 여기에 나타나요</span>}
+              }) : <span className="text-muted-foreground">저장된 학습 표현이 없어요. 실제 수집·학습은 준비 중이에요.</span>}
             </div>
-            <p className="text-caption text-muted-foreground">과거 메일 없이 시작하므로, 초기에는 위 문체 설정을 쓰고 보낸 메일이 쌓일수록 학습 결과를 더 반영합니다.</p>
+            <p className="text-caption text-muted-foreground">직접 입력한 문체 설정을 사용합니다. 동의를 켜도 새 보낸 메일 수집·학습은 실행되지 않아요.</p>
             {style.traits.length > 0 && <p className="text-caption">문장 특징: {style.traits.join(', ')}</p>}
           </Panel>
           <Panel title="주간 보고 양식">

@@ -73,18 +73,25 @@ class F2Repository:
         except IntegrityError:
             raise conflict() from None
 
-    def style(self, *, user_id: str, profile: Profile | None = None) -> StyleState:
+    def style(
+        self, *, user_id: str, profile: Profile | None = None, include_inactive: bool = False
+    ) -> StyleState:
         profile = profile or self.profile(user_id=user_id).profile
-        if not profile.style_learning_enabled:
+        if not profile.style_learning_enabled and not include_inactive:
             return StyleState()
         with Session(self.engine) as session:
             row = session.get(StyleRecord, user_id)
             if row is None:
-                return StyleState(enabled=True, status="unavailable")
+                return StyleState(
+                    enabled=profile.style_learning_enabled,
+                    status="unavailable" if profile.style_learning_enabled else "disabled",
+                )
             stored = StyleState.model_validate(row.payload)
             return StyleState(
-                enabled=True,
-                status="ready" if stored.analyzed_count else "unavailable",
+                enabled=profile.style_learning_enabled,
+                status=("ready" if stored.analyzed_count else "unavailable")
+                if profile.style_learning_enabled
+                else "disabled",
                 analyzed_count=stored.analyzed_count,
                 phrases=tuple(p for p in stored.phrases if p not in profile.excluded_phrases),
                 traits=stored.traits,

@@ -1,0 +1,19 @@
+--- a/apps/desktop/src/renderer/app.tsx
++++ b/apps/desktop/src/renderer/app.tsx
+@@ -6,7 +6,7 @@
+ import { MailboxRoute, SearchRoute, unavailableSearchClient } from './features/mailbox/routes';
+ import { Button } from './components/ui/button';
+ import { mailFailure, type MailError, type MailSession } from '../shared/mail-read';
+-import { F2ProfileRoute, F2ReplyRoute, unavailableF2Client, type F2Client } from './features/profile-draft';
++import { F2PrivacyRoute, F2ProfileRoute, F2ReplyRoute, unavailableF2Client, type F2Client } from './features/profile-draft';
+ import type { SearchClient } from './features/search/contracts';
+ import { createF2IPCClient } from './bridges/f2-ipc-client';
+ import { createSearchIPCClient } from './bridges/search-ipc-client';
+@@ -66,6 +66,7 @@
+         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
+         {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
+         {session && <Route path="/report/weekly" element={<WeeklyReportPage autoGenerate={false} key={session.account_id} client={weeklyReport} />} />}
++        <Route path="/settings/privacy" element={<F2PrivacyRoute client={f2} />} />
+         <Route path="/settings/profile" element={<F2ProfileRoute client={f2} mailboxPath={mailboxPath} />} />
+         <Route path="/reply/:mailId" element={<F2ReplyRoute client={f2} mailboxPath={mailboxPath} />} />
+         <Route path="*" element={<Navigate to={session ? '/mail/inbox' : '/onboarding/1'} replace />} />

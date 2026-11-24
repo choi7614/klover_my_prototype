@@ -1,0 +1,26 @@
+--- a/apps/desktop/src/renderer/features/profile-draft/routes.tsx
++++ b/apps/desktop/src/renderer/features/profile-draft/routes.tsx
+@@ -1,4 +1,5 @@
+ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
++import { PrivacyPage } from './privacy-page';
+ import { ProfilePage } from './profile-page';
+ import { ReplyDraftPage } from './reply-draft-page';
+ import type { F2Client } from './contracts';
+@@ -6,7 +7,7 @@
+ /** 공통 라우터에 적용 전 패치로만 연결한다. 실제 메일함 경로는 F0가 제공한다. */
+ export function F2ProfileRoute({ client, mailboxPath }: { client: F2Client; mailboxPath: string }) {
+   const navigate = useNavigate();
+-  return <ProfilePage client={client} onExit={() => void navigate(mailboxPath)} />;
++  return <ProfilePage client={client} onExit={() => void navigate(mailboxPath)} onNavigate={target => { if (target === 'privacy') void navigate('/settings/privacy'); }} />;
+ }
+ 
+ export function F2ReplyRoute({ client, mailboxPath }: { client: F2Client; mailboxPath: string }) {
+@@ -22,3 +23,8 @@
+   }
+   return <ReplyDraftPage autoGenerate={false} client={client} mailId={mailId} draftId={draftId} onExit={() => void navigate(mailboxPath)} />;
+ }
++
++export function F2PrivacyRoute({ client }: { client: F2Client }) {
++  const navigate = useNavigate();
++  return <PrivacyPage client={client} onBack={() => void navigate('/settings/profile')} />;
++}
