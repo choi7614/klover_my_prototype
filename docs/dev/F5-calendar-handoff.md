@@ -6,8 +6,8 @@
 
 - 원격 develop `7668d94aa5f251541d95e17c9ed238fabc52b418`, PR #41 병합을 API로 확인했다.
 - 기존 F5 원격/로컬 HEAD `b85e2eb5e6980e7ec1900346bb5d0a27eb47b93a`를 재사용했다. 기존 브랜치와 작업을 삭제·초기화하지 않았다.
-- 기능 브랜치에 최신 develop을 병합하지 않았다. 최신 develop의 **별도 검증 사본**에서 기능 파일과 공통 변경안을 함께 검사했다.
-- 이 단위는 전부 미커밋·미Push, 새 PR 없음. 커밋·Push·PR 및 기능 브랜치 로컬 통합은 사용자 보고 후 묶음 승인 대상이다. develop/main 병합은 하지 않았다.
+- 사용자 승인 후 최신 develop `7668d94`를 기능 브랜치에 로컬 통합했다(`f5046d7`). 공통 패치는 미적용이다. 별도 검증 사본에서 기능 파일과 공통 변경안을 함께 검사했다.
+- 사용자 묶음 승인으로 구현 `7634286`·로컬 통합 `f5046d7`을 커밋했다. Push·PR 제출 진행 중이며 최종 제출 정보는 status를 따른다. develop/main 병합은 하지 않는다.
 - 작업 원본 `/workspace/klover_my_prototype`. 검증 사본 `/tmp/klover-f5-calendar-base`. 사본에만 있는 필요한 공통 변경은 전부 `patches/F5/calendar/*.patch`에 보관했다. 사본을 직접 운영에 사용하지 않는다.
 
 ## 구현한 흐름
@@ -68,7 +68,7 @@ UTC 차이는 한 번짜리 일정의 명시적 오프셋이다. 지역별 일�
 
 ## 검사와 미검증
 
-최종 결과: 서버 전체 **654 통과/skip 0**, 앱 전체 **195 통과**, Ruff·lint·typecheck·빌드·패치 재구성 검사 통과. F5 status에도 기록했다. 검사 DB는 이 작업에서 새로 만든 Docker PostgreSQL16+pgvector의
+제출 브랜치 자체는 서버 **650 통과/skip 4**(공통 OAuth·0009 미적용 4개), 앱 **195 통과**, Ruff/lint/typecheck 통과다. 공통 변경안을 적용한 사본의 최종 결과: 서버 전체 **654 통과/skip 0**, 앱 전체 **195 통과**, Ruff·lint·typecheck·빌드·패치 재구성 검사 통과. F5 status에도 기록했다. 검사 DB는 이 작업에서 새로 만든 Docker PostgreSQL16+pgvector의
 `klover_f5_test`이며 모든 계정·메일·키·응답은 합성이다. 실제 사용자 DB, 실제 Gmail·Google Calendar·유료 AI·Ollama에 접근하지 않았다.
 
 - 서버 전체 회귀와 새 F5 검사: 암호문/Gmail 계정 보존·권한 오류·반복/동시 승인·시간 초과 후 재시도·명시적 거절·인증/Origin 거부·OAuth 취소/replay·0009 반복 upgrade/downgrade.
@@ -91,7 +91,7 @@ UTC 차이는 한 번짜리 일정의 명시적 오프셋이다. 지역별 일�
 
 ## 통합 채팅에 전달
 
-F5 Calendar 기능 파일과 최신 develop `7668d94` 기준 공통 패치 03~08을 준비했다. 작업 폴더는 `/workspace/klover_my_prototype`, 브랜치는 `feat/F5-ai-scan`, HEAD는 기존 `b85e2eb`이며 이번 변경은 미커밋·미Push·PR 없음이다.
-승인 후 origin/develop을 기능 브랜치에 로컬 통합하고, 이 패치를 통합 채팅에서 적용·공유 타입 재생성·전체 재검사해야 실제 앱에 연결된다. 현재 브랜치에서 실운영 연결 완료라고 보고하지 않는다.
+F5 Calendar 기능 파일과 최신 develop `7668d94` 기준 공통 패치 03~08을 준비했다. 작업 폴더는 `/workspace/klover_my_prototype`, 브랜치는 `feat/F5-ai-scan`, 구현 커밋은 `7634286`, develop 로컬 통합은 `f5046d7`이다. 최종 제출 커밋과 PR은 status를 따른다.
+origin/develop `7668d94`의 기능 브랜치 로컬 통합은 완료했다. 이 패치를 통합 채팅에서 적용·공유 타입 재생성·전체 재검사해야 실제 앱에 연결된다. 현재 브랜치에서 실운영 연결 완료라고 보고하지 않는다.
 기존 F1 분석→제안 훅은 이미 develop에 있고 이번 자동 실행 변경은 없다. F0에는 Calendar 설정 경로/제한 IPC만 요청하며 OS 알림·트레이·메일 발송은 요청하지 않는다.
-실제 Google·맥북·사용자 DB는 미검증이다. 커밋·Push·PR은 묶음 승인 대기, develop/main 병합은 별도 승인 대상이다.
+실제 Google·맥북·사용자 DB는 미검증이다. 커밋·Push·PR은 사용자 묶음 승인 범위이며 develop/main 병합은 별도 승인 대상이다.
