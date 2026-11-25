@@ -3,8 +3,9 @@
 import json
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import ValidationError
 
+from app.ai.f2_evidence import derive_evidence
 from app.ai.f2_output_diagnostics import (
     InvalidDraftOutput,
     OutputReason,
@@ -21,51 +22,29 @@ from app.ai.interfaces import (
     TextGeneration,
 )
 from app.ai.json_output import clean_json_text
-from app.schemas.profile_draft import Evidence, GeneratedDraft, GenerationInput
+from app.schemas.profile_draft import DraftCore, GeneratedDraft, GenerationInput
 
 
-class DraftQuote(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-    text: str = Field(min_length=1, max_length=20000)
-    source: str = Field(pattern=r"^(profile\.phrase|mail:[A-Za-z0-9_-]{1,128})$")
-    source_quote: str = Field(min_length=1, max_length=20000)
-
-
-class QuotedDraft(GeneratedDraft):
-    evidence: tuple[DraftQuote, ...] = Field(default=(), max_length=100)
+class DraftOutput(DraftCore):
+    """제공자에게 요구하는 응답 형식. 근거 문구는 요구하지 않는다(서버가 계산)."""
 
 
 def grounded_draft(raw: str, request: GenerationInput) -> GeneratedDraft:
     if not isinstance(raw, str):
         raise InvalidDraftOutput(OutputReason.SCHEMA_INVALID)
     try:
-        quoted = QuotedDraft.model_validate_json(clean_json_text(raw))
+        data = json.loads(clean_json_text(raw))
+    except ValueError:
+        raise InvalidDraftOutput(OutputReason.JSON_INVALID) from None
+    if not isinstance(data, dict):
+        raise InvalidDraftOutput(OutputReason.SCHEMA_INVALID)
+    # 예전 형식을 따라 근거(evidence)를 같이 보낸 모델도 실패시키지 않는다. 내용은 쓰지 않고 버린다.
+    data.pop("evidence", None)
+    try:
+        output = DraftOutput.model_validate(data)
     except ValidationError as error:
         raise InvalidDraftOutput(schema_reason(error)) from None
-    mails = {m.mail_id: m for m in (request.original, *request.related)}
-    evidence = []
-    for item in quoted.evidence:
-        start = quoted.body.find(item.text)
-        if start < 0:
-            raise InvalidDraftOutput(OutputReason.BODY_QUOTE)
-        if item.source == "profile.phrase":
-            if item.text != item.source_quote or item.text not in request.learned_phrases:
-                raise InvalidDraftOutput(OutputReason.LEARNED_PHRASE)
-        else:
-            mail = mails.get(item.source[5:])
-            if request.purpose == "preview" or mail is None:
-                raise InvalidDraftOutput(OutputReason.SOURCE)
-            if not any(item.source_quote in value for value in (mail.body_text, mail.subject)):
-                raise InvalidDraftOutput(OutputReason.SOURCE_QUOTE)
-        # 같은 문구가 반복되면 이미 사용한 위치 다음의 정확한 일치를 찾는다.
-        # 출처/원문 인용을 검증한 뒤에만 위치를 배정하며 근거를 버리지 않는다.
-        while any(start < e.span[1] and start + len(item.text) > e.span[0] for e in evidence):
-            start = quoted.body.find(item.text, start + 1)
-            if start < 0:
-                raise InvalidDraftOutput(OutputReason.OVERLAP)
-        evidence.append(Evidence(span=(start, start + len(item.text)), source=item.source))
-    evidence.sort(key=lambda e: e.span)
-    result = GeneratedDraft(**quoted.model_dump(exclude={"evidence"}), evidence=tuple(evidence))
+    result = GeneratedDraft(**output.model_dump(), evidence=derive_evidence(output.body, request))
     if request.direction is not None and result.selected_direction != request.direction:
         raise InvalidDraftOutput(OutputReason.DIRECTION)
     if any(phrase in result.body for phrase in request.profile.excluded_phrases):
@@ -94,11 +73,6 @@ class SharedDraftAI:
                 "address": request.original.from_addr,
             },
         }
-        payload["allowed_evidence_sources"] = (
-            []
-            if request.purpose == "preview"
-            else [f"mail:{mail.mail_id}" for mail in (request.original, *request.related)]
-        ) + (["profile.phrase"] if request.learned_phrases else [])
         operation = (
             "preview" if request.purpose == "preview" else "revise" if request.action else "create"
         )
@@ -110,7 +84,7 @@ class SharedDraftAI:
                         purpose="draft",
                         system_prompt=prompt,
                         user_prompt=json.dumps(payload, ensure_ascii=False),
-                        response_schema=QuotedDraft.model_json_schema(),
+                        response_schema=DraftOutput.model_json_schema(),
                     )
                 )
             except ProvidersNotConfigured:

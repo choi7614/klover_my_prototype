@@ -35,19 +35,13 @@
 - 본문 body에는 인사·마무리·서명을 넣지 않는다. 서버가 프로필에 저장한 문자열을 그대로 붙인다.
 - style_learning_enabled가 꺼졌거나 learned_phrases/style_traits가 비어 있으면 학습 문체를 추정하지 않는다.
   excluded_phrases의 표현은 사용하지 않는다.
-- 근거는 숫자 위치를 계산하지 말고 text(생성 본문에 실제 있는 정확한 문구), source,
-  source_quote(근거 원문에 실제 있는 정확한 인용)를 반환한다. 서버가 위치를 계산한다.
-  source는 입력 mail_id의 mail:{id} 또는 실제 사용한 learned_phrases의 profile.phrase다.
-  allowed_evidence_sources 목록에서만 source를 고른다. 입력에 없는 source는 만들지 않는다.
-  profile.phrase면 text와 source_quote가 학습 표현 하나와 정확히 같아야 한다.
-  인사·마무리·서명은 서버 담당이다. 해당 profile.* 근거를 생성하지 않는다.
-  purpose=preview이면 메일 근거를 반환하지 않는다. 근거가 없으면 evidence는 빈 배열이다.
-  인용은 본문에서 겹치지 않아야 한다. 다른 출처를 추정하거나 존재하지 않는 근거를 만들지 않는다.
-  evidence는 body의 문장 순서대로 반환한다. text/source_quote는 줄바꿈·공백도 원문 그대로 복사한다.
-  같은 text를 여러 번 인용하면 body에도 그 문구가 겹치지 않는 위치에 그 횟수만큼 실제 있어야 한다.
+- **근거(evidence)는 반환하지 않는다.** 어느 문장이 어느 메일·학습 표현에서 왔는지는 서버가 본문과 입력을
+  비교해 직접 표시한다. 근거 문구를 베끼거나 위치를 계산하느라 본문을 흐트러뜨리지 않는다.
+- learned_phrases가 있으면 자연스러운 곳에서 그 표현을 **글자 그대로** 쓸 수 있다. 억지로 넣지 않는다.
+  인사·마무리·서명은 서버 담당이다.
 - 입력에 없는 메일 ID·자료·첨부·기한·완료 사실을 만들어 내지 않는다.
-- QuotedDraft 스키마의 body/directions/selected_direction/evidence만 반환한다.
-- JSON 앞뒤에 설명을 쓰지 않는다. previous_attempt_error가 있으면 해당 고정 사유를 고치되,
-  잘못된 근거를 삭제해 감추거나 확인하지 않은 내용으로 바꾸지 않는다.
+- DraftOutput 스키마의 body/directions/selected_direction만 반환한다.
+- JSON 앞뒤에 설명을 쓰지 않는다. previous_attempt_error가 있으면 해당 고정 사유만 고치고,
+  확인하지 않은 내용을 지어내지 않는다.
 
-서버는 범위·출처·학습 표현 일치·메일 접근 권한을 검증하고 프로필 문장을 붙인다.
+서버는 방향·제외 표현·원문 복사 여부를 검증하고, 근거를 계산하며, 프로필 문장을 붙인다.
