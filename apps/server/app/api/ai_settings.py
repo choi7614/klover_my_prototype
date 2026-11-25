@@ -10,6 +10,7 @@ from app.ai.interfaces import GenerationRequest, ProviderCallError, ProvidersNot
 from app.ai.selection import AISelectionError, AIState, AIUpdate, SelectedGeneration, selected
 from app.api.errors import error_response
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state
 
 
 class Probe(BaseModel):
@@ -28,7 +29,7 @@ def register_ai_settings(application):
     def store(request):
         if request.query_params:
             raise HTTPException(422)
-        result = getattr(request.app.state, "ai_settings", None)
+        result = get_state(request, StateName.AI_SETTINGS)
         if result is None:
             raise AISelectionError("메일 API 서버에서 AI 설정을 확인하세요.")
         return result

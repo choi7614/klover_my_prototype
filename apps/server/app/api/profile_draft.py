@@ -10,6 +10,7 @@ from app.ai.f2_port import DraftAI, F2Error, RelatedMailSearch, UnavailableDraft
 from app.api.ai_scope import ai_scope, execution_result
 from app.api.errors import error_response
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state, set_state
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.db.repositories.profile_draft import F2Repository
 from app.schemas.common import ErrorResponse
@@ -38,7 +39,7 @@ class F2Context:
 def service(request: Request, reader: Annotated[object, Depends(authorize)]):
     if request.query_params:
         raise HTTPException(422)
-    context = getattr(request.app.state, "profile_draft", None)
+    context = get_state(request, StateName.PROFILE_DRAFT)
     if context is None:
         raise F2Error("f2_unavailable", 503, "프로필 저장소 연결이 준비되지 않았어요.")
     try:
@@ -110,9 +111,9 @@ async def revise_draft(draft_id: Identifier, request: DraftRevise, api: Service,
 
 
 def register_profile_draft(application):
-    if getattr(application.state, "f2_registered", False):
+    if get_state(application, StateName.F2_REGISTERED, False):
         return
-    application.state.f2_registered = True
+    set_state(application, StateName.F2_REGISTERED, True)
     application.include_router(router)
 
     @application.exception_handler(F2Error)
