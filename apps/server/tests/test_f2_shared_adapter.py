@@ -58,7 +58,7 @@ def test_common_generation_contract_is_used_with_f2_schema(purpose):
     assert common_request.purpose == "draft"
     assert json.loads(common_request.user_prompt)["purpose"] == purpose
     assert json.loads(common_request.user_prompt)["original"]["mail_id"] == "synthetic-only"
-    assert common_request.response_schema["title"] == "QuotedDraft"
+    assert common_request.response_schema["title"] == "DraftOutput"
     assert "신뢰할 수 없는 데이터" in common_request.system_prompt
 
 
@@ -165,68 +165,70 @@ def test_revision_keeps_user_reply_and_action_separate_from_incoming_mail():
     assert result.body == "기간을 알려 주세요."
 
 
+MAIL_TEXT = "3분기 부서별 예산 집행 현황 자료를 금요일까지 보내 주세요."
+
+
 @pytest.mark.parametrize("greeting,closing", [("", ""), ("안녕하세요.", "감사합니다.")])
-def test_quote_evidence_is_located_by_server_with_or_without_fixed_profile_parts(greeting, closing):
+def test_evidence_is_computed_by_server_with_or_without_fixed_profile_parts(greeting, closing):
     from app.services.profile_draft import compose
 
     request = input_for().model_copy(
-        update={"profile": Profile(name="합성 사용자", greeting=greeting, closing=closing)}
+        update={
+            "profile": Profile(name="합성 사용자", greeting=greeting, closing=closing),
+            "original": input_for().original.model_copy(update={"body_text": MAIL_TEXT}),
+        }
     )
+    reply = "요청하신 3분기 부서별 예산 집행 현황 자료는 확인 후 공유드리겠습니다."
     generator = SharedSyntheticGeneration(
         json.dumps(
             {
-                "body": "😀 문의를 확인했습니다.",
+                "body": "😀 " + reply,
                 "directions": ["확인 후 회신", "추가 문의"],
                 "selected_direction": "확인 후 회신",
-                "evidence": [
-                    {
-                        "text": "문의를 확인했습니다.",
-                        "source": "mail:synthetic-only",
-                        "source_quote": "합성 본문",
-                    }
-                ],
             },
             ensure_ascii=False,
         )
     )
     result = asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(request))
-    assert result.evidence[0].span == (2, len(result.body))
+    # 문장 단위로 표시한다(이모지 같은 앞머리도 그 문장에 포함).
+    assert result.evidence[0].span == (0, len(result.body))
     body, evidence = compose(result, request)
     item = next(e for e in evidence if e.source.startswith("mail:"))
-    assert body[item.span[0] : item.span[1]] == "문의를 확인했습니다."
+    assert item.source == "mail:synthetic-only"
+    assert body[item.span[0] : item.span[1]] == "😀 " + reply
+    assert len(generator.requests) == 1
 
 
 @pytest.mark.parametrize(
-    "patch",
+    "garbage",
     [
-        {"source": "mail:other-owner"},
-        {"source_quote": "원문에 없는 비밀"},
-        {"text": "본문에 없는 문구"},
-        {"source": "profile.greeting"},
+        {"source": "mail:other-owner", "text": "x", "source_quote": "y"},
+        {"source": "profile.greeting", "text": "검사 문장", "source_quote": "합성 본문"},
+        {
+            "text": "본문에 없는 문구",
+            "source": "mail:synthetic-only",
+            "source_quote": "원문에 없는 비밀",
+        },
+        "not-an-object",
+        [1, 2, 3],
     ],
 )
-def test_invalid_quote_evidence_is_never_guessed_or_silently_dropped(patch):
-    evidence = {
-        "text": "검사 문장",
-        "source": "mail:synthetic-only",
-        "source_quote": "합성 본문",
-        **patch,
-    }
+def test_model_supplied_evidence_is_ignored_and_never_makes_the_draft_fail(garbage):
     generator = SharedSyntheticGeneration(
         json.dumps(
             {
                 "body": "검사 문장",
                 "directions": ["확인", "문의"],
                 "selected_direction": "확인",
-                "evidence": [evidence],
+                "evidence": [garbage],
             }
         )
     )
-    with pytest.raises(F2Error) as error:
-        asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(input_for()))
-    assert error.value.code == "invalid_ai_output"
-    assert len(generator.requests) == 2
-    assert "원문에 없는 비밀" not in generator.requests[-1].user_prompt
+    result = asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(input_for()))
+    # 모델이 낸 근거는 쓰지 않는다. 다른 사람 메일·인사말 같은 출처가 결과에 섞이지 않는다.
+    assert result.body == "검사 문장" and result.evidence == ()
+    assert len(generator.requests) == 1
+    assert "evidence" not in generator.requests[0].response_schema["properties"]
 
 
 def test_bad_output_has_one_repair_attempt_without_echoing_response():

@@ -14,9 +14,7 @@ class OutputReason(StrEnum):
     JSON_INVALID = "json_invalid"
     SCHEMA_INVALID = "schema_invalid"
     BODY_OR_DIRECTIONS = "body_or_directions_invalid"
-    BODY_QUOTE = "body_quote_missing"
     SOURCE = "source_not_allowed"
-    SOURCE_QUOTE = "source_quote_missing"
     LEARNED_PHRASE = "learned_phrase_mismatch"
     OVERLAP = "evidence_overlap"
     SPAN = "evidence_span_invalid"
@@ -32,35 +30,25 @@ REASONS = {
     OutputReason.JSON_INVALID: ("응답 JSON 형식", "JSON 객체 하나만 반환하세요."),
     OutputReason.SCHEMA_INVALID: (
         "응답 항목·자료형",
-        "QuotedDraft의 항목과 자료형을 지키세요. "
-        "숫자 span이나 profile.greeting 등은 반환하지 마세요.",
+        "body, directions, selected_direction 항목과 자료형만 지키세요. 근거는 반환하지 마세요.",
     ),
     OutputReason.BODY_OR_DIRECTIONS: (
         "빈 본문 또는 답장 방향 구성",
         "본문은 비우지 말고 방향 2~3개를 중복 없이 반환하세요. 선택 방향을 목록에 포함하세요.",
     ),
-    OutputReason.BODY_QUOTE: (
-        "근거 문구와 생성 본문의 불일치",
-        "근거 text는 생성 body에 실제 있는 문구를 글자 그대로 복사하세요.",
-    ),
     OutputReason.SOURCE: (
         "허용되지 않은 근거 출처",
-        "allowed_evidence_sources에 있는 출처만 사용하세요. "
-        "미리보기에서는 메일 근거를 쓰지 마세요.",
-    ),
-    OutputReason.SOURCE_QUOTE: (
-        "근거 인용과 원문의 불일치",
-        "source_quote는 해당 입력 메일의 제목 또는 본문에서 정확히 복사하세요. 바꾸어 쓰지 마세요.",
+        "근거는 서버가 계산합니다. evidence를 반환하지 마세요.",
     ),
     OutputReason.LEARNED_PHRASE: (
         "학습 표현과 근거의 불일치",
-        "profile.phrase의 text와 source_quote는 실제 learned_phrases 한 항목과 같아야 합니다.",
+        "학습 표현은 learned_phrases 항목을 그대로 사용하세요.",
     ),
     OutputReason.OVERLAP: (
         "본문에서 겹치는 근거 위치",
-        "근거는 본문 순서대로 반환하고 서로 겹치거나 중복되는 근거를 만들지 마세요.",
+        "근거는 서버가 계산합니다. evidence를 반환하지 마세요.",
     ),
-    OutputReason.SPAN: ("근거 위치 범위", "본문 안의 정확한 근거 문구만 반환하세요."),
+    OutputReason.SPAN: ("근거 위치 범위", "근거는 서버가 계산합니다. evidence를 반환하지 마세요."),
     OutputReason.DIRECTION: (
         "요청한 답장 방향과의 불일치",
         "요청 direction을 selected_direction과 directions에 그대로 포함하세요.",
