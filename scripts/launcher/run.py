@@ -269,27 +269,32 @@ def prerequisites():
     from app.mail_api_config import read_api_token
 
     if not (ROOT / ".env").is_file():
-        raise LaunchError("먼저 설치 안내에 따라 DB·Google·AI 최초 설정을 완료하세요.")
+        raise LaunchError(
+            "아직 설치가 끝나지 않았어요. "
+            "docs/dev/setup.md 맨 위 '쉬운 설치'의 2단계(DB)부터 따라 하세요."
+        )
     try:
         load_settings()
         token = read_api_token()
         ai = read_ai_settings({**environment_values(), "AI_PROVIDER": "ollama"})
     except Exception:
         raise LaunchError(
-            "Google·메일 API·로컬 AI 설정을 확인하세요. 기존 키를 다시 만들지 마세요."
+            "설정이 빠졌어요. setup.md '쉬운 설치'의 3단계(Google), 4단계(.env의 AI 줄), "
+            "5단계(앱 열쇠) 중 빠진 것을 확인하세요. 이미 만든 키는 다시 만들지 마세요."
         ) from None
     node, docker = shutil.which("node"), shutil.which("docker")
     cli = DESKTOP / "node_modules/electron-vite/bin/electron-vite.js"
     electron = DESKTOP / "node_modules/electron/path.txt"
     if not node or not docker or not cli.is_file() or not electron.is_file():
         raise LaunchError(
-            "Node.js·Docker·앱 의존성 또는 Electron 실행 파일이 없어요. 설치 안내를 확인하세요."
+            "Node.js·Docker·앱 패키지 또는 Electron이 없어요. "
+            "setup.md '쉬운 설치'의 0~1단계를 확인하세요."
         )
     # path.txt가 있어도 실행 파일 다운로드가 끝났는지 확인한다.
     relative = electron.read_text().strip()
     if not relative or not (electron.parent / "dist" / relative).is_file():
         raise LaunchError(
-            "Electron 다운로드가 완료되지 않았어요. 설치 안내의 Electron 오류 해결을 확인하세요."
+            "Electron 다운로드가 끝나지 않았어요. setup.md 2절 끝의 Electron 명령을 실행하세요."
         )
     return node, docker, cli, token, ai
 
@@ -343,7 +348,9 @@ def launch(check_only=False):
                 raise LaunchError("DB를 준비하지 못했어요. Docker 상태·기존 DB 설정을 확인하세요.")
         if not run_command([sys.executable, "-m", "app.cli.check_database"], cwd=SERVER):
             raise LaunchError(
-                "DB 연결 또는 버전 확인이 필요해요. 설치 안내의 업데이트를 먼저 완료하세요."
+                "DB 연결 또는 버전 확인이 필요해요. "
+                "Docker를 켜고 setup.md '쉬운 설치' 2단계를 다시 실행하세요. "
+                "업데이트 뒤라면 setup.md 9절을 따르세요."
             )
         message("2/4 로컬 AI와 모델을 확인하고 있어요…")
         if not ollama_ready(ai) and not check_only:
@@ -360,7 +367,8 @@ def launch(check_only=False):
                     )
         if not ollama_ready(ai):
             raise LaunchError(
-                "Ollama 또는 필요한 모델을 확인하지 못했어요. 설치 안내에 따라 실행·다운로드하세요."
+                "Ollama 또는 모델을 확인하지 못했어요. "
+                "Ollama 앱을 켜고 setup.md '쉬운 설치' 4단계의 모델 받기를 확인하세요."
             )
         if check_only:
             message("기본 준비 확인 완료. 실제 Google·AI 생성·앱 창 동작은 별도 확인이 필요해요.")
@@ -377,7 +385,8 @@ def launch(check_only=False):
 
         if not wait_ready(authenticated, seconds=45, process=server):
             raise LaunchError(
-                "서버·저장된 계정 연결을 확인하지 못했어요. 기존 Google 설정과 DB를 확인하세요."
+                "서버 또는 저장된 Google 계정 연결을 확인하지 못했어요. "
+                "setup.md '쉬운 설치' 3단계(Google)와 2단계(DB)를 확인하세요."
             )
         message("4/4 Klover를 열고 있어요. 앱을 종료하면 이번에 시작한 서버도 정리합니다.")
         env = {
