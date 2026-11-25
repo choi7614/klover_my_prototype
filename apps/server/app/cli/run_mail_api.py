@@ -10,6 +10,7 @@ from app.ai.f2_shared_adapter import SharedDraftAI
 from app.ai.interfaces import ProvidersNotConfigured
 from app.ai.runtime import load_providers
 from app.ai.search_adapter import SharedQueryParser, SharedSearchAnswerer
+from app.ai.search_semantic import build_semantic_search
 from app.ai.selection import AISettingsStore, SelectedGeneration
 from app.api.mail_read import MailAPIContext
 from app.api.mail_sync import MailSyncContext
@@ -109,6 +110,7 @@ def main():
             SQLRecentSearchRepository(engine),
             parser=search_parser,
             answerer=search_answerer,
+            semantic=build_semantic_search(engine),
             model_timeout=120,
         )
         # F2 답장 초안: 검색과 같은 공통 AI 제공자를 쓴다. 관련 메일 검색(related)은 아직 없다.

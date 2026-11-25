@@ -31,7 +31,7 @@ Electron renderer → 제한된 preload IPC → Electron main → 로컬 Bearer 
 | 분석 | sync 후 서버 내부 백그라운드 작업자 스레드가 로컬 F1 분석·임베딩 수행. 완료 뒤 로컬 F5 훅으로 제안 저장 |
 | 분석 표시 | 앱의 조회·재시도·상태 폴링. WebSocket 푸시 아님 |
 | AI | F2/F3/F4는 요청별 `SelectedGeneration`, 자동 F1/임베딩/F5는 로컬만 주입 |
-| 검색 | SQL 기간·상대·키워드+선택 AI 해석/답변. 벡터 저장은 있지만 F3 의미 검색 어댑터는 미연결 |
+| 검색 | SQL 기간·상대·키워드+선택 AI 해석/답변. F1 로컬 임베딩·호환 벡터 검색 연결, 실패 시 키워드 유지. 반영 상태는 [통합 기록](../dev/F3-memory-search-integration.md) 참조 |
 | 주간 보고 | F1 저장소·F2 프로필·선택 AI·0006 보고 저장·앱 연결. 첫 주 생성 지원, 자료·프로필 필요 |
 | F5 | F1 결과→제안 변환·S04/할 일·승인 경계. 실제 Calendar transport는 차단, OS 알림/트레이 없음 |
 | 공유 타입 | OpenAPI → `packages/api-types` 자동 생성. 직접 수정 금지 |
