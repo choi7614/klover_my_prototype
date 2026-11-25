@@ -4,7 +4,7 @@ export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 KLOVER_ROOT="$(cd -- "$(dirname -- "$0")" && pwd)" || exit 1
 KLOVER_PYTHON="$KLOVER_ROOT/apps/server/.venv/bin/python"
 if [ ! -x "$KLOVER_PYTHON" ]; then
-  echo '먼저 docs/dev/setup.md의 최초 설치를 완료하세요.'
+  echo '먼저 docs/dev/setup.md 맨 위 쉬운 설치 1단계부터 따라 하세요.'
   read -r -p 'Enter를 누르면 닫습니다. ' _
   exit 1
 fi
