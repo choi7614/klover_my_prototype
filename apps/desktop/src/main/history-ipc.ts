@@ -1,5 +1,6 @@
 import type { IpcMain, WebContents } from 'electron';
 import { readLocalAPI, type LocalAPIConfiguration } from './mail-client';
+import { localRequest } from './local-api';
 import { trustedMailSender } from './mail-ipc';
 import { readHistoryJob, type HistoryResult } from '../shared/history-bridge';
 const failure = (): HistoryResult => ({ ok: false, error: { code: 'history_failed', message: '가져오기 상태·기간·서버 연결을 확인하세요. 기존 메일은 보존됩니다.' } });
@@ -19,7 +20,8 @@ export function registerHistoryIPC(ipc: IpcMain, contents: WebContents, renderer
     }
     const local = await readLocalAPI(config); if (!local) return failure();
     try {
-      const response = await fetch(new URL(path, local.base), { method: op === 'list' ? 'GET' : 'POST', headers: { Authorization: `Bearer ${local.token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined, redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(15000) });
+      const { url, init } = localRequest(local, { method: op === 'list' ? 'GET' : 'POST', path, body: body as object | undefined, timeoutMs: 15000 });
+      const response = await fetch(url, init);
       const text = await response.text();
       if (!response.ok || text.length > 100000) return failure();
       const payload: unknown = JSON.parse(text);
