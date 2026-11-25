@@ -141,7 +141,7 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
             <div className="grid grid-cols-2 gap-3"><Field label="첫 인사" maxLength={1000} value={draft.greeting} onChange={e => change('greeting', e.target.value)} /><Field label="마무리" maxLength={1000} value={draft.closing} onChange={e => change('closing', e.target.value)} /></div>
             <Area label="서명" maxLength={2000} rows={2} value={draft.signature} onChange={e => change('signature', e.target.value)} />
           </Panel>
-          <Panel title="◆ 보낸 메일에서 내 문체 학습" className="lg:col-span-2 border-ai-border">
+          <Panel title="보낸 메일에서 내 문체 학습" className="lg:col-span-2 border-ai-border">
             <div className="flex items-center gap-3 text-caption">
               <span className="flex-1 text-muted-foreground">{`보낸 메일 수집·학습 연결 준비 중 · 기존 분석 기록 ${style.analyzed_count}건`}</span>
               <button type="button" role="switch" aria-checked={draft.style_learning_enabled} aria-label="문체 학습 동의" onClick={() => void toggleLearning()} className="rounded-full border border-input px-3 py-1 text-body focus-visible:ring-2 focus-visible:ring-ring">{draft.style_learning_enabled ? '동의 켬' : '동의 끔'}</button>
@@ -168,7 +168,7 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
           </Panel>
           <Panel title="미리보기">
             <div aria-live="polite" className="min-h-28 flex-1 whitespace-pre-wrap rounded-md border bg-muted p-3 text-body">
-              {previewBusy ? <Skeleton label="◆ 예시 답장을 만들고 있어요" /> : previewError ? <p>{previewError}</p> : preview?.body}
+              {previewBusy ? <Skeleton label="예시 답장을 만들고 있어요" /> : previewError ? <p>{previewError}</p> : preview?.body}
             </div>
           </Panel>
         </fieldset>

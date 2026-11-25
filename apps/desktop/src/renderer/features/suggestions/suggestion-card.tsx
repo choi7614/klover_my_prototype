@@ -180,7 +180,7 @@ export function SuggestionCard({ suggestion, client, onChange, onActive, calenda
               disabled={disabled || unavailable || !evidenceValid || !validPayload(draft)
                 || (row.type === 'calendar' && 'calendar_id' in draft && !calendars.some(calendar => calendar.id === draft.calendar_id))}
               onClick={() => void handle('approve')}>
-              {busy ? '처리 중…' : uncertain ? '등록 결과 다시 확인' : row.type === 'calendar' ? '캘린더에 추가' : row.type === 'todo' ? '할 일에 추가' : '◆ 회신 초안 만들기'}
+              {busy ? '처리 중…' : uncertain ? '등록 결과 다시 확인' : row.type === 'calendar' ? '캘린더에 추가' : row.type === 'todo' ? '할 일에 추가' : '회신 초안 만들기'}
             </Button>
             <Button variant="secondary" className="h-9 px-3" disabled={disabled || uncertain || !evidenceValid}
               onClick={() => void handle('dismiss')}>무시</Button>

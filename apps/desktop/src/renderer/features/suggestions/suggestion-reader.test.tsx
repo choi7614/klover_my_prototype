@@ -33,7 +33,7 @@ describe('S04 기능 전용 제안 화면', () => {
     const client = new SyntheticSuggestionsClient();
     render(<Harness client={client} ready={false} />);
     expect(screen.getByRole('button', { name: '캘린더에 추가' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '◆ 회신 초안 만들기' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '회신 초안 만들기' })).toBeDisabled();
     expect(client.calls).toEqual([]);
   });
 

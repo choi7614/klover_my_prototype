@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Archive, File, Inbox, PenLine, RefreshCw, Send, Settings, SquareCheck, Trash2 } from 'lucide-react';
+import { Archive, File, Inbox, PenLine, RefreshCw, Search, Send, Settings, SquareCheck, Trash2 } from 'lucide-react';
 import logo from '@brand/klover-logo.svg';
 import mark from '@brand/klover-mark.svg';
 import { Button } from '@/components/ui/button';
@@ -145,7 +145,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
       <header className="flex h-14 shrink-0 items-center gap-6 border-b px-5">
         <img src={logo} alt="Klover" className="h-[26px] w-[176px] object-contain object-left" />
         <form role="search" onSubmit={submitSearch} className="flex h-10 min-w-0 max-w-[720px] flex-1 items-center gap-2 rounded-full border bg-background px-4 focus-within:border-ai focus-within:ring-2 focus-within:ring-ai-border">
-          <span className="text-ai" aria-hidden="true">◆</span>
+          <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <label htmlFor="mailbox-search" className="sr-only">자연어 검색</label>
           <input id="mailbox-search" ref={searchInput} type="search" value={searchText} onChange={event => setSearchText(event.target.value)}
             maxLength={500} placeholder="무엇이든 물어보세요. 예: 지난주 영업기획팀이 보낸 예산 관련 메일"
@@ -160,19 +160,19 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
         프로필과 AI 제공자는 설정에서 변경할 수 있습니다. <a href="#/settings/mail-history" className="underline">과거 메일 가져오기</a> · <a href="#/settings/calendar" className="underline">캘린더 연결</a> · <a href="#/settings/ai" className="underline">AI 설정</a> · 알림 설정은 준비 중입니다. <a className="ml-3 underline underline-offset-2 focus-visible:outline-ring" href="#/onboarding/1">첫 실행 설정 보기</a>
       </div>
       <div className="flex min-h-0 flex-1">
-        <aside className="flex w-[220px] shrink-0 flex-col border-r bg-sidebar p-3" aria-label="메일함">
-          <Button disabled className="mb-3"><PenLine aria-hidden="true" />새 메일</Button>
-          <div className="flex h-[34px] items-center gap-2 rounded-md bg-selected px-3 text-body font-semibold text-selected-foreground"><Inbox className="size-4" aria-hidden="true" />받은편지함</div>
+        <aside className="flex w-[220px] shrink-0 flex-col bg-sidebar p-3 text-sidebar-foreground" aria-label="메일함">
+          <Button disabled className="mb-3 rounded-leaf-sm"><PenLine aria-hidden="true" />새 메일</Button>
+          <div className="flex h-[34px] items-center gap-2 rounded-leaf-sm bg-sidebar-primary px-3 text-body font-semibold text-sidebar-primary-foreground"><Inbox className="size-4" aria-hidden="true" />받은편지함</div>
           {[[Send, '보낸편지함'], [File, '임시보관함'], [Archive, '보관함'], [Trash2, '스팸·휴지통']].map(([Icon, label]) => {
             const Component = Icon as typeof Send;
-            return <button key={String(label)} disabled className="flex h-[34px] items-center gap-2 px-3 text-body text-muted-foreground opacity-40"><Component className="size-4" aria-hidden="true" />{String(label)}</button>;
+            return <button key={String(label)} disabled className="flex h-[34px] items-center gap-2 px-3 text-body text-sidebar-muted opacity-60"><Component className="size-4" aria-hidden="true" />{String(label)}</button>;
           })}
-          <p className="mt-8 px-3 text-caption text-muted-foreground">AI 기능</p>
-          <a href="#/todos" className="mt-1 flex h-[34px] items-center gap-2 rounded-md px-3 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><SquareCheck className="size-4" aria-hidden="true" />할 일</a>
-          <a href="#/report/weekly" className="mt-auto rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring">주간 보고</a>
-          <a href="#/settings" className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-body text-foreground hover:bg-accent focus-visible:outline-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
+          <p className="mt-8 px-3 text-caption text-sidebar-muted">AI 기능</p>
+          <a href="#/todos" className="mt-1 flex h-[34px] items-center gap-2 rounded-leaf-sm px-3 text-body text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring"><SquareCheck className="size-4" aria-hidden="true" />할 일</a>
+          <a href="#/report/weekly" className="mt-auto rounded-leaf-sm px-3 py-2 text-body text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring">주간 보고</a>
+          <a href="#/settings" className="mt-2 flex items-center gap-2 rounded-leaf-sm px-3 py-2 text-body text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
         </aside>
-        <section className="flex w-[360px] shrink-0 flex-col border-r max-[1280px]:w-[320px]" aria-label="받은 메일 목록">
+        <section className="flex w-[360px] shrink-0 flex-col bg-canvas max-[1280px]:w-[320px]" aria-label="받은 메일 목록">
           <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
             <h1 className="text-body font-semibold">받은편지함</h1>
             <span className="text-caption text-muted-foreground">{mails.length ? `${mails.length}건 불러옴` : ''}</span>
@@ -185,11 +185,11 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
           {syncing && <p role="status" className="border-b bg-muted px-4 py-2 text-caption text-muted-foreground">Gmail에서 새 메일 확인 중…</p>}
           {syncNotice && !syncing && <p role="status" className="border-b px-4 py-2 text-caption text-muted-foreground">{syncNotice}</p>}
           {syncError && <div role="alert" className="border-b px-4 py-3 text-caption text-danger"><p>{syncError.message}</p><Button variant="secondary" className="mt-2" onClick={() => void refresh()}>새 메일 다시 가져오기</Button></div>}
-          <div className="min-h-0 flex-1 overflow-y-auto" aria-busy={loading}>
-            {loading && !mails.length && <div role="status" className="space-y-3 p-4"><span className="sr-only">메일 목록 불러오는 중</span>{[1, 2, 3, 4].map(key => <div key={key} className="h-20 animate-pulse rounded-md bg-muted" />)}</div>}
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2.5" aria-busy={loading}>
+            {loading && !mails.length && <div role="status" className="space-y-3 p-2"><span className="sr-only">메일 목록 불러오는 중</span>{[1, 2, 3, 4].map(key => <div key={key} className="h-20 animate-pulse rounded-leaf bg-background" />)}</div>}
             {!loading && !listError && !mails.length && <div className="p-6 text-center"><img src={mark} alt="" className="mx-auto mb-5 size-16" /><h2 className="text-title font-semibold">받은편지함이 비어 있습니다</h2><p className="mt-3 text-body text-muted-foreground">사용 시작 이후 수신해 저장한 메일이 여기에 표시됩니다. 이전 메일은 가져오지 않습니다.</p></div>}
             {mails.map(mail => <button key={mail.mail_id} onClick={() => setSelected(mail.mail_id)} aria-pressed={selected === mail.mail_id}
-              className={cn('block w-full border-b border-l-[3px] border-l-background p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring', selected === mail.mail_id && 'border-l-selected-bar bg-selected')}>
+              className={cn('block w-full rounded-leaf bg-background p-4 text-left shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selected === mail.mail_id && 'ring-2 ring-selected-bar')}>
               <span className="flex items-start gap-2 text-body"><span className={cn('min-w-0 flex-1 truncate', !mail.is_read && 'font-semibold')}>{!mail.is_read && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-primary" aria-label="안 읽음" />}{mail.from_name || mail.from_addr}</span><time className="shrink-0 text-caption text-muted-foreground" dateTime={mail.received_at}>{timestamp(mail.received_at)}</time></span>
               <span className="mt-1 block truncate text-body font-semibold">{subject(mail.subject)}</span>
               {analysis
@@ -197,17 +197,17 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
                 : <span className="mt-1 line-clamp-2 text-caption text-muted-foreground">{mail.preview}</span>}
             </button>)}
             {listError && <div role="alert" className="p-4 text-body text-danger"><p>{listError.message}</p><Button variant="secondary" className="mt-3" onClick={() => void loadList(mails.length ? cursor : null)}>목록 다시 시도</Button></div>}
-            {cursor && !listError && <div className="p-4"><Button variant="secondary" className="w-full" disabled={loading} onClick={() => void loadList(cursor)}>{loading ? '불러오는 중…' : '다음 페이지'}</Button></div>}
+            {cursor && !listError && <div className="p-2"><Button variant="secondary" className="w-full" disabled={loading} onClick={() => void loadList(cursor)}>{loading ? '불러오는 중…' : '다음 페이지'}</Button></div>}
           </div>
         </section>
-        <section className="min-w-0 flex-1 overflow-y-auto" aria-label="선택한 메일">
+        <div className="flex min-w-0 flex-1 bg-canvas p-2.5 pl-0"><section className="min-w-0 flex-1 overflow-y-auto rounded-leaf-lg bg-background" aria-label="선택한 메일">
           {!selected && <p className="flex h-full items-center justify-center text-body text-muted-foreground">메일을 선택하세요</p>}
           {detailLoading && <div role="status" className="space-y-4 p-7"><span className="sr-only">메일 본문 불러오는 중</span><div className="h-7 animate-pulse rounded-md bg-muted" /><div className="h-40 animate-pulse rounded-md bg-muted" /></div>}
           {detailError && <div role="alert" className="p-7 text-body text-danger"><p>{detailError.message}</p><Button variant="secondary" className="mt-3" onClick={() => setDetailRetry(value => value + 1)}>본문 다시 시도</Button></div>}
-          {selected && <div className="sticky top-0 flex h-11 items-center gap-2 border-b bg-background px-5">
+          {selected && <div className="sticky top-0 flex h-11 items-center gap-2 rounded-t-leaf-lg border-b bg-background px-5">
             <a href={`#/reply/${encodeURIComponent(selected)}`}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-ai px-3 text-body font-semibold text-ai-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <span aria-hidden="true">◆</span>답장 초안 만들기</a>
+              className="inline-flex h-8 items-center gap-1.5 rounded-leaf-sm bg-ai px-3 text-body font-semibold text-ai-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              답장 초안 만들기</a>
           </div>}
           {detail && (() => {
             // F1 AI 요약 박스: 이 메일(mail_id)의 분석 결과만 붙인다.
@@ -220,7 +220,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
                 header={<MailHead detail={detail} aiBox={aiBox} />} fallback={<MailArticle detail={detail} aiBox={aiBox} />} />
               : <MailArticle detail={detail} aiBox={aiBox} />;
           })()}
-        </section>
+        </section></div>
       </div>
     </main>
   );
