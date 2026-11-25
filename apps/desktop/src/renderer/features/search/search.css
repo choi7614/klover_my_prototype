@@ -1,11 +1,11 @@
-.f3-search-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--background); color: var(--foreground); }
+.f3-search-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--canvas); color: var(--foreground); }
 .f3-search-page h1, .f3-search-page h2, .f3-search-page p { margin: 0; }
 .f3-search-page h1 { font-size: var(--text-title); font-weight: 700; }
 .f3-search-page h2 { font-size: var(--text-body); font-weight: 600; }
 .f3-button { height: 36px; }
 .f3-button svg { width: 16px; height: 16px; }
 .f3-search-page button:focus-visible, .f3-search-page input:focus-visible, .f3-search-page select:focus-visible, .f3-search-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.f3-search-header { display: flex; gap: 24px; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); }
+.f3-search-header { display: flex; gap: 24px; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--background); }
 .f3-query-form { display: flex; gap: 8px; align-items: center; border: 1px solid var(--ai-border); border-radius: 24px; padding: 4px 4px 4px 16px; flex: 1; max-width: 840px; }
 .f3-query-form:focus-within { box-shadow: 0 0 0 3px var(--ai-subtle); }
 .f3-query-form input { flex: 1; min-width: 0; outline: none; font-size: var(--text-body); background: var(--background); }
@@ -13,19 +13,19 @@
 .f3-query-form kbd { color: var(--muted-foreground); font-size: var(--text-caption); border: 1px solid var(--border); padding: 0 4px; border-radius: 4px; }
 .f3-understood { padding: 14px 24px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 60px; }
 .f3-understood > strong { color: var(--ai-text); font-size: var(--text-body); }
-.f3-chip, .f3-add-condition { border: 1px solid var(--ai-border); border-radius: 24px; padding: 4px 12px; display: inline-flex; gap: 8px; align-items: center; min-height: 30px; background: var(--ai-subtle); font-size: var(--text-caption); }
+.f3-chip, .f3-add-condition { border: 1px solid var(--ai-border); border-radius: var(--radius-leaf-sm); padding: 4px 12px; display: inline-flex; gap: 8px; align-items: center; min-height: 30px; background: var(--ai-subtle); font-size: var(--text-caption); }
 .f3-chip b { color: var(--ai-text); }
 .f3-add-condition { background: var(--background); color: var(--muted-foreground); border-style: dashed; }
 .f3-search-body { display: flex; flex: 1; min-height: 0; }
 .f3-results { padding: 24px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
-.f3-answer { background: var(--ai-subtle); border: 1px solid var(--ai-border); border-radius: 8px; padding: 16px; line-height: 1.75; }
+.f3-answer { background: var(--ai-subtle); border: 0; border-radius: var(--radius-leaf); padding: 16px; line-height: 1.75; }
 .f3-answer h2 { color: var(--ai-text); margin-bottom: 8px; }
 .f3-answer p { white-space: pre-wrap; }
 .f3-citation { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; font-size: var(--text-caption); color: var(--ai-text); background: var(--background); border: 1px solid var(--ai-border); border-radius: 4px; font-weight: 700; }
 .f3-result-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .f3-result-heading label, .f3-search-method { font-size: var(--text-caption); color: var(--muted-foreground); }
-.f3-result { display: flex; gap: 12px; border: 1px solid var(--border); padding: 16px; border-radius: 8px; }
-.f3-result-highlight { border-color: var(--ai-border); box-shadow: 0 0 0 3px var(--ai-subtle); }
+.f3-result { display: flex; gap: 12px; background: var(--background); box-shadow: var(--shadow-card); padding: 16px; border-radius: var(--radius-leaf); }
+.f3-result-highlight { box-shadow: 0 0 0 2px var(--selected-bar); }
 .f3-number { width: 24px; height: 24px; border-radius: 6px; background: var(--ai); color: var(--ai-foreground); font-size: var(--text-caption); display: inline-flex; justify-content: center; align-items: center; font-weight: 700; flex-shrink: 0; }
 .f3-result-content { flex: 1; min-width: 0; }
 .f3-result-meta { display: flex; justify-content: space-between; gap: 16px; font-size: var(--text-caption); color: var(--muted-foreground); }

@@ -18,7 +18,7 @@ export function Area({ label, ...props }: ComponentProps<'textarea'> & { label: 
 }
 
 export function Panel({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
-  return <section aria-label={title} className={cn('flex min-w-0 flex-col gap-3 rounded-md border bg-card p-4', className)}>
+  return <section aria-label={title} className={cn('flex min-w-0 flex-col gap-3 rounded-leaf bg-card p-4 shadow-card', className)}>
     <h2 className="text-title font-semibold">{title}</h2>{children}
   </section>;
 }
@@ -29,7 +29,7 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
   return <fieldset className="min-w-0">
     <legend className="mb-1 text-caption">{label}</legend>
     <div className="flex overflow-hidden rounded-md border border-input">
-      {options.map(option => <label key={option.value} className={cn('relative flex h-9 flex-1 cursor-pointer items-center justify-center text-caption', value === option.value ? 'bg-foreground text-background' : 'bg-background')}>
+      {options.map(option => <label key={option.value} className={cn('relative flex h-9 flex-1 cursor-pointer items-center justify-center text-caption', value === option.value ? 'bg-primary text-primary-foreground' : 'bg-background')}>
         <input className="absolute inset-0 cursor-pointer opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring" type="radio" name={label} value={option.value} checked={value === option.value} onChange={() => onChange(option.value)} />
         <span>{option.label}</span>
       </label>)}

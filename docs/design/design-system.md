@@ -19,6 +19,10 @@
 - **사이드바**: 진한 세이지(`sidebar`) 바탕에 밝은 글자(`sidebar-foreground`, 보조는 `sidebar-muted`). 선택된 메뉴는 흰 면(`sidebar-primary`).
 - **메일함 바탕**: `canvas` 위에 흰 카드를 올린다. 그림자는 카드의 얇은 선(`shadow-card`)만.
 - **카테고리 색**은 채도를 낮춘 값(2-3)을 쓴다.
+- **중립색도 세이지 기운**: `muted`(#F1F4F1)·`accent`(#E8EEE9)·`border`(#E0E7E1)·`input`(#C6D1C9)·`muted-foreground`(#5E6C63)는 차가운 회색이 아니라 세이지 쪽으로 기운 회색이다.
+- **모든 화면의 공통 틀**: 좌측 이동 영역(메일함·첫 실행 단계·프로필/개인정보 설정 메뉴)은 진한 세이지 사이드바, 내용 바탕은 `canvas`, 그 위에 흰 `rounded-leaf` 카드·패널을 올린다. 첫 실행·답장 초안의 큰 내용 패널은 `rounded-leaf-lg`. 진한 사이드바 위의 로고는 `klover-logo-white.svg`.
+- **버튼**은 `rounded-leaf-sm`(Button 컴포넌트가 기본 적용). 선택된 항목의 검정색 채움은 쓰지 않고 `primary`를 쓴다.
+- 로고 마크 가운데의 보라색 마름모는 브랜드 자산이므로 그대로 둔다(사용자 결정).
 - 시안은 화면 방향 비교 자료(C′ 순한 톤)를 따른다.
 
 ## 1. 적용 방법 (Claude Code에게 그대로 전달)

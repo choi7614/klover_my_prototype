@@ -29,13 +29,12 @@ export function AISettingsPage() {
     finally { setBusy(false); }
   }
   return <main className="mx-auto max-w-3xl space-y-5 p-8 text-body text-foreground">
-
     <h1 className="text-heading font-bold">AI 설정</h1>
     <p>자동 분류·태그·요약·임베딩·할 일 제안은 로컬 AI로 처리합니다. 아래 기능만 제공자를 선택합니다.</p>
     {!state ? <p role="status">{message || '설정을 불러오는 중…'}</p> : <>
       <label className="flex gap-2"><input type="checkbox" checked={state.mode === 'local_only'} disabled={busy} onChange={e => setState({ ...state, mode: e.target.checked ? 'local_only' : 'hybrid' })} />AI 로컬 전용 모드 (저장 후 적용)</label><p className="text-caption text-muted-foreground">로컬 전용 모드는 저장된 Claude 선택과 관계없이 로컬로 처리하며, 기존 키와 선택 설정은 보존합니다.</p>
       <fieldset disabled={busy || state.mode === 'local_only'} className="space-y-3">{(Object.keys(labels) as AIPurpose[]).map(p => <label key={p} className="flex items-center justify-between gap-4">{labels[p]}<select aria-label={labels[p]} className="rounded-md border border-input bg-background p-2" value={state.defaults[p]} onChange={e => setState({ ...state, defaults: { ...state.defaults, [p]: e.target.value as AIProvider } })}><option value="ollama">로컬 AI (Ollama)</option><option value="claude">Claude API</option></select></label>)}</fieldset>
-      <section className="space-y-3 rounded-lg border p-4"><h2 className="font-semibold">Claude 연결</h2>
+      <section className="space-y-3 rounded-leaf bg-background p-4 shadow-card"><h2 className="font-semibold">Claude 연결</h2>
         <p>키: {state.claude_key_set ? '등록됨 (값은 표시하지 않음)' : '미등록'} · 모델: {state.claude_model}</p>
         <label className="block">Claude 모델 ID<input aria-label="Claude 모델 ID" value={model} onChange={e => setModel(e.target.value)} disabled={busy} maxLength={200} className="mt-1 block w-full rounded-md border border-input bg-background p-2" /></label>
         <p className="text-caption text-muted-foreground">Anthropic Console에서 계정에 제공되는 모델 ID를 입력하세요. 바꾸면 세 생성 기능에 공통 적용합니다.</p>

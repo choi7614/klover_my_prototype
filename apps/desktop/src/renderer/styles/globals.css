@@ -104,10 +104,10 @@
   --secondary: var(--color-gray-0);             /* 테두리 버튼 */
   --secondary-foreground: var(--color-gray-800);
 
-  --muted: var(--color-gray-50);                /* 사이드바·패널 배경 */
-  --muted-foreground: var(--color-gray-500);    /* 날짜·보조 글자 */
+  --muted: #F1F4F1;                             /* 패널·정보 줄 배경 (세이지 기운의 회색) */
+  --muted-foreground: #5E6C63;                  /* 날짜·보조 글자 (흰 바탕 대비 5.5:1) */
 
-  --accent: var(--color-gray-100);              /* hover 배경 */
+  --accent: #E8EEE9;                            /* hover 배경 */
   --accent-foreground: var(--color-gray-900);
 
   --selected: var(--color-sage-100);            /* 선택된 메일·메뉴 배경 */
@@ -117,8 +117,8 @@
   --destructive: #DC2626;
   --destructive-foreground: var(--color-gray-0);
 
-  --border: var(--color-gray-200);
-  --input: var(--color-gray-300);
+  --border: #E0E7E1;
+  --input: #C6D1C9;
   --ring: var(--color-sage-400);
 
   /* AI — AI가 만든 모든 것 (요약, 초안, 칩, 제안). 색이 아니라 'AI 요약' 같은 글자 라벨로 구분한다 */

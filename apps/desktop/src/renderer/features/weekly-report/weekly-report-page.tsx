@@ -34,7 +34,7 @@ function Modal({ title, children, close }: { title: string; children: ReactNode;
   }, []);
   return (
     <dialog ref={dialog} aria-label={title} onCancel={(event) => { event.preventDefault(); close(); }}
-      className="m-auto max-h-[85vh] w-[560px] max-w-[94vw] rounded-lg border border-border bg-popover p-0 text-popover-foreground shadow-pop backdrop:bg-foreground/30">
+      className="m-auto max-h-[85vh] w-[560px] max-w-[94vw] rounded-leaf-lg border border-border bg-popover p-0 text-popover-foreground shadow-pop backdrop:bg-foreground/30">
       <div className="flex items-center justify-between border-b px-6 py-4">
         <h2 className="text-title font-semibold">{title}</h2>
         <button type="button" onClick={close} aria-label="닫기" className="rounded p-1 focus-visible:ring-2 focus-visible:ring-ring"><X size={18} /></button>
@@ -188,8 +188,8 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
   const mayGenerate = !busy && !!options?.profile
     && !!period.start && !!period.end && period.end >= period.start && !!recipient.trim();
 
-  return <section aria-label="주간 보고" className="flex min-h-[720px] min-w-0 flex-1 flex-col bg-background">
-    <div className="flex flex-wrap items-end gap-3 border-b px-6 py-4">
+  return <section aria-label="주간 보고" className="flex min-h-[720px] min-w-0 flex-1 flex-col bg-canvas">
+    <div className="flex flex-wrap items-end gap-3 border-b bg-background px-6 py-4">
       <nav aria-label="주간 보고 이동" className="flex gap-3 text-caption"><a href="#/mail/inbox" className="underline">받은편지함</a><a href="#/settings/profile" className="underline">프로필·보고 양식 설정</a><a href="#/settings/ai" className="underline">AI 설정</a></nav>
       <div className="mr-2 flex items-center gap-2 pb-2 text-title font-semibold"><FileText className="size-5 text-primary" />주간 보고</div>
       <AIChoiceControl purpose="weekly_report" value={provider} onChange={setProvider} disabled={busy} />
@@ -212,7 +212,7 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
     {error && <div role="alert" className="border-b border-warning-border bg-warning-subtle px-6 py-3 text-body text-warning">{error}</div>}
     {message && <p role="status" className="border-b bg-success-subtle px-6 py-2 text-caption text-success">{message}</p>}
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-      <main aria-label="보고서 본문" className="min-w-0 flex-1 px-8 py-6" aria-busy={busy}>
+      <main aria-label="보고서 본문" className="m-3 min-w-0 flex-1 rounded-leaf-lg bg-background px-8 py-6" aria-busy={busy}>
         {!options && busy && <Loading sections={['금주 주요 업무', '진행 중인 업무', '이슈·요청사항', '차주 계획']} />}
         {options && !options.profile && <Empty title="주간 보고 프로필이 없습니다" description="위의 프로필·보고 양식 설정에서 저장한 뒤 주간 보고로 돌아와 주세요." />}
         {options?.profile && !report && busy && <Loading sections={options.profile.report_sections} />}
