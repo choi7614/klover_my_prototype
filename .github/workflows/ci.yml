@@ -33,6 +33,8 @@ jobs:
         run: uv run --locked ruff check .
       - name: ruff format --check
         run: uv run --locked ruff format --check .
+      - name: 구조 규칙 (import-linter)
+        run: uv run --locked lint-imports
       - name: pytest (DB 필요 검사는 skip)
         run: uv run --locked pytest -q -rs
 

@@ -144,6 +144,7 @@ uv run --locked --directory apps/server python -m app.cli.run_mail_api  # 앱용
 uv run --locked --directory apps/server pytest             # 서버 테스트
 uv run --locked --directory apps/server ruff check .
 uv run --locked --directory apps/server ruff format --check .
+uv run --locked --directory apps/server lint-imports   # 계층 구조 규칙 (동결 목록은 pyproject.toml)
 pnpm --filter desktop dev                                 # 앱
 pnpm --filter desktop lint && pnpm --filter desktop typecheck && pnpm --filter desktop test
 pnpm gen:api-types                                        # 서버 API 변경 후 TS 타입 재생성 (통합 채팅)
