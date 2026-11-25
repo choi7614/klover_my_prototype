@@ -46,6 +46,103 @@ def run_command(command, *, cwd=ROOT, env=None, timeout=30):
         return False
 
 
+def git(args, *, timeout=30):
+    """고정 인자의 git만 실행한다. 인증 입력창이 뜨지 않게 하고 (종료 코드, 출력)을 돌려준다."""
+    try:
+        done = subprocess.run(
+            ["git", *args],
+            cwd=ROOT,
+            env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
+            timeout=timeout,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return done.returncode, done.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return 1, ""
+
+
+# 이 경로가 바뀐 업데이트일 때 필요한 후속 처리
+SERVER_DEPENDENCY_FILES = {"apps/server/uv.lock", "apps/server/pyproject.toml"}
+LAUNCHER_PREFIXES = ("scripts/launcher/", "Klover-Start.")
+
+
+def update_dependencies(changed):
+    """잠금 파일이 바뀐 때만 설치한다. 실패하면 실행하지 않고 안내한다."""
+    if changed & SERVER_DEPENDENCY_FILES:
+        uv = shutil.which("uv")
+        message("서버 패키지를 갱신하고 있어요…")
+        if not uv or not run_command(
+            [uv, "sync", "--locked", "--directory", str(SERVER)], timeout=600
+        ):
+            raise LaunchError(
+                "새 버전은 받았지만 서버 패키지를 갱신하지 못했어요. "
+                "docs/dev/setup.md 9절의 uv sync를 직접 실행하세요."
+            )
+    if any(name == "pnpm-lock.yaml" or name.endswith("package.json") for name in changed):
+        corepack, pnpm = shutil.which("corepack"), shutil.which("pnpm")
+        command = [corepack, "pnpm"] if corepack else [pnpm] if pnpm else None
+        message("앱 패키지를 갱신하고 있어요. 몇 분 걸릴 수 있어요…")
+        if not command or not run_command([*command, "install", "--frozen-lockfile"], timeout=900):
+            raise LaunchError(
+                "새 버전은 받았지만 앱 패키지를 갱신하지 못했어요. "
+                "docs/dev/setup.md 9절의 pnpm install을 직접 실행하세요."
+            )
+
+
+def auto_update():
+    """main 브랜치를 안전하게 최신으로 맞춘다. 실행 도구 자신이 바뀌면 True(다시 시작 필요).
+
+    다음 조건을 모두 만족할 때만 받는다: git 저장소, main 브랜치, 고친 파일 없음, 빨리감기 가능.
+    그 밖에는 아무것도 바꾸지 않고 현재 버전으로 계속한다. reset·강제 전환·덮어쓰기를 하지 않는다.
+    """
+    if os.environ.get("KLOVER_NO_UPDATE") == "1":
+        message("자동 업데이트를 건너뜁니다(KLOVER_NO_UPDATE=1).")
+        return False
+    if not (ROOT / ".git").exists() or not shutil.which("git"):
+        message("Git 저장소가 아니라서 자동 업데이트를 건너뜁니다.")
+        return False
+    code, branch = git(["rev-parse", "--abbrev-ref", "HEAD"])
+    if code or branch != "main":
+        message(
+            "main 브랜치가 아니라서 자동 업데이트를 건너뜁니다(작업 중인 브랜치는 건드리지 않아요)."
+        )
+        return False
+    code, dirty = git(["status", "--porcelain", "--untracked-files=no"])
+    if code or dirty:
+        message("직접 고친 파일이 있어서 자동 업데이트를 건너뜁니다. 현재 버전으로 실행해요.")
+        return False
+    message("최신 버전을 확인하고 있어요…")
+    if git(["fetch", "origin", "main"], timeout=30)[0]:
+        message("최신 버전을 확인하지 못했어요(인터넷·저장소 확인). 현재 버전으로 실행해요.")
+        return False
+    _, before = git(["rev-parse", "HEAD"])
+    code, after = git(["rev-parse", "origin/main"])
+    if code or not before or before == after:
+        message("이미 최신 버전이에요.")
+        return False
+    if git(["merge-base", "--is-ancestor", "HEAD", "origin/main"])[0]:
+        message(
+            "이 컴퓨터의 main이 원격과 달라서 자동 업데이트를 건너뜁니다. 현재 버전으로 실행해요."
+        )
+        return False
+    if git(["merge", "--ff-only", "origin/main"], timeout=60)[0]:
+        message("새 버전을 적용하지 못해 현재 버전으로 실행해요. 변경은 없습니다.")
+        return False
+    _, names = git(["diff", "--name-only", before, "HEAD"])
+    changed = {line.strip() for line in names.splitlines() if line.strip()}
+    message(f"새 버전으로 업데이트했어요({len(changed)}개 파일 변경).")
+    update_dependencies(changed)
+    if any(name.startswith("apps/server/migrations/") for name in changed):
+        message(
+            "이번 업데이트에는 DB 구조 변경이 포함돼 있어요. 백업한 뒤 docs/dev/setup.md 9절의 "
+            "마이그레이션을 실행해야 실행됩니다."
+        )
+    return any(name.startswith(LAUNCHER_PREFIXES) for name in changed)
+
+
 def local_json(url, token=None):
     # 프록시와 리디렉션을 사용하지 않는다. 인증은 고정 loopback 주소에만 보낸다.
     from urllib.request import HTTPRedirectHandler
@@ -305,10 +402,22 @@ def launch(check_only=False):
 def main():
     parser = argparse.ArgumentParser(description="설정 완료된 Klover 실행")
     parser.add_argument("--check", action="store_true", help="서비스 시작 없이 준비 상태 확인")
+    parser.add_argument(
+        "--no-update", action="store_true", help="시작 전 자동 업데이트를 하지 않음"
+    )
     args = parser.parse_args()
+    restart = False
     try:
         with LaunchLock(ROOT / ".local-run/launcher.lock"):
-            launch(args.check)
+            # 준비 상태 확인(--check)은 아무것도 바꾸지 않는다.
+            if not args.check and not args.no_update:
+                restart = auto_update()
+            if not restart:
+                launch(args.check)
+        if restart:
+            # 실행 도구 자신이 바뀌었으면 새 코드로 다시 시작한다(잠금은 이미 풀었다).
+            message("실행 도구가 새로워져서 다시 시작합니다.")
+            return subprocess.call([sys.executable, str(Path(__file__).resolve()), "--no-update"])
     except KeyboardInterrupt:
         message("Klover 실행을 종료했습니다.")
     except LaunchError as error:

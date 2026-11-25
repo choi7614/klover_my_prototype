@@ -309,3 +309,201 @@ def test_windows_wrapper_missing_setup_is_actionable(tmp_path):
     )
     assert result.returncode == 1
     assert "최초 설치" in result.stdout
+
+
+# ---------- 시작 전 자동 업데이트 (임시 git 저장소로 실제 동작 확인) ----------
+import os  # noqa: E402
+import subprocess  # noqa: E402
+
+
+def _git(cwd, *args):
+    env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_SYSTEM": os.devnull}
+    return subprocess.run(
+        ["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid", *args],
+        cwd=cwd,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _commit(repo, name, text="x", message_text="c"):
+    path = repo / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", message_text)
+
+
+@pytest.fixture
+def repos(tmp_path, monkeypatch):
+    """원격(origin)과 사용자 복제본. 복제본이 launcher.ROOT가 된다."""
+    origin = tmp_path / "origin.git"
+    seed = tmp_path / "seed"
+    seed.mkdir()
+    _git(seed, "init", "-b", "main")
+    _commit(seed, "README.md", "v1")
+    _git(tmp_path, "clone", "--bare", str(seed), str(origin))
+    clone = tmp_path / "clone"
+    _git(tmp_path, "clone", str(origin), str(clone))
+    monkeypatch.setattr(launcher, "ROOT", clone)
+    monkeypatch.setattr(launcher, "SERVER", clone / "apps/server")
+    monkeypatch.delenv("KLOVER_NO_UPDATE", raising=False)
+    # 테스트가 사용자 git 설정을 읽거나 쓰지 않게 한다.
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+    monkeypatch.setenv("GIT_CONFIG_SYSTEM", os.devnull)
+    runner = Mock(return_value=True)
+    monkeypatch.setattr(launcher, "run_command", runner)
+    return SimpleNamespace(origin=origin, seed=seed, clone=clone, run=runner)
+
+
+def _publish(repos, name, text="new", message_text="new"):
+    _git(repos.seed, "remote", "add", "o", str(repos.origin)) if not _has_remote(repos) else None
+    _commit(repos.seed, name, text, message_text)
+    _git(repos.seed, "push", "o", "main")
+
+
+def _has_remote(repos):
+    return "o" in _git(repos.seed, "remote").split()
+
+
+def test_update_fast_forwards_clean_main_and_skips_installs_when_locks_unchanged(repos, capsys):
+    _publish(repos, "docs/a.md")
+    assert launcher.auto_update() is False
+    assert (repos.clone / "docs/a.md").is_file()
+    repos.run.assert_not_called()
+    assert "업데이트했어요" in capsys.readouterr().out
+
+
+def test_update_reports_already_latest(repos, capsys):
+    assert launcher.auto_update() is False
+    assert "이미 최신" in capsys.readouterr().out
+
+
+def test_update_syncs_server_and_app_packages_when_lock_files_change(repos, monkeypatch):
+    monkeypatch.setattr(launcher.shutil, "which", lambda name: f"/bin/{name}")
+    _publish(repos, "apps/server/uv.lock", "lock2")
+    _publish(repos, "pnpm-lock.yaml", "lock2")
+    assert launcher.auto_update() is False
+    commands = [call.args[0] for call in repos.run.call_args_list]
+    assert any(c[1:3] == ["sync", "--locked"] for c in commands)
+    assert any(c[-2:] == ["install", "--frozen-lockfile"] for c in commands)
+
+
+def test_update_failure_to_install_stops_with_actionable_message(repos, monkeypatch):
+    monkeypatch.setattr(launcher.shutil, "which", lambda name: f"/bin/{name}")
+    repos.run.return_value = False
+    _publish(repos, "apps/server/uv.lock", "lock2")
+    with pytest.raises(launcher.LaunchError, match="서버 패키지"):
+        launcher.auto_update()
+
+
+def test_update_asks_restart_when_launcher_itself_changed(repos):
+    _publish(repos, "scripts/launcher/run.py", "new launcher")
+    assert launcher.auto_update() is True
+
+
+def test_update_warns_about_database_migration_but_never_runs_it(repos, capsys):
+    _publish(repos, "apps/server/migrations/versions/0010_x.py", "m")
+    launcher.auto_update()
+    assert "DB 구조 변경" in capsys.readouterr().out
+    assert not any("alembic" in " ".join(map(str, c.args[0])) for c in repos.run.call_args_list)
+
+
+def test_update_skips_when_not_on_main(repos, capsys):
+    _git(repos.clone, "switch", "-c", "feat/work")
+    _publish(repos, "docs/a.md")
+    before = _git(repos.clone, "rev-parse", "HEAD")
+    assert launcher.auto_update() is False
+    assert _git(repos.clone, "rev-parse", "HEAD") == before
+    assert "main 브랜치가 아니라서" in capsys.readouterr().out
+
+
+def test_update_skips_when_tracked_file_was_edited(repos, capsys):
+    (repos.clone / "README.md").write_text("my edit", encoding="utf-8")
+    _publish(repos, "docs/a.md")
+    assert launcher.auto_update() is False
+    assert (repos.clone / "README.md").read_text(encoding="utf-8") == "my edit"
+    assert not (repos.clone / "docs/a.md").exists()
+    assert "직접 고친 파일" in capsys.readouterr().out
+
+
+def test_update_ignores_untracked_files_and_still_updates(repos):
+    (repos.clone / "my-notes.txt").write_text("keep", encoding="utf-8")
+    _publish(repos, "docs/a.md")
+    launcher.auto_update()
+    assert (repos.clone / "docs/a.md").is_file()
+    assert (repos.clone / "my-notes.txt").read_text(encoding="utf-8") == "keep"
+
+
+def test_update_never_rewrites_local_commits_when_main_diverged(repos, capsys):
+    _commit(repos.clone, "local.txt", "mine", "local work")
+    mine = _git(repos.clone, "rev-parse", "HEAD")
+    _publish(repos, "docs/a.md")
+    assert launcher.auto_update() is False
+    assert _git(repos.clone, "rev-parse", "HEAD") == mine
+    assert "원격과 달라서" in capsys.readouterr().out
+
+
+def test_update_continues_when_offline(repos, monkeypatch, capsys):
+    _git(repos.clone, "remote", "set-url", "origin", str(repos.clone / "no-such-remote"))
+    assert launcher.auto_update() is False
+    assert "확인하지 못했어요" in capsys.readouterr().out
+
+
+def test_update_opt_out_and_non_git_folder(repos, monkeypatch, tmp_path, capsys):
+    monkeypatch.setenv("KLOVER_NO_UPDATE", "1")
+    _publish(repos, "docs/a.md")
+    assert launcher.auto_update() is False
+    assert not (repos.clone / "docs/a.md").exists()
+    monkeypatch.delenv("KLOVER_NO_UPDATE")
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    monkeypatch.setattr(launcher, "ROOT", plain)
+    assert launcher.auto_update() is False
+    assert "Git 저장소가 아니라서" in capsys.readouterr().out
+
+
+def test_update_only_uses_safe_git_commands(repos, monkeypatch):
+    seen = []
+    real = launcher.git
+    monkeypatch.setattr(
+        launcher, "git", lambda args, **kw: (seen.append(args), real(args, **kw))[1]
+    )
+    _publish(repos, "docs/a.md")
+    launcher.auto_update()
+    flat = [part for args in seen for part in args]
+    for forbidden in ("reset", "checkout", "switch", "clean", "pull", "--force", "-f", "stash"):
+        assert forbidden not in flat
+    assert ["merge", "--ff-only", "origin/main"] in seen
+
+
+def test_main_updates_before_launch_but_check_mode_never_updates(configured, monkeypatch):
+    updater, starter = Mock(return_value=False), Mock()
+    monkeypatch.setattr(launcher, "auto_update", updater)
+    monkeypatch.setattr(launcher, "launch", starter)
+    monkeypatch.setattr(launcher, "LaunchLock", lambda path: __import__("contextlib").nullcontext())
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    assert launcher.main() == 0
+    updater.assert_called_once()
+    starter.assert_called_once_with(False)
+    updater.reset_mock()
+    monkeypatch.setattr("sys.argv", ["run.py", "--check"])
+    launcher.main()
+    updater.assert_not_called()
+    monkeypatch.setattr("sys.argv", ["run.py", "--no-update"])
+    launcher.main()
+    updater.assert_not_called()
+
+
+def test_main_restarts_with_no_update_when_launcher_changed(configured, monkeypatch):
+    monkeypatch.setattr(launcher, "auto_update", Mock(return_value=True))
+    starter, call = Mock(), Mock(return_value=0)
+    monkeypatch.setattr(launcher, "launch", starter)
+    monkeypatch.setattr(launcher.subprocess, "call", call)
+    monkeypatch.setattr(launcher, "LaunchLock", lambda path: __import__("contextlib").nullcontext())
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    assert launcher.main() == 0
+    starter.assert_not_called()
+    assert call.call_args.args[0][-1] == "--no-update"
