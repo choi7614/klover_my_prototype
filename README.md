@@ -7,17 +7,37 @@ macOS와 Windows용 실행 경로를 제공합니다. 정식 설치 프로그램
 
 **[설치·실행 안내 → docs/dev/setup.md](docs/dev/setup.md)**
 
-실행 코드는 **develop**에 있습니다. 동료에게는 [develop의 README](https://github.com/choi7614/klover_my_prototype/blob/develop/README.md)를 전달하세요.
-현재 main에는 실행 코드가 없습니다. 비공개 저장소라면 먼저 접근 권한과 GitHub 인증이 필요합니다.
+동료용 설치 기준은 **main**입니다. [저장소 첫 화면](https://github.com/choi7614/klover_my_prototype)의 안내를 따라주세요.
+현재 공개 저장소이므로 읽기에는 초대가 필요하지 않습니다. 향후 비공개로 바뀌면 소유자의 초대와 GitHub 인증이 필요합니다.
 
 ```bash
-git clone --branch develop --single-branch https://github.com/choi7614/klover_my_prototype.git
+git clone --branch main --single-branch https://github.com/choi7614/klover_my_prototype.git
 cd klover_my_prototype
 ```
 
 최초 한 번 Git·Node.js/pnpm·uv·Docker Desktop·Ollama를 설치하고,
 본인의 Google 테스트 계정과 웹 OAuth JSON을 준비합니다. 설정은 본인 컴퓨터에서 진행하며 키를 채팅에 보내지 않습니다.
 처음에는 로컬 AI만 사용하면 됩니다. Claude는 선택 사항입니다.
+
+## 어떻게 동작하나요?
+
+앱 화면은 같은 컴퓨터의 서버에 요청하고, 서버가 메일·AI·저장을 담당합니다.
+동료마다 본인의 PC·Google 계정·DB를 사용하며, 개발자의 서버나 메일을 공유하지 않습니다.
+
+```mermaid
+flowchart LR
+  subgraph PC[내 컴퓨터]
+    App[Klover 앱] --> Server[로컬 서버]
+    Server <--> DB[(메일·설정 DB)]
+    Server <--> Local[Ollama · 로컬 AI]
+  end
+  Server <--> Gmail[Google · Gmail]
+  Server -. 선택한 요청만 .-> Claude[Claude API · 선택 사항]
+```
+
+자동 분류·요약·임베딩·할 일 제안은 로컬 AI를 사용합니다. Claude는 동의 후 선택한
+초안·검색·보고 요청에만 사용하며 API 요금이 발생할 수 있습니다.
+[구성 요소와 데이터 흐름을 쉽게 보기](docs/architecture/overview.md).
 
 ## 평소에는 더블클릭
 

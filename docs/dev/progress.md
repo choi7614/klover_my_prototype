@@ -1,6 +1,6 @@
 # 개발 현황판
 
-2026-11-25 · 기능 코드 기준 **develop `9946b87` (PR #48 병합)** · main에는 실행 코드 없음.
+2026-11-25 · 준비 기준 **develop `f3c09f7` (PR #49 병합)** · main 반영은 승인 대기.
 
 | 기능 | 구현·연결 | 남은 범위 | 상세 |
 | --- | --- | --- | --- |
@@ -13,17 +13,18 @@
 
 ## 이번 작업
 
-- `integrate/colleague-setup` · Codex · README/설치 안내 최신화, 보류된 실행 도구 재검토·재사용.
-- 원본 `/workspace/klover-desktop-launcher`와 미커밋 11개 파일 보존. 최신 develop에서 별도 worktree로 진행.
-- 보고 후 커밋·Push·PR 생성과 검사 통과 시 develop 병합을 승인받았다. main은 변경하지 않는다.
-- [PR #49](https://github.com/choi7614/klover_my_prototype/pull/49) · 구현 `02c9e42` Push 완료.
-  서버·앱 및 세 OS 실행 도구 CI 통과. 최종 병합 여부/커밋은 PR 이력을 따른다.
-- 이번 검사: 분리 DB 서버 713 통과/Windows 전용 1 skip, Ruff·시작 파일 문법·문서 참조 확인 통과.
-- 실제 사용자 DB·Google·유료 AI에는 접근하지 않는다. [검증 기록](colleague-setup-verification.md).
+- `integrate/main-sharing` · Codex · 동료용 main 안내·구성도·공유 전 점검.
+- 준비 기준은 develop `f3c09f7`(#49), 현재 원격 main은 초기 `9575f47`이다.
+- README/설치는 main 반영 후 사용할 안내로 준비했다. 실제 main 반영은 별도 승인 전까지 하지 않는다.
+- 문서 커밋·Push·develop/main 대상 PR 생성과 검사 통과 시 develop 병합을 승인받았다. main 병합은 별도 승인 대기.
+- 계획: 문서 준비 PR → 승인 후 develop → develop 전체를 main 대상으로 PR → 별도 main 승인.
+- 기존 작업 폴더·브랜치·미커밋 실행 도구 원본과 사용자 DB·계정·키는 보존한다.
+- [공유 준비 점검](main-sharing-verification.md) / [기존 실행 도구 검사](colleague-setup-verification.md).
 
 ## 반영 이력과 확인 수준
 
 - #39 로컬 정책/재시도/과거 메일, #40~#41 F2/F1 안정화, #42~#46 개인정보/보고/Calendar/설정 통합 완료.
+- #49 동료 설치 안내·더블클릭 실행 도구 병합(`f3c09f7`). 세 OS 실행 도구 CI와 서버·앱 CI 통과.
 - #47~#48 자연어·의미 검색 및 공통 연결 완료. 패치 폴더는 기록이며 다시 적용하지 않는다.
 - 최근 통합 검사 기록: 서버693/skip0·앱215. 해당 작업 당시 합성/분리 DB 결과이며 이번 재실행과 구분한다.
 - 기존 사용자 macOS 사용 확인 보고(API 키 입력 제외). 새 동료 설치·두 OS 더블클릭·실제 Claude 품질/요금은 미검증.

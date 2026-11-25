@@ -1,6 +1,6 @@
 # Klover 설치·실행 안내
 
-> 2026-11-25 · 기준 develop `9946b87`(#48) + 실행 도구 작업. 최초 설치·평소 실행·업데이트의 단일 기준 안내.
+> 2026-11-25 · 동료 설치 기준 main · 준비 원본 develop `f3c09f7`(#49). 최초 설치·평소 실행·업데이트의 단일 기준 안내.
 
 처음이면 1~6절, 설치가 끝났으면 8절, 기존 사용자 업데이트는 9절을 따릅니다.
 macOS는 터미널, Windows는 PowerShell에서 진행합니다. 2~6절의 공통 명령은 두 OS에서 같고,
@@ -8,7 +8,7 @@ macOS는 터미널, Windows는 PowerShell에서 진행합니다. 2~6절의 공�
 
 현재는 소스에서 실행하는 개발용 데모다. 앱(Electron)·서버(FastAPI)·PostgreSQL과 로컬 Ollama를
 같은 컴퓨터에서 사용한다. 클라우드 이전은 보류, 사내망 적용은 장기 목표다.
-[현황판](progress.md)과 [이번 실행 검증](verification-2026-11-24.md)에서 구현·실환경 미검증을 구분한다.
+[현황판](progress.md)과 [공유 준비 점검](main-sharing-verification.md)에서 구현·실환경 미검증을 구분한다.
 
 ## 1. OS와 필요한 도구
 
@@ -34,28 +34,37 @@ Windows 실행 경로는 준비했지만 실제 OS/파일 ACL 확인은 남아 �
 | Google | 본인의 테스트 Gmail·Cloud 프로젝트·웹 OAuth 클라이언트 | [Cloud Console](https://console.cloud.google.com/) |
 | Claude API | 선택 사항. 키·사용 가능한 모델 ID·API 잔액 | [Anthropic Console](https://console.anthropic.com/) |
 
-설치 후 새 터미널에서 `git --version`, `node --version`, `corepack pnpm --version`, `python3 --version`,
-`uv --version`, `docker compose version`, `docker info`를 확인한다. Corepack이 없는 Node 배포판이라면
+설치 후 새 터미널에서 `git --version`, `node --version`, `corepack pnpm --version`,
+`uv --version`, `docker compose version`, `docker info`를 확인한다. Python은 uv가 준비할 수 있다. Corepack이 없는 Node 배포판이라면
 pnpm 공식 안내로 정확한 버전을 설치한다. Codex·Claude Code는 앱 실행에 필요하지 않다.
 모델은 메모리·디스크를 많이 쓰므로 모델 카드의 요구 사항을 확인한다. 최소 RAM·속도·정확도를 보장하지 않는다.
 
 ## 2. 새 사용자 — 저장소와 의존성
 
-현재 원격 `main 9575f47`에는 실행 코드가 없으므로 **develop을 지정**한다. 비공개 저장소라면
-소유자에게 접근 권한을 받고 GitHub 인증을 준비한다. 본인이 선택한 부모 폴더에서 실행한다.
+동료용 공유 버전은 **main**을 지정한다. 공개 저장소의 읽기에는 초대가 필요하지 않다.
+비공개 저장소로 바뀌면 소유자에게 접근 권한을 받고 GitHub 인증을 준비한다. 본인이 선택한 부모 폴더에서 실행한다.
 
 ```bash
-git clone --branch develop --single-branch https://github.com/choi7614/klover_my_prototype.git
+git clone --branch main --single-branch https://github.com/choi7614/klover_my_prototype.git
 cd klover_my_prototype
 git status --short --branch
 git log -1 --oneline
-uv sync --locked --directory apps/server
+uv sync --locked --python 3.12 --directory apps/server
 corepack pnpm install --frozen-lockfile
 ```
 
 이후 별도 안내가 없으면 **저장소 루트**에서 실행한다. 특정 개인의 폴더나 이미 만든 토큰은 필요하지 않다.
 잠금 파일은 바꾸지 않는다. Node 버전 오류는 버전을 맞추고 새 터미널에서 재시도한다.
 이미 사용 중이면 새 설치를 반복하지 말고 [업데이트](#9-기존-사용자--업데이트)를 따른다.
+`git log -1 --oneline` 결과는 문의할 때 쓸 코드 버전이다.
+
+Electron 실행 파일 다운로드가 누락된 경우 먼저 네트워크·프록시 설정을 확인하고 다음을 한 번 실행한다.
+
+```bash
+corepack pnpm --filter desktop exec node node_modules/electron/install.js
+```
+
+새 `.env`·키를 다시 만들거나 의존성/DB를 삭제하는 복구 절차가 아니다.
 
 ## 3. 새 사용자 — DB 설정·실행·마이그레이션
 
@@ -267,12 +276,13 @@ docker compose --env-file .env -f infra/docker-compose.yml stop db
 
 앱·서버를 종료하고 10절에 따라 DB와 비밀 파일을 함께 백업한다.
 `git status --short --branch`, `git fetch origin`으로 현재 브랜치·변경을 확인한다.
-**미커밋 파일이 없고 로컬 develop이 분기하지 않았을 때만** 아래를 실행한다.
+**미커밋 파일이 없고 로컬 main이 분기하지 않았을 때만** 아래를 실행한다.
 기능 브랜치·기존 변경이 있으면 reset·강제 전환·덮어쓰기를 하지 말고 먼저 작업을 보존한다.
 
 ```bash
-git switch develop
-git pull --ff-only origin develop
+git fetch origin main:refs/remotes/origin/main
+git switch main
+git pull --ff-only origin main
 uv sync --locked --directory apps/server
 corepack pnpm install --frozen-lockfile
 docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
@@ -280,6 +290,11 @@ uv run --locked --directory apps/server alembic upgrade head
 uv run --locked --directory apps/server alembic current
 uv run --locked --directory apps/server python -m app.cli.check_database
 ```
+
+기존 develop 사용자도 위 절차로 main을 선택할 수 있다. 명시적 fetch는 develop만 받던 저장소에도 main을 가져온다.
+`git switch main`이나 `pull --ff-only`가 실패하면 중단하고 변경을 보존한다. reset·강제 Push로 맞추지 않는다.
+개발 참여로 develop을 계속 사용할 때만 기존 브랜치를 유지하며 `git pull --ff-only origin develop`을 사용한다.
+두 브랜치를 동시에 실행하지 않는다.
 
 기존 `.env`·`.local-secrets`·DB 볼륨·Compose 프로젝트명·모델 차원을 유지한다.
 비밀번호·키·계정을 다시 만들지 않는다. PR #37 자체에는 새 DB 이력이 없지만 이전 사용자는
@@ -330,7 +345,7 @@ AI 설정의 암호문과 키도 함께 보존한다. 코드 버전·DB 연결 �
 
 | 증상 | 확인 순서 |
 | --- | --- |
-| 실행 코드·package.json이 없음 | 브랜치·커밋 확인. 현재 main 대신 develop 사용 |
+| 실행 코드·package.json이 없음 | main 브랜치·커밋 확인. 공유 버전 반영 전 초기 커밋이면 최신 main을 받기 |
 | DB 비밀번호 거절 | 예시 복사 여부·기존 DB 암호·DATABASE_URL 우선 여부. DB 삭제 금지 |
 | DB·schema 오류 | Docker → 포트 → migration → check_database. /health만으로 판단 금지 |
 | Google 설정 생성 실패 | 웹 JSON·정확한 콜백·기존 .local-secrets 확인. 키 삭제 금지 |
