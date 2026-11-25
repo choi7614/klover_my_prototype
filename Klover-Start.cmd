@@ -4,7 +4,7 @@ setlocal
 set "PYTHONUTF8=1"
 set "KLOVER_ROOT=%~dp0"
 if not exist "%KLOVER_ROOT%apps\server\.venv\Scripts\python.exe" (
-  echo 먼저 docs/dev/setup.md의 최초 설치를 완료하세요.
+  echo 먼저 docs/dev/setup.md 맨 위 '쉬운 설치' 1단계부터 따라 하세요.
   pause
   exit /b 1
 )

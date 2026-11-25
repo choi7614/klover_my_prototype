@@ -267,7 +267,7 @@ def test_missing_macos_setup_keeps_actionable_message(tmp_path):
         ["bash", str(wrapper)], input="\n", text=True, capture_output=True, timeout=5
     )
     assert result.returncode == 1
-    assert "최초 설치" in result.stdout
+    assert "쉬운 설치" in result.stdout
 
 
 def test_real_child_cleanup_preserves_unrelated_process():
@@ -308,7 +308,7 @@ def test_windows_wrapper_missing_setup_is_actionable(tmp_path):
         timeout=10,
     )
     assert result.returncode == 1
-    assert "최초 설치" in result.stdout
+    assert "쉬운 설치" in result.stdout
 
 
 # ---------- 시작 전 자동 업데이트 (임시 git 저장소로 실제 동작 확인) ----------

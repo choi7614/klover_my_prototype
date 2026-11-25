@@ -1,14 +1,129 @@
 # Klover 설치·실행 안내
 
-> 2026-11-25 · 동료 설치 기준 main · 준비 원본 develop `f3c09f7`(#49). 최초 설치·평소 실행·업데이트의 단일 기준 안내.
+> 2026-11-25 · 동료 설치 기준 main(내 버전은 `git log -1 --oneline`). 최초 설치·평소 실행·업데이트의 단일 기준 안내.
 
-처음이면 1~6절, 설치가 끝났으면 8절, 기존 사용자 업데이트는 9절을 따릅니다.
+처음이면 바로 아래 **쉬운 설치 7단계**를 따르세요(자세한 설명은 1~7절). 설치가 끝났으면 8절, 기존 사용자 업데이트는 9절입니다.
 macOS는 터미널, Windows는 PowerShell에서 진행합니다. 2~6절의 공통 명령은 두 OS에서 같고,
 환경 변수와 백업처럼 문법이 다른 부분은 OS를 구분했습니다. 최초 준비 이후에는 더블클릭으로 실행합니다.
 
 현재는 소스에서 실행하는 개발용 데모다. 앱(Electron)·서버(FastAPI)·PostgreSQL과 로컬 Ollama를
 같은 컴퓨터에서 사용한다. 클라우드 이전은 보류, 사내망 적용은 장기 목표다.
 [현황판](progress.md)과 [공유 준비 점검](main-sharing-verification.md)에서 구현·실환경 미검증을 구분한다.
+
+## 쉬운 설치 (처음 한 번, 7단계)
+
+> 컴퓨터를 잘 몰라도 **위에서부터 하나씩** 따라 하면 됩니다. 명령은 복사해서 붙여 넣고 Enter를 누르세요.
+> Mac은 "터미널", Windows는 "PowerShell"을 엽니다. 전체 시간은 **1~2시간**이며, 대부분 내려받는 시간입니다.
+> 각 단계 끝의 **"성공하면"** 이 나오면 다음으로 가고, 안 나오면 멈추고 맨 아래 "막혔을 때"를 보세요.
+
+**0단계. 준비물 설치 (한 번만)** · 각 사이트에서 "다운로드"를 눌러 설치합니다. 링크는 아래 1절 표에 있습니다.
+Git · Node.js(LTS 22 또는 24) · uv · Docker Desktop · Ollama, 그리고 **본인의 Google 테스트 계정**.
+설치 후 Docker Desktop과 Ollama 앱을 한 번 열어 둡니다.
+
+**1단계. 코드 받기** · 원하는 폴더에서 아래를 차례로 실행합니다. (몇 분)
+
+```bash
+git clone --branch main --single-branch https://github.com/choi7614/klover_my_prototype.git
+cd klover_my_prototype
+uv sync --locked --python 3.12 --directory apps/server
+corepack pnpm install --frozen-lockfile
+```
+
+성공하면: 마지막 줄에 `Done in …`이 나옵니다. 이후 모든 명령은 이 `klover_my_prototype` 폴더 안에서 실행합니다.
+
+**2단계. 데이터 저장소(DB) 만들기** · Docker Desktop이 켜져 있어야 합니다. (몇 분)
+
+```bash
+uv run --locked --directory apps/server python -m app.cli.init_local_db
+docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+uv run --locked --directory apps/server alembic upgrade head
+uv run --locked --directory apps/server python -m app.cli.check_database
+```
+
+성공하면: `{"database":"ok","schema":"current"}`가 나옵니다. `.env` 파일이 새로 생기는데 **남에게 보내지 마세요**.
+
+**3단계. Google 메일 연결** · 가장 손이 많이 가는 단계입니다. (약 20분) 자세한 설명은 [4절](#4-새-사용자--google-프로젝트oauth-json로그인)입니다.
+
+1. [Google Cloud Console](https://console.cloud.google.com/)에서 프로젝트를 만들고 **Gmail API**를 사용 설정합니다.
+2. **Google Auth Platform**에서 앱을 만들고(대상: 외부), **테스트 사용자**에 내 Gmail 주소를 추가합니다.
+3. 데이터 액세스에 `https://www.googleapis.com/auth/gmail.readonly` 범위를 추가합니다.
+4. **클라이언트 만들기 → 웹 애플리케이션**을 고르고, 리디렉션 URI에 정확히 `http://localhost:8000/auth/google/callback`을 입력합니다.
+5. 만든 클라이언트의 **JSON을 내려받아** 내 컴퓨터에만 보관합니다. (채팅·GitHub에 올리지 마세요.)
+
+```bash
+uv run --locked --directory apps/server python -m app.cli.configure_google
+uv run --locked --directory apps/server python -m app.cli.run_google_connection
+```
+
+첫 명령에서 JSON 파일의 전체 경로와 내 Gmail 주소를 물으면 입력합니다. 두 번째 명령을 켜 둔 채
+브라우저로 `http://localhost:8000/auth/google`을 열어 로그인하고 동의합니다.
+성공하면: 화면에 **연결 확인 완료**가 나옵니다. 그다음 터미널에서 **Ctrl+C**로 두 번째 명령을 끕니다.
+
+**4단계. AI(로컬 모델) 준비** · 모델을 내려받는 시간이 가장 깁니다. (10~30분)
+컴퓨터 **메모리(RAM)** 에 맞는 모델을 고릅니다. 크기는 대략적인 값입니다.
+
+| 내 메모리 | 고를 모델 | 내려받기 크기(대략) |
+| --- | --- | --- |
+| 16GB 이상 | `qwen3:14b` (권장) | 약 9GB |
+| 8~16GB | `qwen3:8b` (가볍지만 AI 응답 형식 오류가 더 잦을 수 있음) | 약 5GB |
+| 공통(검색용) | `bge-m3` | 약 1.2GB |
+
+```bash
+ollama pull qwen3:14b
+ollama pull bge-m3
+```
+
+(8GB 컴퓨터는 첫 줄을 `ollama pull qwen3:8b`로 바꿉니다.) 그다음 `.env` 파일을 열어 **맨 아래에 아래 줄을 추가**하고 저장합니다.
+(Mac: `open -e .env` · Windows: `notepad .env`) `OLLAMA_MODEL`은 방금 받은 모델 이름으로 씁니다.
+
+```dotenv
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen3:14b
+OLLAMA_FORMAT=schema
+OLLAMA_THINK=false
+OLLAMA_TIMEOUT_SECONDS=120
+OLLAMA_RETRIES=1
+EMBEDDING_MODEL=bge-m3
+EMBEDDING_DIMENSIONS=1024
+```
+
+```bash
+uv run --locked --directory apps/server python -m app.cli.check_ai --ping
+```
+
+성공하면: `generation: ok`, `embedding: ok`가 나옵니다. (Claude는 선택 사항이라 지금은 필요 없습니다.)
+
+**5단계. 앱 열쇠 만들기** · 한 줄이면 됩니다. (1분)
+
+```bash
+uv run --locked --directory apps/server python -m app.cli.prepare_mail_api
+```
+
+**6단계. 실행** · Docker Desktop과 Ollama를 켠 뒤, 폴더에서 아래 파일을 **더블클릭**합니다.
+Mac은 `Klover-Start.command`(처음 한 번 안 열리면 터미널에서 `chmod +x Klover-Start.command`), Windows는 `Klover-Start.cmd`입니다.
+검은 진행 창이 뜨고 잠시 뒤 Klover 앱이 열립니다. 진행 창은 닫지 마세요. 다음부터는 이 단계만 하면 됩니다.
+시작할 때마다 새 버전이 있으면 알아서 받아 적용합니다.
+
+**7단계. 잘 되는지 확인** · 앱에서 새로고침 버튼을 눌러 받은 메일이 보이는지 봅니다.
+설치한 뒤 **새로 도착한 메일부터** 보이니, 다른 계정으로 내 Gmail에 시험 메일 한 통을 보내고 다시 새로고침해 보세요.
+몇 분 뒤 요약·분류가 붙으면 완성입니다.
+
+**설치가 끝났다는 표시**: 2단계의 `schema: current` · 4단계의 `generation: ok`·`embedding: ok` · 6단계에서 앱이 열림.
+
+**막혔을 때**
+
+| 이런 안내가 나오면 | 할 일 |
+| --- | --- |
+| 더블클릭했더니 "먼저 설치를 완료하세요" | 1단계부터 다시 확인 (특히 `uv sync`) |
+| "DB 연결 또는 버전 확인이 필요해요" | Docker Desktop을 켜고 2단계의 명령을 다시 실행 |
+| "Google·메일 API·로컬 AI 설정을 확인하세요" | 3단계(Google), 4단계(`.env`의 AI 줄), 5단계(앱 열쇠) 중 빠진 것을 확인 |
+| "Ollama 또는 필요한 모델을…" | Ollama 앱을 켜고 4단계의 `ollama pull`을 확인 |
+| "8000번 포트를 사용 중" | 이전에 켠 Klover 창(3단계의 `run_google_connection` 포함)을 Ctrl+C로 끔 |
+| Electron 관련 오류 | [2절](#2-새-사용자--저장소와-의존성) 끝의 Electron 명령 실행 |
+| 그 밖의 오류 | 단계 번호와 오류 문구만 알려 주세요. `.env`·키·JSON·메일 내용은 보내지 마세요 |
+
+아래 1~12절은 같은 내용을 **자세히** 설명한 것입니다. 위 7단계로 되면 읽지 않아도 됩니다.
 
 ## 1. OS와 필요한 도구
 
@@ -130,6 +245,7 @@ uv run --locked --directory apps/server python -m app.cli.run_google_connection
 Ollama 공식 앱을 설치해 로컬 서비스를 켠다. 이미 실행 중이라면 중복 실행하지 않는다.
 서비스가 꺼져 있다면 별도 터미널에서 `ollama serve`를 실행해 켜둔다.
 다른 터미널에서 생성 모델·임베딩 모델을 받는다. 생성 모델은 **예시**이며 기기에 맞게 선택한다.
+메모리가 16GB 이상이면 `qwen3:14b`(약 9GB), 8~16GB이면 `qwen3:8b`(약 5GB), 임베딩 `bge-m3`는 약 1.2GB다(대략적인 일반 기준이며 이 저장소에서 측정한 값이 아니다). 8GB 모델은 AI 응답 형식 오류가 더 잦을 수 있다.
 
 ```bash
 ollama pull qwen3:14b
