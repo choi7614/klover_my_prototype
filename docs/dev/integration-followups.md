@@ -30,6 +30,10 @@ main 공유용 안내와 구성도는 코드와 함께 #51로 반영했다. [공
 - 저장소가 서비스 쪽 오류·포트 정의를 가져다 씀 7건: `f5_errors`, `report_ports`, `search_rules`, `search_ports`, `pipeline.embed`.
   정의를 하위 계층(예: `app/schemas`)으로 옮기면 해소된다.
 - `ai/search_semantic`이 SQL 저장소를 직접 만듦 1건: 실행 명령의 조립 코드로 옮기면 해소된다.
+- 앱 보관함(`app.state`) 이름은 `apps/server/app/api/state.py`의 `StateName`에서만 정하고, 새 기능은 거기에 이름을
+  추가한다. 목록에 없는 이름을 쓰면 `tests/test_app_state_names.py`가 실패한다. 서비스를 타입 있는 컨테이너 한 곳에서
+  조립하는 구조(`run_mail_api.py` 정리)는 테스트 30여 곳이 보관함에 직접 꽂고 있어 별도 작업으로 남긴다.
+- 앱 main의 로컬 서버 요청 뼈대는 `apps/desktop/src/main/local-api.ts`(`localRequest`)로 모았다. 새 통로는 이것을 쓴다.
 - API 파일마다 DB 오류→HTTP 오류 변환이 응답 코드·문구가 달라 한 곳으로 합치면 앱이 받는 응답이 바뀐다.
   합치려면 앱 쪽 오류 처리와 함께 별도 작업으로 한다.
 - 프런트 기능 폴더의 생성 타입(`profile-draft/api-schema.generated.d.ts`, `suggestions/f5-api.d.ts`)이

@@ -10,6 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.errors import error_response
+from app.api.state import StateName, get_state
 from app.db.repositories.mail_query import InvalidMailCursor, MailAccountUnavailable
 from app.schemas.common import ErrorResponse
 from app.schemas.mail_api import LocalSession, MailDetail, MailPage
@@ -39,7 +40,7 @@ def authorize(
         raise HTTPException(403)
     if credentials is None or len(request.headers.getlist("authorization")) != 1:
         raise HTTPException(401, headers={"WWW-Authenticate": "Bearer"})
-    context = getattr(request.app.state, "mail_api", None)
+    context = get_state(request, StateName.MAIL_API)
     if context is None:
         raise HTTPException(503)
     if len(credentials.credentials) > 128 or not secrets.compare_digest(

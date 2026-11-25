@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.errors import error_response
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state, set_state
 from app.db.repositories.mail_analysis import AnalysisRepository
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.schemas.common import ErrorResponse
@@ -30,7 +31,7 @@ MAIL_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,128}")
 
 
 def _runner(request: Request):
-    return getattr(request.app.state, "mail_analysis_runner", None)
+    return get_state(request, StateName.MAIL_ANALYSIS_RUNNER)
 
 
 def _auto_state(request: Request) -> str:
@@ -43,11 +44,7 @@ def create_analysis_router(engine: Engine | None = None) -> APIRouter:
     router = APIRouter(tags=["F1 분류 수정"])
 
     def scoped_repository(request: Request, authorized: Annotated[object, Depends(authorize)]):
-        bound = (
-            engine
-            if engine is not None
-            else getattr(request.app.state, "mail_analysis_engine", None)
-        )
+        bound = engine if engine is not None else get_state(request, StateName.MAIL_ANALYSIS_ENGINE)
         if bound is None:
             raise HTTPException(503)
         try:
@@ -180,8 +177,8 @@ def create_analysis_router(engine: Engine | None = None) -> APIRouter:
 def register_mail_analysis(application, engine: Engine | None = None):
     """운영 앱 등록. 개인 응답 헤더는 기존 /mails/ 경로 미들웨어가 붙인다."""
     if engine is not None:
-        application.state.mail_analysis_engine = engine
-    if getattr(application.state, "f1_registered", False):
+        set_state(application, StateName.MAIL_ANALYSIS_ENGINE, engine)
+    if get_state(application, StateName.F1_REGISTERED, False):
         return
-    application.state.f1_registered = True
+    set_state(application, StateName.F1_REGISTERED, True)
     application.include_router(create_analysis_router())

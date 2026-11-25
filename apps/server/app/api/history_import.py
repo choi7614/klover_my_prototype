@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state
 
 
 class ImportRange(BaseModel):
@@ -44,7 +45,7 @@ def register_history_import(app):
     )
 
     def runner(request):
-        result = getattr(request.app.state, "history_import", None)
+        result = get_state(request, StateName.HISTORY_IMPORT)
         if result is None:
             raise HTTPException(503)
         return result

@@ -1,5 +1,6 @@
 import type { IpcMain, WebContents } from 'electron';
 import { readLocalAPI, type LocalAPIConfiguration } from './mail-client';
+import { localRequest } from './local-api';
 import { trustedMailSender } from './mail-ipc';
 import { readAIState, validProvider, type AIResult } from '../shared/ai-bridge';
 
@@ -29,11 +30,12 @@ export function registerAIIPC(ipc: IpcMain, contents: WebContents, rendererURL: 
     const local = await readLocalAPI(configuration);
     if (!local) return fail();
     try {
-      const response = await fetcher(new URL(operation === 'check' ? '/settings/ai/check' : '/settings/ai', local.base), {
+      const { url, init } = localRequest(local, {
         method: operation === 'get' ? 'GET' : operation === 'save' ? 'PUT' : 'POST',
-        headers: { Authorization: `Bearer ${local.token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
-        body: body ? JSON.stringify(body) : undefined, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(operation === 'check' ? 150000 : 15000),
+        path: operation === 'check' ? '/settings/ai/check' : '/settings/ai',
+        body: body as object | undefined, timeoutMs: operation === 'check' ? 150000 : 15000,
       });
+      const response = await fetcher(url, init);
       const text = await response.text();
       if (text.length > 10000 || !response.ok) return fail();
       const result: unknown = JSON.parse(text);

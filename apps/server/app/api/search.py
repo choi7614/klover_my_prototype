@@ -12,6 +12,7 @@ from app.ai.selection import execution_info
 from app.api.ai_scope import ai_scope, execution_result
 from app.api.errors import error_response
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.schemas.common import ErrorResponse
 from app.schemas.search import RecentSearch, SearchRequest, SearchResponse, SearchScope
@@ -24,7 +25,7 @@ router = APIRouter(
 
 
 async def context(request: Request, repository: Annotated[object, Depends(authorize)]):
-    service = getattr(request.app.state, "search_service", None)
+    service = get_state(request, StateName.SEARCH_SERVICE)
     if service is None:
         raise HTTPException(503)
     try:

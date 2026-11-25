@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.errors import error_response
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.google_config import GoogleConnectionError
 from app.schemas.common import ErrorResponse
@@ -46,7 +47,7 @@ router = APIRouter(
 @router.post("/mails/sync", response_model=MailSyncResult)
 def sync_mails(request: Request, _authorized: Annotated[object, Depends(authorize)]):
     """사용 시작 이후 도착한 받은편지함 메일만 저장한다. 이미 저장한 메일은 건너뛴다."""
-    context = getattr(request.app.state, "mail_sync", None)
+    context = get_state(request, StateName.MAIL_SYNC)
     if context is None:
         raise HTTPException(503)
     # 같은 서버 안의 중복 요청은 기다리지 않고 바로 알린다.
