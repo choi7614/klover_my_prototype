@@ -228,6 +228,8 @@ Calendar 테스트는 pending+simulated+test다. 불명확한 실행은 uncertai
 - `GET /settings/ai`: 기능별 기본값, 외부 전송 허용 여부, 키 등록 여부, 로컬 모델 설정 여부, Claude 모델 ID. 키 값은 반환하지 않음.
 - `PUT /settings/ai`: `defaults`(draft/search/weekly_report 각각 ollama/claude), `external_consent`, 선택 `api_key`·`claude_model`·`clear_key`. 키 생략/빈 UI 입력은 유지. `clear_key`는 암호화 파일에 저장한 키만 삭제하며 환경 변수 키는 보존.
 - `POST /settings/ai/check`: `{provider: ollama|claude}`. 메일 없는 고정 합성 요청으로 연결 검사(Claude 소량 과금). 실제 기능 품질 검사가 아님.
+  실패하면 503과 원인별 고정 `code`(키 미등록·키 오류·모델 없음·크레딧 부족·미지원 모델 등)와 안내 문장을 주며, Anthropic이 준 사유가 있으면 키를 뺀 200자 이내로 덧붙인다.
+- `GET /settings/ai/claude-models`: 저장한 키로 Anthropic Models API를 조회해 쓸 수 있는 Claude 모델 `{models: [{id, name}]}`(최대 100개, `claude-*`만). 메일·프로필은 보내지 않는다. 로컬 전용 모드·키 미등록·조회 실패는 503.
 - 모두 기존 loopback·Bearer·Origin 차단 경계와 비공개 응답 정책을 사용한다. 기존 연결 계정의 로컬 운영자 설정이다.
 - `POST /drafts`, `/drafts/{id}/revise`, `/profile/preview`, `/search`, `/reports/weekly`에 선택 `ai_provider: default|ollama|claude|null` 추가. 생략/null/default는 저장 기본값(새 설정은 로컬 전용·로컬 기본). `/profile/preview`는 선택과 무관하게 로컬 고정.
 - F3는 해석과 답변이 같은 설정 스냅샷을 사용한다. 요청 간 변경은 다음 요청부터 적용한다.

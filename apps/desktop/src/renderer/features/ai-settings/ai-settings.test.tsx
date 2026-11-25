@@ -11,6 +11,7 @@ function bridge() {
     get: vi.fn().mockResolvedValue({ ok: true, data: state }),
     save: vi.fn().mockImplementation(async (request) => ({ ok: true, data: { ...state, defaults: request.defaults, external_consent: request.external_consent, claude_key_set: true } })),
     check: vi.fn().mockResolvedValue({ ok: true, data: { status: 'reachable', provider: 'claude' } }),
+    models: vi.fn().mockResolvedValue({ ok: true, data: { models: [{ id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5' }, { id: 'claude-opus-5-5', name: 'Claude Opus 5.5' }] } }),
   };
   vi.stubGlobal('klover', { ai });
   return ai;
@@ -63,6 +64,31 @@ describe('AI 설정', () => {
     expect(screen.getByText(/AI 설정을 저장했습니다/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Claude 연결 검사' })).toBeInTheDocument();
     expect(screen.queryByText('synthetic-private-key')).not.toBeInTheDocument();
+  });
+  it('모델 이름을 모를 때 내 키로 쓸 수 있는 모델을 불러와 고를 수 있다', async () => {
+    const ai = bridge();
+    render(<AISettingsPage />);
+    await screen.findByLabelText('답장 초안·수정');
+    expect(screen.queryByLabelText('쓸 수 있는 Claude 모델')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '쓸 수 있는 모델 불러오기' }));
+    expect(await screen.findByText(/모델 2개를 불러왔어요/)).toBeInTheDocument();
+    expect(screen.getByText(/synthetic-model\)은 목록에 없어요/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('쓸 수 있는 Claude 모델'), { target: { value: 'claude-sonnet-5-5' } });
+    expect(screen.getByLabelText('Claude 모델 ID')).toHaveValue('claude-sonnet-5-5');
+    // 모델을 바꿨으니 저장하지 않은 변경이 있다고 알리고, 검사 때 함께 저장한다.
+    expect(screen.getByRole('button', { name: '저장하고 Claude 연결 검사' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '저장하고 Claude 연결 검사' }));
+    await screen.findByText('Claude 연결 확인 완료');
+    expect(ai.save.mock.calls[0][0]).toMatchObject({ claude_model: 'claude-sonnet-5-5' });
+  });
+  it('모델 목록을 불러오지 못하면 이유를 보여 준다', async () => {
+    const ai = bridge();
+    ai.models.mockResolvedValueOnce({ ok: false, error: { code: 'claude_auth_failed', message: 'Claude API 키가 올바르지 않거나 사용 권한이 없어요.' } });
+    render(<AISettingsPage />);
+    await screen.findByLabelText('답장 초안·수정');
+    fireEvent.click(screen.getByRole('button', { name: '쓸 수 있는 모델 불러오기' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('키가 올바르지 않거나');
+    expect(screen.queryByLabelText('쓸 수 있는 Claude 모델')).not.toBeInTheDocument();
   });
   it('저장에 실패하면 검사하지 않고 실패 원인을 보여 준다', async () => {
     const ai = bridge();

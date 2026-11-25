@@ -506,6 +506,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/ai/claude-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Claude Models
+         * @description 이 키로 쓸 수 있는 Claude 모델 목록. 메일·프로필은 보내지 않는다.
+         */
+        get: operations["claude_models_settings_ai_claude_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/suggestion-events": {
         parameters: {
             query?: never;
@@ -833,6 +853,18 @@ export interface components {
             mail_id: string;
             /** Number */
             number: number;
+        };
+        /** ClaudeModel */
+        ClaudeModel: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** ClaudeModels */
+        ClaudeModels: {
+            /** Models */
+            models: components["schemas"]["ClaudeModel"][];
         };
         /** ConflictResult */
         ConflictResult: {
@@ -4704,6 +4736,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProbeResult"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    claude_models_settings_ai_claude_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaudeModels"];
                 };
             };
             /** @description 요청 형식 오류 */

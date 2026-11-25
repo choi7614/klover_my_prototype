@@ -25,9 +25,17 @@ class ProviderCallError(RuntimeError):
     code는 고정 오류 코드(예: ollama_unreachable), 메시지는 고정된 한국어 안내다.
     """
 
-    def __init__(self, message: str = "AI 호출에 실패했습니다", *, code: str = "provider_error"):
+    def __init__(
+        self,
+        message: str = "AI 호출에 실패했습니다",
+        *,
+        code: str = "provider_error",
+        detail: str = "",
+    ):
         super().__init__(message)
         self.code = code
+        # 연결 검사 화면에만 보여 주는 제공자 안내(키 제거·길이 제한). 로그에는 쓰지 않는다.
+        self.detail = detail
 
 
 @dataclass(frozen=True, repr=False)

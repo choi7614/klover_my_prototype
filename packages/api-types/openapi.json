@@ -389,6 +389,40 @@
         "title": "Citation",
         "type": "object"
       },
+      "ClaudeModel": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "ClaudeModel",
+        "type": "object"
+      },
+      "ClaudeModels": {
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ClaudeModel"
+            },
+            "title": "Models",
+            "type": "array"
+          }
+        },
+        "required": [
+          "models"
+        ],
+        "title": "ClaudeModels",
+        "type": "object"
+      },
       "ConflictResult": {
         "additionalProperties": false,
         "properties": {
@@ -7184,6 +7218,53 @@
           }
         ],
         "summary": "Check",
+        "tags": [
+          "AI 설정"
+        ]
+      }
+    },
+    "/settings/ai/claude-models": {
+      "get": {
+        "description": "이 키로 쓸 수 있는 Claude 모델 목록. 메일·프로필은 보내지 않는다.",
+        "operationId": "claude_models_settings_ai_claude_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaudeModels"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Claude Models",
         "tags": [
           "AI 설정"
         ]

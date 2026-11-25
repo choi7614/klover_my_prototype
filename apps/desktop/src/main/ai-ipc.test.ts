@@ -20,10 +20,20 @@ describe('AI 설정 통로', () => {
     const s = setup();
     s.fetcher.mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: 'claude_auth_failed', message: 'Claude API 키가 올바르지 않거나 사용 권한이 없어요.' } }), { status: 503 }));
     expect(await s.handlers.get('klover:ai:check')!(s.event, 'claude')).toEqual({ ok: false, error: { code: 'claude_auth_failed', message: 'Claude API 키가 올바르지 않거나 사용 권한이 없어요.' } });
-    for (const body of ['not json', JSON.stringify({ error: { code: 'BAD CODE', message: 'x' } }), JSON.stringify({ error: { code: 'ok_code', message: 'x'.repeat(301) } }), JSON.stringify({})]) {
+    for (const body of ['not json', JSON.stringify({ error: { code: 'BAD CODE', message: 'x' } }), JSON.stringify({ error: { code: 'ok_code', message: 'x'.repeat(601) } }), JSON.stringify({})]) {
       s.fetcher.mockResolvedValueOnce(new Response(body, { status: 503 }));
       expect(await s.handlers.get('klover:ai:check')!(s.event, 'claude')).toEqual({ ok: false, error: { code: 'ai_settings_failed', message: 'AI 설정과 연결 상태를 확인해 주세요.' } });
     }
+  });
+  it('쓸 수 있는 모델 목록은 인수 없이 조회하고 알려진 모양만 전달한다', async () => {
+    const s = setup();
+    s.fetcher.mockResolvedValueOnce(new Response(JSON.stringify({ models: [{ id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5', secret: 'x' }], token: 'x' })));
+    expect(await s.handlers.get('klover:ai:models')!(s.event)).toEqual({ ok: true, data: { models: [{ id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5' }] } });
+    expect(s.fetcher.mock.calls[0][0].pathname).toBe('/settings/ai/claude-models');
+    expect(await s.handlers.get('klover:ai:models')!(s.event, 'extra')).toMatchObject({ ok: false });
+    s.fetcher.mockResolvedValueOnce(new Response(JSON.stringify({ models: [{ id: '../evil', name: 'x' }] })));
+    expect(await s.handlers.get('klover:ai:models')!(s.event)).toMatchObject({ ok: false });
+    expect(s.fetcher).toHaveBeenCalledTimes(2);
   });
   it('신뢰한 화면과 고정 동작만 허용하고 비밀 필드를 응답에서 제거한다', async () => {
     const s = setup();
