@@ -37,7 +37,22 @@ PROBE_FAILURES = {
     ),
     "claude_timeout": "Claude 응답이 늦어요. 잠시 뒤 다시 검사하세요.",
     "claude_unreachable": "Claude API에 연결하지 못했어요. 인터넷 연결을 확인하세요.",
-    "claude_bad_request": "Claude가 요청 형식을 거부했어요. 모델 ID를 확인하세요.",
+    "claude_bad_request": (
+        "Claude가 요청을 거부했어요. 모델 ID가 이 계정에서 쓸 수 있는 최신 모델인지 확인하고, "
+        "계속되면 Anthropic Console에서 계정 상태와 크레딧을 확인하세요."
+    ),
+    "claude_credit_low": (
+        "Anthropic 계정의 크레딧(잔액)이 부족해요. Anthropic Console의 Plans & Billing에서 "
+        "크레딧을 충전한 뒤 다시 검사하세요."
+    ),
+    "claude_effort_unsupported": (
+        "이 Claude 모델은 응답 품질 설정을 지원하지 않아요. "
+        "claude-sonnet-5-5 같은 최신 모델 ID를 쓰세요."
+    ),
+    "claude_format_unsupported": (
+        "이 Claude 모델은 구조화된 JSON 출력을 지원하지 않아요. "
+        "claude-sonnet-5-5 같은 최신 모델 ID를 쓰세요."
+    ),
     "claude_refused": "Claude가 검사 요청에 답하지 않았어요. 잠시 뒤 다시 검사하세요.",
     "claude_truncated": "Claude 응답이 잘려서 확인하지 못했어요. 다시 검사하세요.",
     "claude_invalid_response": "Claude 응답을 읽지 못했어요. 모델 ID를 확인하고 다시 검사하세요.",

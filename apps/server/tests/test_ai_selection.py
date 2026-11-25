@@ -236,6 +236,18 @@ def test_connection_probe_is_synthetic_and_requires_saved_consent(tmp_path, monk
             "claude_unreachable",
             "인터넷",
         ),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_credit_low"),
+            "claude_credit_low",
+            "크레딧",
+        ),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_format_unsupported"),
+            "claude_format_unsupported",
+            "JSON",
+        ),
         ("claude", TimeoutError(), "claude_timeout", "늦어요"),
         (
             "claude",
