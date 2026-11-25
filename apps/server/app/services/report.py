@@ -72,6 +72,10 @@ async def prepare_weekly_report_input(
         category = mail.effective_category
         if category in ("notice", "newsletter"):
             excluded.append(ExcludedReportMail(mail=mail, reason=category))
+        elif mail.direction == "sent" and mail.analysis_status == "pending":
+            # 보낸 메일은 Gmail에서 보기만 하려고 저장해 AI 분석을 하지 않는다(계속 pending).
+            # 분석이 끝난 보낸 메일만 보고에 넣고, 분석 안 된 것은 보고 준비를 막지 않도록 건너뛴다.
+            continue
         elif mail.analysis_status != "done" or category is None:
             not_ready.append(mail.mail_id)
         else:

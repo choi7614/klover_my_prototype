@@ -174,9 +174,9 @@ export interface paths {
         };
         /**
          * List Mails
-         * @description 받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.
+         * @description 받은/보낸 메일을 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.
          *
-         *     category를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다.
+         *     category를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다. 받은편지함에서만 쓴다.
          */
         get: operations["list_mails_mails_get"];
         put?: never;
@@ -253,7 +253,7 @@ export interface paths {
         };
         /**
          * Read Mail
-         * @description 소유 계정의 일반 텍스트 본문. 다른 계정 ID도 같은 404로 처리한다.
+         * @description 소유 계정의 받은·보낸 메일 일반 텍스트 본문. 다른 계정 ID도 같은 404로 처리한다.
          */
         get: operations["read_mail_mails__mail_id__get"];
         put?: never;
@@ -1263,6 +1263,12 @@ export interface components {
             body_text: string;
             /** Cc */
             cc: components["schemas"]["app__schemas__mail_api__MailContact"][];
+            /**
+             * Direction
+             * @default received
+             * @enum {string}
+             */
+            direction: "received" | "sent";
             /** From Addr */
             from_addr: string;
             /** From Name */
@@ -1282,6 +1288,11 @@ export interface components {
             subject: string;
             /** To */
             to: components["schemas"]["app__schemas__mail_api__MailContact"][];
+            /**
+             * To Label
+             * @default
+             */
+            to_label: string;
         };
         /** MailEntities */
         MailEntities: {
@@ -1330,6 +1341,12 @@ export interface components {
              * @enum {string}
              */
             analysis_status: "pending" | "done" | "failed";
+            /**
+             * Direction
+             * @default received
+             * @enum {string}
+             */
+            direction: "received" | "sent";
             /** From Addr */
             from_addr: string;
             /** From Name */
@@ -1347,6 +1364,11 @@ export interface components {
             received_at: string;
             /** Subject */
             subject: string;
+            /**
+             * To Label
+             * @default
+             */
+            to_label: string;
         };
         /**
          * MailSyncResult
@@ -2826,7 +2848,7 @@ export interface operations {
     list_mails_mails_get: {
         parameters: {
             query?: {
-                box?: "inbox";
+                box?: "inbox" | "sent";
                 limit?: number;
                 cursor?: string | null;
                 category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;

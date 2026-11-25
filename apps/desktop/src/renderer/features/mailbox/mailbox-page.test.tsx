@@ -92,6 +92,54 @@ describe('받은편지함 화면 (합성 API 응답)', () => {
   });
 });
 
+function sentMail(id = 'sent-1'): MailSummary {
+  return { ...mail(id), subject: `보낸 제목 ${id}`, from_addr: 'me@example.invalid', from_name: '나', is_read: true, direction: 'sent', to_label: '받는이 외 1명' };
+}
+describe('보낸편지함: 보기 전용 (합성 응답)', () => {
+  function withSent() {
+    const bridge = api();
+    bridge.inbox.mockImplementation((query?: { box?: string }) => Promise.resolve({ ok: true, data: { items: query?.box === 'sent' ? [sentMail()] : [mail()], next_cursor: null } }));
+    bridge.detail.mockImplementation((id: string) => Promise.resolve({ ok: true, data: id.startsWith('sent') ? { ...sentMail(id), to: [{ addr: 'to@example.invalid', name: '받는이' }], cc: [], body_text: '보낸 본문' } : body(id) }));
+    return bridge;
+  }
+  it('보낸편지함을 누르면 보낸 메일만 받는 사람과 함께 보여 주고 분류 목록은 풀린다', async () => {
+    const bridge = withSent();
+    render(<MailboxPage api={bridge} session={session} onDisconnected={vi.fn()} />);
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    fireEvent.click(screen.getByRole('button', { name: '보낸편지함' }));
+    const item = await screen.findByRole('button', { name: /보낸 제목 sent-1/ });
+    expect(bridge.inbox).toHaveBeenLastCalledWith({ limit: 20, cursor: null, box: 'sent' });
+    expect(item).toHaveTextContent('받는 사람: 받는이 외 1명');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('보낸편지함');
+    expect(screen.getByText(/보기 전용입니다/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '보낸편지함' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: /합성 제목 mail-1/ })).not.toBeInTheDocument();
+  });
+  it('보낸 메일 본문은 보여 주되 답장 초안·AI 요약은 붙이지 않는다', async () => {
+    const analysis = { batch: vi.fn().mockResolvedValue({ items: [], auto_analysis: 'ready' }), retry: vi.fn() };
+    const bridge = withSent();
+    render(<MailboxPage api={bridge} session={session} onDisconnected={vi.fn()} analysis={analysis as never} />);
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    fireEvent.click(screen.getByRole('button', { name: '보낸편지함' }));
+    fireEvent.click(await screen.findByRole('button', { name: /보낸 제목 sent-1/ }));
+    expect(await screen.findByTestId('mail-text-body')).toHaveTextContent('보낸 본문');
+    expect(screen.queryByRole('link', { name: '답장 초안 만들기' })).not.toBeInTheDocument();
+    // 받은 메일 때문에 분석 요청은 처음에 한 번 갔지만, 보낸 메일 id는 분석 요청에 들어가지 않는다.
+    const asked = (analysis.batch.mock.calls as string[][][]).flatMap(([ids]) => ids);
+    expect(asked).not.toContain('sent-1');
+  });
+  it('분류를 누르면 받은편지함으로 돌아가고, 비어 있으면 안내한다', async () => {
+    const bridge = withSent();
+    render(<MailboxPage api={bridge} session={session} onDisconnected={vi.fn()} />);
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    bridge.inbox.mockResolvedValueOnce({ ok: true, data: { items: [], next_cursor: null } });
+    fireEvent.click(screen.getByRole('button', { name: '보낸편지함' }));
+    await screen.findByText('보낸 메일이 없습니다');
+    fireEvent.click(within(screen.getByRole('navigation', { name: '분류' })).getByRole('button', { name: /회의·일정/ }));
+    await waitFor(() => expect(bridge.inbox).toHaveBeenLastCalledWith({ limit: 20, cursor: null, category: 'meeting' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('받은편지함 · 회의·일정');
+  });
+});
 describe('왼쪽 분류 목록: 분류별로 메일 모아 보기 (합성 응답)', () => {
   const counts = { total: 7, counts: { meeting: 3, notice: 1 } };
   function withCounts() {

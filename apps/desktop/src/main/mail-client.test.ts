@@ -9,7 +9,7 @@ import { MailAPIClient, localAPIURL } from './mail-client';
 
 const token = 'S'.repeat(43);
 const session = { user_id: 'user-test', account_id: 'account-test', email: 'demo@example.invalid', sync_started_at: '2026-11-19T00:00:00+09:00' };
-const summary = { mail_id: 'mail-1', subject: '합성 메일', from_addr: 'sender@example.invalid', from_name: '발신자', preview: '미리보기', received_at: '2026-11-19T01:00:00+09:00', is_read: false, analysis_status: 'pending' };
+const summary = { mail_id: 'mail-1', subject: '합성 메일', from_addr: 'sender@example.invalid', from_name: '발신자', preview: '미리보기', received_at: '2026-11-19T01:00:00+09:00', is_read: false, analysis_status: 'pending', direction: 'received', to_label: '' };
 let directory: string;
 let file: string;
 const servers: Server[] = [];
@@ -77,6 +77,9 @@ describe('main 전용 메일 API', () => {
     expect(new URL(paths[0], baseURL).searchParams.get('category')).toBe('meeting');
     expect((await client.inbox({ limit: 20 })).ok).toBe(true);
     expect(new URL(paths[1], baseURL).searchParams.has('category')).toBe(false);
+    expect(new URL(paths[1], baseURL).searchParams.get('box')).toBe('inbox');
+    expect((await client.inbox({ limit: 20, box: 'sent' })).ok).toBe(true);
+    expect(new URL(paths[2], baseURL).searchParams.get('box')).toBe('sent');
     const counts = await client.categoryCounts();
     expect(counts).toEqual({ ok: true, data: { total: 5, counts: { meeting: 2, notice: 1 } } });
     expect(JSON.stringify(counts)).not.toContain(token);

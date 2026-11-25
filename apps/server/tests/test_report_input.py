@@ -81,6 +81,16 @@ def test_seoul_date_boundaries_include_both_directions_and_exclude_other_users()
     assert result.scope.total == 2
 
 
+def test_unanalyzed_sent_mail_is_skipped_but_unanalyzed_received_mail_still_blocks():
+    sent_only_viewed = make_mail(
+        "sent-viewed", direction="sent", analysis_status="pending", category=None
+    )
+    result = prepare([make_mail("ok"), sent_only_viewed])
+    assert [group.mail_ids for group in result.groups] == [("ok",)]
+    with pytest.raises(ReportInputNotReadyError):
+        prepare([make_mail("pending", analysis_status="pending", category=None), sent_only_viewed])
+
+
 def test_single_day_period_includes_the_whole_day():
     result = prepare(
         [

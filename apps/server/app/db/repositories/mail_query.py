@@ -4,6 +4,7 @@ import base64
 import json
 import re
 from datetime import datetime
+from typing import Literal
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
@@ -19,6 +20,8 @@ from app.schemas.mail_api import (
     MailSummary,
 )
 from app.schemas.report import MailCategory
+
+MailBox = Literal["inbox", "sent"]
 
 
 class MailAccountUnavailable(ValueError):
@@ -58,6 +61,20 @@ def _cursor(mail):
     return base64.urlsafe_b64encode(data).decode().rstrip("=")
 
 
+def _to_label(recipients):
+    """보낸편지함 목록에 보일 받는 사람: 첫 사람과 나머지 인원수."""
+    names = [
+        (row.get("name") or row.get("addr") or "").strip()
+        for row in recipients
+        if isinstance(row, dict)
+    ]
+    names = [name for name in names if name]
+    if not names:
+        return ""
+    label = names[0] if len(names) == 1 else f"{names[0]} 외 {len(names) - 1}명"
+    return label[:120]
+
+
 def _summary(mail):
     return dict(
         mail_id=mail.mail_id,
@@ -68,6 +85,8 @@ def _summary(mail):
         received_at=mail.received_at,
         is_read=mail.is_read,
         analysis_status=mail.analysis_status,
+        direction=mail.direction,
+        to_label=_to_label(mail.to),
     )
 
 
@@ -103,12 +122,15 @@ class MailQueryRepository:
             )
 
     @staticmethod
-    def _received_where(account):
+    def _received_where(account, box: MailBox = "inbox"):
+        # 받은편지함은 받은 메일, 보낸편지함은 보낸 메일만 보여 준다.
+        # 둘 다 사용 시작 이후(또는 과거 가져오기) 메일이다.
+        direction, mailbox = ("sent", "sent") if box == "sent" else ("received", "inbox")
         return (
             Mail.user_id == account.user_id,
             Mail.account_id == account.account_id,
-            Mail.direction == "received",
-            Mail.mailbox == "inbox",
+            Mail.direction == direction,
+            Mail.mailbox == mailbox,
             or_(Mail.received_at >= account.sync_started_at, Mail.history_imported.is_(True)),
         )
 
@@ -120,8 +142,8 @@ class MailQueryRepository:
             Analysis.account_id == Mail.account_id,
         )
 
-    def _received(self, account, category: MailCategory | None = None):
-        query = select(Mail).where(*self._received_where(account))
+    def _received(self, account, category: MailCategory | None = None, box: MailBox = "inbox"):
+        query = select(Mail).where(*self._received_where(account, box))
         if category is not None:
             # 사용자가 고친 분류(user_label)가 있으면 그것을, 없으면 AI 분류를 쓴다.
             query = query.join(Analysis, self._analysis_join()).where(
@@ -145,11 +167,18 @@ class MailQueryRepository:
             counts = {name: count for name, count in rows if name is not None}
             return MailCategoryCounts(total=total, counts=counts)
 
-    def list(self, *, limit=20, cursor=None, category: MailCategory | None = None):
+    def list(
+        self,
+        *,
+        limit=20,
+        cursor=None,
+        category: MailCategory | None = None,
+        box: MailBox = "inbox",
+    ):
         position = decode_cursor(cursor) if cursor else None
         with Session(self.engine) as session:
             account = self._owner(session)
-            query = self._received(account, category)
+            query = self._received(account, category, box)
             if position:
                 stamp, identifier = position
                 query = query.where(
@@ -170,10 +199,17 @@ class MailQueryRepository:
                 next_cursor=_cursor(rows[-1]) if more else None,
             )
 
-    def detail(self, mail_id):
+    def detail(self, mail_id, *, include_sent=False):
+        """기본은 받은 메일만(답장 초안 등 다른 기능용). include_sent=True면 보낸 메일도 연다."""
         with Session(self.engine) as session:
             account = self._owner(session)
-            row = session.scalar(self._received(account).where(Mail.mail_id == mail_id))
+            boxes = ("inbox", "sent") if include_sent else ("inbox",)
+            row = session.scalar(
+                select(Mail).where(
+                    Mail.mail_id == mail_id,
+                    or_(*(and_(*self._received_where(account, box)) for box in boxes)),
+                )
+            )
             if row is None:
                 return None
             return MailDetail(**_summary(row), to=row.to, cc=row.cc, body_text=row.body_text)
