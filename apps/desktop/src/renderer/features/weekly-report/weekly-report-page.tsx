@@ -223,7 +223,7 @@ export function WeeklyReportPage({ client, autoGenerate = true, writeClipboard =
           <p className="mb-2 text-caption text-muted-foreground">대상 기간: {report.period.start} ~ {report.period.end} · 조회 {report.scope.total}건</p>
           {report.partial_period && <p className="mb-3 text-caption text-muted-foreground">일부 기간 자료 · 선택 기간에 현재까지 확보된 메일을 반영했습니다. 대상 {report.period.start} ~ {report.period.end} · 조회 {report.scope.total}건</p>}
           <div className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-heading font-bold">{report.title}</h1><span className="text-caption text-muted-foreground">{dirty ? '저장하지 않은 수정 있음' : `저장본 · 버전 ${report.revision}`}</span></div>
-          <p className="mt-2 text-caption text-muted-foreground">{report.subtitle} · {report.generation === 'test_double' ? '테스트 대역 결과' : report.generation === 'ai' ? '◆ AI 작성' : '업무 메일 없음'} — 내용을 바로 고칠 수 있어요</p>
+          <p className="mt-2 text-caption text-muted-foreground">{report.subtitle} · {report.generation === 'test_double' ? '테스트 대역 결과' : report.generation === 'ai' ? 'AI 작성' : '업무 메일 없음'} — 내용을 바로 고칠 수 있어요</p>
           <p className="mt-1 text-caption text-muted-foreground">보고 대상: {report.recipient} · {report.style === 'bullet' ? '개조식' : '서술형'}</p>
           {busy && <p role="status" className="mt-4 text-caption text-ai-text">보고서를 처리하고 있어요. 현재 내용은 결과 확인 전까지 유지합니다.</p>}
           {report.status === 'empty' && <Empty title="이 기간에 주고받은 업무 메일이 없어요" description="받은편지함에서 수신·분석 상태를 확인하거나 다른 기간과 제외 목록을 확인해 주세요." />}

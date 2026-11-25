@@ -22,7 +22,7 @@ describe('F3 독립 검색 화면', () => {
     expect(screen.getByRole('article', { name: '검색 결과 2' })).toHaveFocus();
     fireEvent.click(screen.getByRole('button', { name: '출장비 예산 초과분 처리 문의' }));
     expect(openMail).toHaveBeenCalledWith({ mail_id: 'm2', direction: 'received', source: 'F3' });
-    fireEvent.click(within(screen.getByRole('article', { name: '검색 결과 2' })).getByRole('button', { name: '◆ 답장 초안' }));
+    fireEvent.click(within(screen.getByRole('article', { name: '검색 결과 2' })).getByRole('button', { name: '답장 초안' }));
     expect(openDraft).toHaveBeenCalledWith({ mail_id: 'm2', source: 'F3' });
     fireEvent.click(screen.getByText('조건을 일부만 만족하는 메일 1건 더 보기'));
     expect(screen.getByText('미충족: 대상')).toBeVisible();
@@ -61,7 +61,7 @@ describe('F3 독립 검색 화면', () => {
     client.delay = (query) => query === '해석 오류' ? new Promise<void>((resolve) => { release = resolve; }) : Promise.resolve();
     render(<SearchPage client={client} identityKey="u:a" />);
     search('해석 오류');
-    expect(screen.getByText('◆ 질문을 이해하고 있어요…')).toBeVisible();
+    expect(screen.getByText('질문을 이해하고 있어요…')).toBeVisible();
     search('빠른 검색'); await results();
     await act(async () => { release(); });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('F3 독립 검색 화면', () => {
   it('F0/F2 미연결 버튼과 2차 대화 기능은 동작하지 않는다', async () => {
     render(<SearchPage client={new SyntheticSearchClient()} identityKey="u:a" />);
     search(); await results();
-    expect(screen.getAllByRole('button', { name: '◆ 답장 초안' }).every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
+    expect(screen.getAllByRole('button', { name: '답장 초안' }).every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
     expect(screen.getByText(/이어서 질문하기/)).toHaveAttribute('aria-disabled', 'true');
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     expect(screen.getByRole('textbox', { name: '검색 질문' })).toHaveFocus();

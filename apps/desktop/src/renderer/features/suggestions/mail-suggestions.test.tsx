@@ -18,13 +18,13 @@ describe('S04 메일 읽기 제안 진입', () => {
     const value = client(list);
     render(<MailSuggestions mailId="synthetic-mail" body={syntheticBody} client={value}
       header={<h2>합성 제목</h2>} fallback={<p>기본 본문</p>} />);
-    expect(await screen.findByRole('heading', { name: '◆ AI 제안 3건' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'AI 제안 3건' })).toBeInTheDocument();
     expect(list).toHaveBeenCalledWith({ mail_id: 'synthetic-mail', limit: 50 });
     expect(screen.getByRole('heading', { name: '합성 제목' })).toBeInTheDocument();
     expect(screen.queryByText('기본 본문')).not.toBeInTheDocument();
     // 캘린더·답장 초안은 연결 전이라 승인 버튼이 꺼져 있다.
     expect(screen.getByRole('button', { name: '캘린더에 추가' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '◆ 회신 초안 만들기' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '회신 초안 만들기' })).toBeDisabled();
     expect(value.calls).toEqual([]);
   });
   it('제안이 없으면 기존 S03 모양을 유지한다', async () => {

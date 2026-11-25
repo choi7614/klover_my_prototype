@@ -58,7 +58,7 @@ describe('F1 받은편지함 분류·요약 표시 (합성 응답)', () => {
     expect(screen.queryByText('__proto__')).not.toBeInTheDocument();
   });
 
-  it('목록에 ◆ 요약 첫 문장과 분류·회신 필요·마감 태그를, 읽기 영역에 AI 요약 박스를 보여 준다', async () => {
+  it('목록에 요약 첫 문장과 분류·회신 필요·마감 태그를, 읽기 영역에 AI 요약 박스를 보여 준다', async () => {
     const analysis = client([done('mail-1'), done('mail-2', { category: 'newsletter', needs_reply: false, action_items: [] })]);
     render(<MailboxPage api={api()} session={session} onDisconnected={vi.fn()} analysis={analysis} />);
     const first = await row('mail-1');
@@ -74,7 +74,7 @@ describe('F1 받은편지함 분류·요약 표시 (합성 응답)', () => {
 
     fireEvent.click(first);
     const box = await screen.findByTestId('ai-summary-box');
-    expect(box).toHaveTextContent('◆ AI 요약');
+    expect(box).toHaveTextContent('AI 요약');
     expect(box).toHaveTextContent('금요일까지 회신이 필요합니다.');
     expect(box).toHaveTextContent('내가 할 일 집행 현황 자료 송부');
     expect(box).toHaveTextContent('마감 10/16(금)');
