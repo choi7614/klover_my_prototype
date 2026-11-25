@@ -15,6 +15,7 @@ const mail = Object.freeze<MailReadBridge>({
   inbox: query => ipcRenderer.invoke('klover:mail:inbox', query),
   detail: mailId => ipcRenderer.invoke('klover:mail:detail', mailId),
   sync: () => ipcRenderer.invoke('klover:mail:sync'),
+  categoryCounts: () => ipcRenderer.invoke('klover:mail:category-counts'),
 });
 
 // F2 프로필·답장 초안. 인수는 main에서 다시 검사한다. 발송 통로는 없다.

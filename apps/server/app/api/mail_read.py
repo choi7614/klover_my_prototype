@@ -13,7 +13,8 @@ from app.api.errors import error_response
 from app.api.state import StateName, get_state
 from app.db.repositories.mail_query import InvalidMailCursor, MailAccountUnavailable
 from app.schemas.common import ErrorResponse
-from app.schemas.mail_api import LocalSession, MailDetail, MailPage
+from app.schemas.mail_api import LocalSession, MailCategoryCounts, MailDetail, MailPage
+from app.schemas.report import MailCategory
 
 bearer = HTTPBearer(auto_error=False, scheme_name="LocalMailBearer")
 
@@ -84,15 +85,26 @@ def list_mails(
     box: Literal["inbox"] = "inbox",
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     cursor: Annotated[str | None, Query(max_length=1024)] = None,
+    category: MailCategory | None = None,
 ):
-    """받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다."""
-    if set(request.query_params) - {"box", "limit", "cursor"} or any(
+    """받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.
+
+    category를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다.
+    """
+    if set(request.query_params) - {"box", "limit", "cursor", "category"} or any(
         len(request.query_params.getlist(key)) != 1 for key in request.query_params
     ):
         raise HTTPException(422)
-    return _read(lambda: repository.list(limit=limit, cursor=cursor))
+    return _read(lambda: repository.list(limit=limit, cursor=cursor, category=category))
 
 
+@router.get("/mails/category-counts", response_model=MailCategoryCounts)
+def category_counts(repository: Repository):
+    """받은편지함의 분류별 메일 수. 왼쪽 목록의 숫자에 쓴다."""
+    return _read(repository.category_counts)
+
+
+# 위의 고정 경로가 아래 {mail_id}보다 먼저 선언돼야 category-counts가 메일 ID로 잡히지 않는다.
 @router.get("/mails/{mail_id}", response_model=MailDetail)
 def read_mail(
     repository: Repository,

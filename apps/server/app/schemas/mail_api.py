@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel
 
+from app.schemas.report import MailCategory
+
 
 class MailContact(BaseModel):
     addr: str
@@ -30,6 +32,13 @@ class MailDetail(MailSummary):
 class MailPage(BaseModel):
     items: list[MailSummary]
     next_cursor: str | None
+
+
+class MailCategoryCounts(BaseModel):
+    """받은편지함 분류별 메일 수. 분석이 안 끝난 메일은 total에만 들어간다."""
+
+    total: int
+    counts: dict[MailCategory, int]
 
 
 class LocalSession(BaseModel):

@@ -175,6 +175,8 @@ export interface paths {
         /**
          * List Mails
          * @description 받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.
+         *
+         *     category를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다.
          */
         get: operations["list_mails_mails_get"];
         put?: never;
@@ -194,6 +196,26 @@ export interface paths {
         };
         /** 메일 목록용 분석 결과 묶음 조회 */
         get: operations["analysis_batch_mails_analysis_batch_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mails/category-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Category Counts
+         * @description 받은편지함의 분류별 메일 수. 왼쪽 목록의 숫자에 쓴다.
+         */
+        get: operations["category_counts_mails_category_counts_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1217,6 +1239,18 @@ export interface components {
             summary?: string | null;
             /** User Label */
             user_label?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
+        };
+        /**
+         * MailCategoryCounts
+         * @description 받은편지함 분류별 메일 수. 분석이 안 끝난 메일은 total에만 들어간다.
+         */
+        MailCategoryCounts: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Total */
+            total: number;
         };
         /** MailDetail */
         MailDetail: {
@@ -2795,6 +2829,7 @@ export interface operations {
                 box?: "inbox";
                 limit?: number;
                 cursor?: string | null;
+                category?: ("work_request" | "meeting" | "approval" | "report_share" | "notice" | "external" | "newsletter") | null;
             };
             header?: never;
             path?: never;
@@ -2898,6 +2933,80 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description 서버 내부 오류 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    category_counts_mails_category_counts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailCategoryCounts"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

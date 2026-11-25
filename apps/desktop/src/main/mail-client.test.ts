@@ -63,6 +63,33 @@ describe('main 전용 메일 API', () => {
     expect(new URL(requests[1].path, baseURL).searchParams.get('cursor')).toBe('opaque?x=/&q=1');
     expect(await readFile(file, 'utf8')).toBe(token + '\n');
   });
+  it('분류 필터는 category 값으로 서버에 전달하고, 분류별 건수는 알려진 값만 넘긴다', async () => {
+    const paths: string[] = [];
+    const baseURL = await listen((request, response) => {
+      paths.push(request.url!);
+      response.setHeader('Content-Type', 'application/json');
+      response.end(JSON.stringify(request.url === '/mails/category-counts'
+        ? { total: 5, counts: { meeting: 2, notice: 1 }, token }
+        : { items: [summary], next_cursor: null }));
+    });
+    const client = new MailAPIClient({ baseURL, tokenFile: file });
+    expect((await client.inbox({ limit: 20, category: 'meeting' })).ok).toBe(true);
+    expect(new URL(paths[0], baseURL).searchParams.get('category')).toBe('meeting');
+    expect((await client.inbox({ limit: 20 })).ok).toBe(true);
+    expect(new URL(paths[1], baseURL).searchParams.has('category')).toBe(false);
+    const counts = await client.categoryCounts();
+    expect(counts).toEqual({ ok: true, data: { total: 5, counts: { meeting: 2, notice: 1 } } });
+    expect(JSON.stringify(counts)).not.toContain(token);
+  });
+  it('분류 값이 잘못됐거나 건수 응답이 이상하면 네트워크 호출 없이 또는 오류로 처리한다', async () => {
+    const fetcher = vi.fn();
+    expect((await new MailAPIClient({ tokenFile: file }, fetcher).inbox({ category: 'unknown' } as never)).ok).toBe(false);
+    expect(fetcher).not.toHaveBeenCalled();
+    for (const body of [{ total: -1, counts: {} }, { total: 1, counts: { other: 1 } }, { total: 1, counts: { meeting: 'x' } }, { counts: {} }, []]) {
+      const bad = vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
+      expect(await new MailAPIClient({ tokenFile: file }, bad).categoryCounts()).toMatchObject({ ok: false, error: { code: 'invalid_response' } });
+    }
+  });
   it('인수와 파일이 잘못되면 네트워크를 호출하지 않는다', async () => {
     const fetcher = vi.fn();
     const client = new MailAPIClient({ tokenFile: file }, fetcher);
