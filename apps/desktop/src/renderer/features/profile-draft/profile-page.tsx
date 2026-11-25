@@ -108,15 +108,15 @@ export function ProfilePage({ client, onExit, onNavigate, confirm = window.confi
   }
 
 
-  return <div className="flex h-full min-h-0 bg-background text-foreground" data-testid="profile-page">
-    <nav aria-label="설정" className="flex w-[220px] shrink-0 flex-col gap-1 border-r bg-muted p-3">
+  return <div className="flex h-full min-h-0 bg-canvas text-foreground" data-testid="profile-page">
+    <nav aria-label="설정" className="flex w-[220px] shrink-0 flex-col gap-1 bg-sidebar p-3 text-sidebar-foreground">
       <Button variant="secondary" className="mb-3 justify-start" disabled={busy} onClick={() => void leave()}>‹ 받은편지함</Button>
-      <span className="px-2 py-2 text-caption text-muted-foreground">설정</span>
-      <button type="button" disabled={!onNavigate || busy} onClick={() => void leave('home')} className="rounded-md px-3 py-2 text-left text-body hover:bg-accent focus-visible:outline-ring">설정 전체</button>
-      {SETTINGS.map(item => item.id === 'profile' ? <div key={item.id} aria-current="page" className="rounded-md bg-selected px-3 py-2 text-body font-semibold text-selected-foreground">{item.label}</div> : <button type="button" key={item.id} disabled={!onNavigate || busy} onClick={() => void leave(item.id)} className="rounded-md px-3 py-2 text-left text-body hover:bg-accent disabled:opacity-40 focus-visible:outline-ring">{item.label}</button>)}
-      <button type="button" disabled={!onNavigate || busy} onClick={() => void leave('weekly-report')} className="rounded-md px-3 py-2 text-left text-body hover:bg-accent focus-visible:outline-ring">주간 보고</button>
-      <button type="button" disabled className="px-3 py-2 text-left text-caption text-muted-foreground">메일 계정 연결 · 준비 중</button>
-      <button type="button" disabled className="px-3 py-2 text-left text-caption text-muted-foreground">알림·시작 프로그램 · 준비 중</button>
+      <span className="px-2 py-2 text-caption text-sidebar-muted">설정</span>
+      <button type="button" disabled={!onNavigate || busy} onClick={() => void leave('home')} className="rounded-leaf-sm px-3 py-2 text-left text-body hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring">설정 전체</button>
+      {SETTINGS.map(item => item.id === 'profile' ? <div key={item.id} aria-current="page" className="rounded-leaf-sm bg-sidebar-primary px-3 py-2 text-body font-semibold text-sidebar-primary-foreground">{item.label}</div> : <button type="button" key={item.id} disabled={!onNavigate || busy} onClick={() => void leave(item.id)} className="rounded-leaf-sm px-3 py-2 text-left text-body hover:bg-sidebar-accent hover:text-sidebar-accent-foreground disabled:opacity-40 focus-visible:outline-sidebar-ring">{item.label}</button>)}
+      <button type="button" disabled={!onNavigate || busy} onClick={() => void leave('weekly-report')} className="rounded-leaf-sm px-3 py-2 text-left text-body hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring">주간 보고</button>
+      <button type="button" disabled className="px-3 py-2 text-left text-caption text-sidebar-muted">메일 계정 연결 · 준비 중</button>
+      <button type="button" disabled className="px-3 py-2 text-left text-caption text-sidebar-muted">알림·시작 프로그램 · 준비 중</button>
     </nav>
     {!draft || !saved ? <div className="flex-1 p-6">{error ? <><p role="alert">{error}</p><Button variant="secondary" onClick={() => setReload(n => n + 1)}>다시 불러오기</Button></> : <Skeleton label="프로필을 불러오고 있어요" />}</div>
       : <form onSubmit={event => void save(event)} className="flex min-h-0 min-w-0 flex-1 flex-col">

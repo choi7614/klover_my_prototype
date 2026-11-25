@@ -1,19 +1,19 @@
 import { Calendar, Mail, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
-import logo from '@brand/klover-logo.svg';
+import logo from '@brand/klover-logo-white.svg';
 import mark from '@brand/klover-mark.svg';
 import { Button } from '@/components/ui/button';
 import { WizardSteps } from '@/components/wizard-steps';
 
 export function OnboardingStartPage({ connectionNotice }: { connectionNotice?: ReactNode }) {
   return (
-    <main className="flex min-h-screen bg-background">
-      <aside className="flex w-[280px] shrink-0 flex-col border-r bg-muted px-6 py-7">
+    <main className="flex min-h-screen bg-canvas">
+      <aside className="flex w-[280px] shrink-0 flex-col bg-sidebar px-6 py-7 text-sidebar-foreground">
         <img src={logo} alt="Klover" className="mb-6 h-7 self-start" />
         <WizardSteps currentStep={1} />
       </aside>
 
-      <section aria-labelledby="onboarding-title" className="flex min-w-0 flex-1 flex-col px-10 py-8">
+      <section aria-labelledby="onboarding-title" className="m-2.5 ml-0 flex min-w-0 flex-1 flex-col rounded-leaf-lg bg-background px-10 py-8">
         <header>
           <p className="text-caption font-semibold text-primary">1 / 5단계</p>
           <h1 id="onboarding-title" className="mt-1 text-heading font-bold">Gmail 계정 연결</h1>

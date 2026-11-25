@@ -25,15 +25,15 @@ export function WizardSteps({ currentStep }: { currentStep: OnboardingStep }) {
               <span
                 aria-hidden="true"
                 className={cn(
-                  'flex size-[26px] shrink-0 items-center justify-center rounded-full border-[1.5px] bg-background text-caption font-bold text-muted-foreground',
-                  complete && 'border-primary bg-primary text-primary-foreground',
-                  current && 'border-primary text-primary ring-4 ring-selected',
-                  !current && !complete && 'border-input',
+                  'flex size-[26px] shrink-0 items-center justify-center rounded-full border-[1.5px] text-caption font-bold text-sidebar-muted',
+                  complete && 'border-sidebar-primary bg-sidebar-primary text-sidebar-primary-foreground',
+                  current && 'border-sidebar-primary text-sidebar-primary ring-4 ring-sidebar-accent',
+                  !current && !complete && 'border-sidebar-muted',
                 )}
               >
                 {complete ? <Check className="size-4" /> : step}
               </span>
-              <span className={cn('pt-0.5 text-body font-medium text-muted-foreground', (complete || current) && 'font-semibold text-foreground')}>
+              <span className={cn('pt-0.5 text-body font-medium text-sidebar-muted', (complete || current) && 'font-semibold text-sidebar-primary')}>
                 <span className="sr-only">{step}단계, {complete ? '완료, ' : current ? '현재 단계, ' : '대기, '}</span>
                 {label}
               </span>

@@ -38,10 +38,10 @@ export function PrivacyPage({ client, onBack }: { client: F2Client; onBack(): vo
     finally { setBusy(false); }
   }
   const p = data?.saved.profile;
-  return <div className="flex h-full min-h-0 bg-background text-foreground">
-    <nav aria-label="설정" className="w-[220px] shrink-0 border-r bg-muted p-3">
+  return <div className="flex h-full min-h-0 bg-canvas text-foreground">
+    <nav aria-label="설정" className="w-[220px] shrink-0 bg-sidebar p-3 text-sidebar-foreground">
       <Button variant="secondary" disabled={busy} onClick={onBack}>‹ 내 프로필·문체</Button>
-      <p aria-current="page" className="mt-3 rounded-md bg-selected p-3 text-body text-selected-foreground">개인정보·학습 데이터</p>
+      <p aria-current="page" className="mt-3 rounded-leaf-sm bg-sidebar-primary p-3 text-body text-sidebar-primary-foreground">개인정보·학습 데이터</p>
     </nav>
     <main className="min-w-0 flex-1 space-y-3 overflow-y-auto p-6">
       <h1 className="text-title font-semibold">개인정보·학습 데이터</h1>
@@ -70,7 +70,7 @@ export function PrivacyPage({ client, onBack }: { client: F2Client; onBack(): vo
         </Panel>
         <p className="text-caption text-muted-foreground">키 관리와 외부 전송 동의는 기존 AI 설정에서 관리해 주세요.</p>
       </>}
-      {confirm && <section role="alertdialog" aria-labelledby="privacy-confirm" className="rounded-md border bg-card p-4">
+      {confirm && <section role="alertdialog" aria-labelledby="privacy-confirm" className="rounded-leaf bg-card p-4 shadow-card">
         <h2 id="privacy-confirm" className="text-title">{confirm === 'delete' ? '학습 기록과 제외 표현을 삭제할까요?' : '학습 동의를 변경할까요?'}</h2>
         <p>{confirm === 'delete' ? '현재 사용자의 저장된 문체 학습 결과(분석 건수·표현·문장 특징)와 모든 제외 표현을 삭제하고 학습 동의를 끕니다. 되돌릴 수 없어요. 프로필의 기본 정보·문체·서명·보고 양식, 기존 초안, 메일, OAuth 토큰, Claude 키는 유지합니다.' : confirm === 'enable' ? '향후 Klover에서 보낸 메일의 문체 학습에 동의합니다. 현재 수집·학습은 준비 중이며 켜도 새 학습이 시작되지 않아요.' : '기존 학습 결과를 초안에 사용하지 않아요. 저장된 학습 기록과 제외 표현은 보관합니다.'}</p>
         <Button variant="secondary" onClick={() => setConfirm(undefined)}>취소</Button>
