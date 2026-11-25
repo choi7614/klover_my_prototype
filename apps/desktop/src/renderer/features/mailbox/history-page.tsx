@@ -33,7 +33,7 @@ export function HistoryPage() {
     <label className="block">종료일 <input aria-label="가져오기 종료일" type="date" value={end} onChange={e => setEnd(e.target.value)} className="rounded border bg-background p-2" /></label>
     <Button disabled={busy || !start || !end || jobs.some(j => j.status === 'running')} onClick={() => void run()}>선택 기간 가져오기</Button>
     {error && <p role="alert">{error}</p>}
-    {jobs.map(j => <section key={j.job_id} className="space-y-2 rounded border p-3"><p>{j.start} ~ {j.end} · {{ running:'가져오는 중', paused:'중단됨', failed:'실패 (부분 저장 보존)', completed:'완료' }[j.status]}</p><p>확인 {j.processed}건 · 새 저장 {j.saved}건 · 중복/제외 {j.skipped}건</p>{j.error && <p>{historyErrors[j.error] ?? historyErrors.import_failed}</p>}<Button variant="secondary" disabled={busy || j.status === 'completed'} onClick={() => void run(j.job_id, j.status === 'running' ? 'pause' : 'resume')}>{j.status === 'running' ? '중단' : '재개·재시도'}</Button></section>)}
+    {jobs.map(j => <section key={j.job_id} className="space-y-2 rounded-leaf bg-background p-3 shadow-card"><p>{j.start} ~ {j.end} · {{ running:'가져오는 중', paused:'중단됨', failed:'실패 (부분 저장 보존)', completed:'완료' }[j.status]}</p><p>확인 {j.processed}건 · 새 저장 {j.saved}건 · 중복/제외 {j.skipped}건</p>{j.error && <p>{historyErrors[j.error] ?? historyErrors.import_failed}</p>}<Button variant="secondary" disabled={busy || j.status === 'completed'} onClick={() => void run(j.job_id, j.status === 'running' ? 'pause' : 'resume')}>{j.status === 'running' ? '중단' : '재개·재시도'}</Button></section>)}
     <p className="text-caption text-muted-foreground">중단은 현재 요청이 끝나는 대로 반영됩니다. 서버를 다시 켜면 진행 중 작업은 중단 상태로 복구되며 수동 재개할 수 있습니다.</p>
   </main>;
 }

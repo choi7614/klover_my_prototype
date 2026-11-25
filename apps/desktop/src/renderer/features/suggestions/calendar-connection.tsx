@@ -25,7 +25,7 @@ export function CalendarConnectionPanel({ client, onChange }: { client: Calendar
     calendar_permission_expired: '캘린더 권한이 만료됐어요. 추가 동의를 다시 확인해 주세요.',
     calendar_connection_failed: '캘린더 연결을 확인하지 못했어요.',
   };
-  return <section aria-label="캘린더 연결" className="rounded-lg border border-border bg-background p-4 text-body">
+  return <section aria-label="캘린더 연결" className="rounded-leaf bg-background p-4 text-body shadow-card">
     <h2 className="font-bold">Google Calendar 연결</h2>
     <p>{state?.email || '계정 확인 중…'}</p>
     <p role="status">{state ? messages[state.status] || '연결 상태를 확인해 주세요.' : '조회 중…'}</p>

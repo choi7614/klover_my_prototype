@@ -133,17 +133,17 @@ export function ReplyDraftPage({ client, mailId, draftId, autoGenerate = true, o
   const referenceIds = new Set(evidence.filter(e => e.source.startsWith('mail:')).map(e => e.source.slice(5)));
   const references = draft?.references.filter(reference => referenceIds.has(reference.mail_id)) ?? [];
 
-  return <div className="flex h-full min-h-0 bg-background text-foreground" data-testid="reply-draft-page">
-    <aside aria-label="원본 메일" className="flex w-[420px] shrink-0 flex-col gap-4 overflow-y-auto border-r bg-muted p-6">
+  return <div className="flex h-full min-h-0 bg-canvas text-foreground" data-testid="reply-draft-page">
+    <aside aria-label="원본 메일" className="flex w-[420px] shrink-0 flex-col gap-4 overflow-y-auto bg-canvas p-6">
       <Button variant="secondary" className="self-start" disabled={busy} onClick={() => void leave()}>‹ 받은편지함</Button>
       <h2 className="text-caption text-muted-foreground">원본 메일</h2>
       {original ? <>
         <div><h1 className="text-title font-semibold">{original.subject}</h1><p className="mt-1 text-caption text-muted-foreground">{original.from_name || original.from_addr} · {new Date(original.received_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}</p></div>
         <p className="whitespace-pre-wrap text-body leading-7">{original.body_text}</p>
-        <div className="rounded-md border border-ai-border bg-ai-subtle p-3 text-body"><h3 className="mb-2 font-semibold text-ai-text">요청사항</h3><p className="text-caption text-muted-foreground">요청사항 분석 연결이 준비되지 않았어요. 원본 내용을 확인해 주세요.</p></div>
+        <div className="rounded-leaf bg-ai-subtle p-3 text-body"><h3 className="mb-2 font-semibold text-ai-text">요청사항</h3><p className="text-caption text-muted-foreground">요청사항 분석 연결이 준비되지 않았어요. 원본 내용을 확인해 주세요.</p></div>
       </> : <Skeleton label="원본 메일을 불러오고 있어요" />}
     </aside>
-    <section aria-label="답장 초안" className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <section aria-label="답장 초안" className="m-2.5 ml-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-leaf-lg bg-background">
       <div className="flex min-h-11 items-center gap-4 border-b px-6 text-body"><span className="w-16 text-caption text-muted-foreground">받는 사람</span>{original?.from_name || original?.from_addr || '확인 중'}</div>
       <div className="flex min-h-11 items-center gap-4 border-b px-6 text-body"><span className="w-16 text-caption text-muted-foreground">제목</span>{original ? `RE: ${original.subject}` : '확인 중'}</div>
       <div className="flex min-h-16 flex-wrap items-center gap-2 border-b px-6 py-3" aria-label="답장 방향">

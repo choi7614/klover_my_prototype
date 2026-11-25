@@ -86,8 +86,8 @@ export function TodoListPage({ client, mailboxPath = '/mail/inbox' }: { client: 
     finally { setAdding(false); }
   }
 
-  return <main className="flex min-h-screen flex-col bg-background text-foreground">
-    <header className="flex h-14 items-center gap-3 border-b px-5">
+  return <main className="flex min-h-screen flex-col bg-canvas text-foreground">
+    <header className="flex h-14 items-center gap-3 border-b bg-background px-5">
       <a href={`#${mailboxPath}`} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-body text-muted-foreground hover:bg-accent focus-visible:outline-ring">
         <ArrowLeft className="size-4" aria-hidden="true" />받은편지함</a>
       <h1 className="flex items-center gap-2 text-title font-bold"><SquareCheck className="size-5 text-cat-work-fg" aria-hidden="true" />할 일</h1>
@@ -108,7 +108,7 @@ export function TodoListPage({ client, mailboxPath = '/mail/inbox' }: { client: 
       {error && <p role="alert" className="mb-3 text-caption text-danger">{error}</p>}
       {loading && !items.length && <div role="status" className="space-y-2"><span className="sr-only">할 일 불러오는 중</span>{[1, 2, 3].map(key => <div key={key} className="h-12 animate-pulse rounded-md bg-muted" />)}</div>}
       {!loading && !error && !items.length && <p className="py-10 text-center text-body text-muted-foreground">{status === 'open' ? '진행 중인 할 일이 없어요.' : '완료한 할 일이 없어요.'}</p>}
-      <ul className="divide-y rounded-md border" hidden={!items.length}>
+      <ul className="divide-y overflow-hidden rounded-leaf bg-background shadow-card" hidden={!items.length}>
         {items.map(todo => <li key={todo.todo_id} className="flex items-center gap-3 px-4 py-3" data-testid="todo-item">
           <input type="checkbox" className="size-4 accent-primary" checked={todo.status === 'completed'} disabled={busy !== null}
             aria-label={`${todo.title} ${todo.status === 'open' ? '완료로 표시' : '진행 중으로 되돌리기'}`} onChange={() => void toggle(todo)} />

@@ -119,7 +119,7 @@ export function SuggestionCard({ suggestion, client, onChange, onActive, calenda
     onFocus={() => onActive(row.suggestion_id)} onBlur={event => {
       if (!event.currentTarget.contains(event.relatedTarget)) onActive(undefined);
     }}
-    className={`rounded-md border bg-card p-4 ${emphasized ? 'border-ai-border ring-[3px] ring-ai-subtle' : 'border-border'}`}>
+    className={`rounded-leaf border bg-card p-4 ${emphasized ? 'border-ai-border ring-[3px] ring-ai-subtle' : 'border-border'}`}>
     <h3 id={titleId} className={`mb-3 flex items-center gap-2 text-body font-bold ${row.type === 'calendar' ? 'text-cat-meeting-fg' : row.type === 'todo' ? 'text-cat-work-fg' : 'text-danger'}`}>
       <Glyph size={16} strokeWidth={1.8} aria-hidden />{label[row.type]}
     </h3>
