@@ -19,3 +19,6 @@ __pycache__/
 client_secret*.json
 *.log
 apps/desktop/*.config.*.mjs
+
+# 실행 도구의 OS 잠금(메일·키 저장 없음)
+.local-run/

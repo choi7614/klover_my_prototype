@@ -1,5 +1,17 @@
 # F0 첫 실행·메일함 — 현재 상태
 
+2026-11-25 · 코드 기준 develop `9946b87`(#48).
+
+- 구현·연결: Gmail 목록·본문·수동 새로고침·명시적 과거 INBOX 가져오기, 공통 설정과 F1~F5 화면 연결.
+- 남은 범위: 앱 안 최초 Google 연결 완료·메일 발송/정리·주기 수신·OS 알림/시작은 미구현.
+- 기존 사용자의 macOS 사용 확인 보고(API 키 제외)와 신규 사용자/실제 모델 전체 검증은 구분한다.
+- 현재 실행·업데이트는 [setup](setup.md), 실행 도구 작업/검사는 [이번 검증](colleague-setup-verification.md)을 따른다.
+
+<details>
+<summary>과거 작업·제출 기록 — 당시의 미적용/승인 대기는 현재 상태가 아님</summary>
+
+# F0 첫 실행·메일함 — 현재 상태
+
 ## 최신 작업 — 2026-11-25 분류·설정 UI
 
 - `integrate/category-settings-ui` · 작업 도구 없음(검사 완료·제출) · 기준 `0fa3dd9`(#45).
@@ -140,5 +152,7 @@
 
 - 멈춘 지점: 공통 패치 01~05 적용·검사 완료.
 - 주의할 점: F2·F3 통로(`main/f2-*.ts`, `main/search-ipc.ts`)는 `mail-ipc.ts`의 `trustedMailSender`와 `mail-client.ts`의 `readLocalAPI`(토큰 읽기)를 함께 쓴다. 바꿀 때 세 통로를 같이 검사한다.
+
+</details>
 
 </details>

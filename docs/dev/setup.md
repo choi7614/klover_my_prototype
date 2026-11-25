@@ -1,6 +1,10 @@
 # Klover 설치·실행 안내
 
-> 2026-11-24 · 기준 `develop 5e2b7a7`(PR #38) + 통합 PR #39 작업 `integrate/local-ai-mail-history`. 새 설치·평소 실행·업데이트의 단일 기준 문서.
+> 2026-11-25 · 기준 develop `9946b87`(#48) + 실행 도구 작업. 최초 설치·평소 실행·업데이트의 단일 기준 안내.
+
+처음이면 1~6절, 설치가 끝났으면 8절, 기존 사용자 업데이트는 9절을 따릅니다.
+macOS는 터미널, Windows는 PowerShell에서 진행합니다. 2~6절의 공통 명령은 두 OS에서 같고,
+환경 변수와 백업처럼 문법이 다른 부분은 OS를 구분했습니다. 최초 준비 이후에는 더블클릭으로 실행합니다.
 
 현재는 소스에서 실행하는 개발용 데모다. 앱(Electron)·서버(FastAPI)·PostgreSQL과 로컬 Ollama를
 같은 컴퓨터에서 사용한다. 클라우드 이전은 보류, 사내망 적용은 장기 목표다.
@@ -11,11 +15,12 @@
 | OS | 지원 목표·확인 수준 |
 | --- | --- |
 | Windows 10 이상 | 제품 목표. 이번 Windows 신규 설치·Google 로그인·Electron·트레이 검증은 미실행 |
-| macOS | 과거 사용자 DB·Google 로그인·새 메일 CLI·메일 API·일부 초안 성공 보고. 이번 신규 설치 전체·실제 AI 종합 검증은 미실행 |
+| macOS | 기존 사용자 사용 확인 보고(API 키 연결 제외). 동료의 신규 설치·실제 모델 종합 검증과 Finder 실행은 미검증 |
 | Linux | GitHub Ubuntu CI·이번 분리 환경 자동 검사 대상. 실제 Google·Ollama·Claude·모든 데스크톱 동작까지 확인한 것은 아님 |
 
-아래 셸 명령은 **macOS/Linux bash·zsh** 기준이다. Windows PowerShell에 그대로 붙여 넣지 않는다.
-Windows 네이티브 실행 절차·토큰 파일 권한 검증은 통합 후속 작업이다. WSL 서버 성공도 Windows 앱 성공과 구분한다.
+명령은 **저장소 루트**에서 실행한다. Windows에서는 `cd` 대신 `Set-Location`도 사용할 수 있다.
+`export`·`$PWD`·백업 명령은 macOS 전용 예시이며 Windows 예시를 따로 제공한다.
+Windows 실행 경로는 준비했지만 실제 OS/파일 ACL 확인은 남아 있다. WSL 성공과 Windows 앱 성공은 다르다.
 
 | 도구 | 버전·준비 | 공식 설치 안내 |
 | --- | --- | --- |
@@ -69,7 +74,7 @@ uv run --locked --directory apps/server python -m app.cli.check_database
 잘못된 예시가 자동으로 고쳐지지도 않는다. 잘못 복사했고 DB를 아직 만들지 않았다면 로컬 편집기로
 고유한 무작위 비밀번호를 설정한다. 기존 DB는 비밀번호만 바꿔도 갱신되지 않으므로 삭제·재생성하지 않는다.
 
-정상 결과: `0008_history (head)`, `{"database":"ok","schema":"current"}`.
+정상 결과: `0009_f5_calendar (head)`, `{"database":"ok","schema":"current"}`.
 DB 이미지 `pgvector/pgvector:pg16`, DB 이름·사용자 `klover`, 기본 호스트 포트 `5432`다.
 데이터는 기본 Compose 프로젝트 기준 `klover_postgres_data` 볼륨에 남는다.
 포트가 겹치면 **새 DB 실행 전** `.env`의 `POSTGRES_PORT`를 빈 포트로 바꾼다.
@@ -85,7 +90,7 @@ Redis·arq·별도 작업자는 현재 실행하지 않는다. 서버는 테이�
 2. Google Auth Platform의 브랜딩·대상 사용자 설정을 완료한다. 외부 앱의 테스트 상태에서는
    연결할 Gmail을 **테스트 사용자**로 등록한다. 프로젝트 이름은 본인이 정한다.
 3. 데이터 액세스에서 `https://www.googleapis.com/auth/gmail.readonly` 범위를 등록한다.
-   Calendar 쓰기·Gmail 발송 권한은 현재 필요하지 않다.
+   최초 메일 연결에는 Calendar 권한이 필요하지 않다. Calendar는 앱 설정에서 별도로 동의한다.
 4. OAuth 클라이언트를 **웹 애플리케이션**으로 만들고 리디렉션 URI를 정확히
    `http://localhost:8000/auth/google/callback`으로 등록한다. 데스크톱 유형 JSON은 사용하지 않는다.
 5. JSON을 내려받아 본인 컴퓨터의 비공개 위치에 보관한다. Git·채팅·공유 문서에 올리지 않는다.
@@ -162,15 +167,26 @@ uv run --locked --directory apps/server python -m app.cli.run_mail_api
 
 서버 터미널을 켜둔다. 일반 `uvicorn app.main:app`은 HTTP·스키마 점검용이며 실제 메일·AI 저장소를
 조립하지 않으므로 앱용 명령으로 대신 쓰지 않는다. 전용 명령은 접근 로그를 끈다.
-포트를 바꾸면 `python -m app.cli.run_mail_api --port 8010`을 사용하고 검사에도 `--port 8010`,
-앱 주소에도 `:8010`을 맞춘다. Google 연결 서버의 고정 포트와 구분한다.
+더블클릭 실행과 Google/Calendar 동의는 기본 8000 포트를 사용한다. 먼저 기존 서버를 종료한다.
+수동 메일 서버의 포트를 변경하는 고급 사용에서는 검사·앱 주소도 동일하게 맞춰야 한다.
 
-**새 터미널**에서 저장소 루트로 이동해 실행한다.
+**수동 실행을 사용할 때만** 새 터미널에서 저장소 루트로 이동해 실행한다. 평소에는 아래 8절의 더블클릭 실행을 권장한다.
+
+macOS/Linux:
 
 ```bash
 uv run --locked --directory apps/server python -m app.cli.check_mail_api
 export KLOVER_API_TOKEN_FILE="$PWD/.local-secrets/mail-api-token"
 export KLOVER_API_BASE_URL="http://127.0.0.1:8000"
+corepack pnpm --filter desktop dev
+```
+
+Windows PowerShell에서는 위 `export` 대신 다음을 사용한다.
+
+```powershell
+uv run --locked --directory apps/server python -m app.cli.check_mail_api
+$env:KLOVER_API_TOKEN_FILE = Join-Path (Get-Location) '.local-secrets\mail-api-token'
+$env:KLOVER_API_BASE_URL = 'http://127.0.0.1:8000'
 corepack pnpm --filter desktop dev
 ```
 
@@ -196,8 +212,14 @@ API 확인: `status: ok`, `session: ok`, `listed`(개수), `detail: ok/empty`.
    1주를 기다릴 필요는 없지만 메일이 없거나 분석이 미완료면 자료가 없다. 대상·제외 건수·원문 근거·
    저장·재조회·편집·복사를 확인한다. Word 출력·자동 발송은 미구현이다.
 
+7. Calendar가 필요하면 Google 프로젝트에서 Calendar API를 사용 설정하고 **설정 → 캘린더 연결**에서
+   기존 Gmail과 같은 계정으로 추가 동의한다. 연결 상태를 다시 확인하고 별도 테스트 캘린더에서 승인 등록한다.
+   연결만으로 일정이 등록되지 않는다. [상세 확인](settings-calendar-integration.md).
+8. **설정 → 개인정보·학습 데이터**에서 저장된 프로필·동의·기록을 확인한다. 실제 수집·학습은 준비 중이다.
+   삭제 버튼은 실제 기록을 지우므로 정상 사용자 데이터로 시험하지 않는다.
+
 위는 사용자 확인 체크리스트이며 이번에 실제 Google·모델·메일로 성공 검증했다는 뜻이 아니다.
-기본 수신은 `sync_started_at` 이후 INBOX다. **과거 Gmail이 안 보이는 것은 현재 제한**이다.
+기본 수신은 사용 시작 이후의 현재 INBOX다. 과거 메일은 설정에서 기간을 골라 명시적으로 가져온다.
 [기간 선택 과거 메일 가져오기](../product/features/planned-mail-history-import.md)는 **구현됐으며 실제 Gmail 검증은 남아 있다**.
 시작 시각·DB를 수동 수정하거나 재연결해 우회하지 않는다.
 
@@ -221,22 +243,25 @@ Claude 생성 실패 시 로컬로 1회 전환하고 실제 처리 AI를 표시�
 
 ## 8. 평소 실행·종료
 
-최초 설치 후에는 키 생성·Google 설정·재연결을 매번 반복하지 않는다. Docker·Ollama를 켜고:
+최초 설치 후에는 키 생성·Google 연결·의존성 설치를 반복하지 않는다.
 
-```bash
-docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
-uv run --locked --directory apps/server python -m app.cli.run_mail_api
-```
+1. Docker Desktop을 켜고 준비 완료를 기다린다.
+2. macOS는 `Klover-Start.command`, Windows는 `Klover-Start.cmd`를 더블클릭한다.
+3. 진행 창을 열어둔다. 도구가 DB·Ollama 모델·계정 인증을 확인하고 서버·앱을 시작한다.
+4. 앱을 종료하면 이번 실행 도구가 띄운 앱·서버·Ollama를 정리한다. 기존 DB/Docker와 기존 Ollama는 그대로 둔다.
+5. 중단할 때는 진행 창의 Control+C를 사용한다. 강제 창 닫기는 정리를 보장하지 않는다.
 
-다른 터미널에서 6절의 API 확인·두 export·앱 실행을 한다. 주기 자동 수신은 없으므로 앱 새로고침을 사용한다.
-현재 창 닫기는 앱 종료이며 트레이 숨김이 아니다. 앱·서버 터미널 각각 `Ctrl+C`, 직접 띄운 Ollama도
-필요하면 `Ctrl+C`로 종료한다. DB 중지:
+실행 파일은 저장소 안에 두고 바탕화면에는 바로가기를 만든다. 실제 두 OS의 더블클릭 실행은 검증 대기다.
+실행 권한·준비 확인·오류 해결은 [실행 도구 안내](desktop-launcher.md)를 따른다.
+수동 실행이 필요하면 6절의 서버·앱 명령을 사용한다. 주기 수신은 없으므로 앱에서 새로고침한다.
+
+DB까지 멈추려면(데이터는 보존):
 
 ```bash
 docker compose --env-file .env -f infra/docker-compose.yml stop db
 ```
 
-중지는 데이터를 지우지 않는다. `down -v`·볼륨 삭제·DB 초기화·downgrade는 실행하지 않는다.
+`down -v`·볼륨 삭제·DB 초기화·downgrade는 실행하지 않는다.
 
 ## 9. 기존 사용자 — 업데이트
 
@@ -263,6 +288,8 @@ uv run --locked --directory apps/server python -m app.cli.check_database
 
 ## 10. 데이터와 암호화 키 백업
 
+아래 첫 예시는 macOS/Linux입니다. Windows PowerShell 예시는 뒤에 있습니다.
+
 앱·서버의 쓰기를 멈추고 DB를 켠 상태에서, 본인이 정한 **저장소 밖의 새 비공개 백업 폴더**에 저장한다.
 `BACKUP_DIR`은 먼저 실제 절대 경로로 설정한다. 아래 명령은 예시이며 이번 작업에서 운영 백업·복구는 실행하지 않는다.
 
@@ -274,6 +301,24 @@ docker compose --env-file .env -f infra/docker-compose.yml exec -T db pg_dump -U
 cp -p .env "$BACKUP_DIR/"
 cp -Rp .local-secrets "$BACKUP_DIR/"
 ```
+
+Windows PowerShell(앱·서버를 종료하고 DB가 켜진 상태):
+
+```powershell
+$backupDir = Join-Path $HOME ('Klover-backups\backup-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+New-Item -ItemType Directory -Path $backupDir -ErrorAction Stop | Out-Null
+docker compose --env-file .env -f infra/docker-compose.yml exec -T db pg_dump -U klover -d klover -Fc -f /tmp/klover-backup.dump
+if ($LASTEXITCODE -ne 0) { throw 'DB 백업 실패' }
+docker compose --env-file .env -f infra/docker-compose.yml cp db:/tmp/klover-backup.dump "$backupDir/klover.dump"
+if ($LASTEXITCODE -ne 0) { throw '백업 파일 복사 실패' }
+docker compose --env-file .env -f infra/docker-compose.yml exec -T db pg_restore --list /tmp/klover-backup.dump | Out-Null
+if ($LASTEXITCODE -ne 0) { throw '백업 형식 확인 실패' }
+Copy-Item .env $backupDir -ErrorAction Stop
+Copy-Item .local-secrets $backupDir -Recurse -ErrorAction Stop
+```
+
+Windows PowerShell 5의 바이너리 출력 변환을 피하려고 DB 컨테이너에서 덤프한 뒤 파일로 복사합니다.
+백업 폴더는 본인 계정만 접근하는 비공개 위치에 보관하세요.
 
 매번 새 백업 폴더를 쓰고 실패한 dump를 성공 백업으로 취급하지 않는다. 저장장치를 암호화하고 공유·Git 업로드하지 않는다.
 DB 덤프에는 **실제 메일 본문**이 포함된다. `.local-secrets`에는 Google JSON·계정 설정·`token.key`·API 토큰,
@@ -302,9 +347,8 @@ AI 설정의 암호문과 키도 함께 보존한다. 코드 버전·DB 연결 �
 | Claude 실패 | 앱 키 등록·모델 ID·동의·API 잔액. 생성 실패 시 로컬 1회 전환. 연결 검사는 대체하지 않음 |
 
 현재 미구현: 앱 안 Google 연결·5단계 완료, 작성·발송·보관·삭제·스팸·읽음 동기화,
-주기 수신, WebSocket·OS 알림·트레이·자동 실행, 실제 Calendar 쓰기,
-F2 관련 메일 자동 검색·문체 학습 수집, Word 출력, 배포 설치 파일·자동 업데이트.
-확정 개발 예정 3건과 장기 목표는 [현황판](progress.md)·[통합 후속 작업](integration-followups.md)을 본다.
+주기 수신, WebSocket·OS 알림·트레이·자동 실행, F2 관련 메일 자동 검색·문체 학습 수집, Word 출력, 배포 설치 파일·자동 업데이트.
+후속 개발·장기 목표는 [현황판](progress.md)·[통합 후속 작업](integration-followups.md)을 본다.
 오류 보고는 단계·OS·코드 버전·일반 오류 코드·건수만 공유한다.
 키·토큰·.env·Google 응답·실제 메일·인증 URL·전체 콘솔 로그는 붙여 넣지 않는다.
 
@@ -328,12 +372,12 @@ corepack pnpm --filter desktop test:e2e
 
 브라우저 검사는 합성 IPC·화면을 검사하며 실제 Gmail·AI 성공을 뜻하지 않는다.
 `test:electron`·`test:mail-read`는 별도 그래픽 환경이 필요한 Electron 실행 검사다.
-Playwright Electron 검사는 OS sandbox를 끄므로 OS sandbox 안전성 검증이 아니다. 현재 두 smoke 스크립트에는 옛 IPC/버튼 기대값이 남아 있어 통합 수정·재검증이 필요하다. 이번 환경은 Electron SUID sandbox 오류로 정상 창이 미검증이며 sandbox를 끄는 사용자 우회는 권장하지 않는다. [근거와 전달 사항](integration-followups.md)을 본다.
-`pnpm gen:api-types`는 생성 파일을 쓰는 개발 명령으로 설치·이번 문서 작업에는 필요하지 않다.
+Playwright Electron 검사는 OS sandbox를 끄므로 OS sandbox 안전성 검증이 아니다. 두 smoke 스크립트의 IPC/새로고침 기대값은 #39에서 보완했으며 네이티브 실행 재검증은 남아 있다. 이번 환경은 Electron SUID sandbox 오류로 정상 창이 미검증이며 sandbox를 끄는 사용자 우회는 권장하지 않는다. [근거와 전달 사항](integration-followups.md)을 본다.
+`pnpm gen:api-types`는 생성 파일을 쓰는 개발 명령으로 일반 설치·실행에는 필요하지 않다.
 [과거 기록](archive/2026-11-24/README.md)의 개인 경로·과거 명령은 현재 실행 지시로 쓰지 않는다.
 
-## 분류 변경·설정 메뉴 보완 (작업 브랜치)
+## 앱에서 기능 찾기
 
-해당 변경이 포함된 버전에서는 받은편지함의 설정이 설정 첫 화면(`/settings`)으로 이어진다.
+받은편지함의 설정은 설정 첫 화면(`/settings`)으로 이어진다.
 분석 완료 메일은 본문의 메일 분류 선택으로 변경할 수 있다. 새 DB 이력은 없다.
-현재 승인/검증 상태와 확인 절차는 [분류·설정 UI](category-settings-ui.md)를 따른다.
+세부 검증 기록과 확인 절차는 [분류·설정 UI](category-settings-ui.md)를 따른다.

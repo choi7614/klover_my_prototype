@@ -1,0 +1,26 @@
+name: Launcher checks
+on:
+  pull_request:
+    paths:
+      - 'scripts/launcher/**'
+      - 'Klover-Start.*'
+      - 'apps/server/tests/test_desktop_launcher.py'
+      - '.github/workflows/launcher.yml'
+permissions:
+  contents: read
+jobs:
+  launcher:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+          enable-cache: true
+      - run: uv sync --locked --directory apps/server
+      - run: uv run --locked --directory apps/server pytest tests/test_desktop_launcher.py -q
+      - run: uv run --locked --directory apps/server ruff check --config pyproject.toml ../../scripts/launcher tests/test_desktop_launcher.py
