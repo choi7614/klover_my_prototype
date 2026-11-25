@@ -41,8 +41,11 @@ class ConnectedCalendar:
             raise CalendarError("calendar_selection_required", blocked=True)
         return GoogleCalendarAdapter(CalendarGrant(owner, frozenset(tokens["scope"].split())), http)
 
-    def execute(self, owner, suggestion_id, payload):
-        return self._adapter(owner, payload).execute(owner, suggestion_id, payload)
+    def execute(self, owner, suggestion_id, payload, event_key=None):
+        return self._adapter(owner, payload).execute(owner, suggestion_id, payload, event_key)
+
+    def registered(self, owner, payload, external_id):
+        return self._adapter(owner, payload).registered(owner, payload, external_id)
 
     def conflicts(self, owner, payload):
         try:

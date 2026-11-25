@@ -303,6 +303,22 @@ class F5Repository:
             session.flush()
             return SuggestionView.model_validate(row)
 
+    def finish_reregister(self, owner, suggestion_id, version, receipt):
+        """다시 등록한 일정의 ID를 기록한다. 같은 요청의 재시도는 같은 결과를 돌려준다."""
+        with Session(self.engine) as session, session.begin():
+            row = self._suggestion(session, owner, suggestion_id, lock=True)
+            if row.version != version:
+                # 앞선 같은 요청이 이미 기록했다면 그 결과를 그대로 돌려준다(중복 클릭·재시도).
+                if row.result and row.result.get("external_id") == receipt.external_id:
+                    return SuggestionView.model_validate(row)
+                raise F5Error("stale_version")
+            if row.status != "approved" or row.execution_status != "succeeded":
+                raise F5Error("reregister_not_available")
+            row.result = receipt.model_dump(mode="json")
+            row.version += 1
+            session.flush()
+            return SuggestionView.model_validate(row)
+
     def approve_todo(self, owner, suggestion_id, version, payload):
         with Session(self.engine) as session, session.begin():
             row = self._suggestion(session, owner, suggestion_id, lock=True)

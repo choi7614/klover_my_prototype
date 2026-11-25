@@ -97,6 +97,7 @@ def test_openapi_describes_only_implemented_api_and_its_response():
         "/suggestions/{suggestion_id}",
         "/suggestions/{suggestion_id}/approve",
         "/suggestions/{suggestion_id}/dismiss",
+        "/suggestions/{suggestion_id}/reregister",
         "/suggestions/{suggestion_id}/conflicts",
         "/todos",
         "/todos/{todo_id}",

@@ -116,6 +116,43 @@ class F5Service:
             raise error from None
         return self.repository.finish(owner, suggestion_id, token, receipt=receipt)
 
+    def reregister(self, owner, suggestion_id, version):
+        """이미 등록했지만 사용자가 구글 캘린더에서 지운 일정을 사용자 요청으로 다시 등록한다.
+
+        - 아직 캘린더에 있으면 아무것도 만들지 않는다(calendar_event_exists).
+        - 새 일정 ID는 (제안, 현재 버전)으로 정해져서 같은 요청을 다시 보내도 한 번만 만들어진다.
+        - 처음 등록한 내용(승인 당시 payload)을 그대로 쓴다. 수정은 받지 않는다.
+        """
+        row = self.repository.get(owner, suggestion_id)
+        if (
+            row.type != "calendar"
+            or row.status != "approved"
+            or row.execution_status != "succeeded"
+            or row.execution_mode != "live"
+            or row.result is None
+            or not row.result.external_id
+        ):
+            raise F5Error("reregister_not_available")
+        if row.version != version:
+            raise F5Error("stale_version")
+        payload = CalendarPayload.model_validate(row.payload.model_dump(mode="json"))
+        if self.calendar.registered(owner, payload, row.result.external_id):
+            raise F5Error("calendar_event_exists")
+        key = f"{suggestion_id}:re{row.version}"
+        try:
+            receipt = self.calendar.execute(owner, suggestion_id, payload, event_key=key)
+        except CalendarError:
+            raise
+        except Exception:
+            raise CalendarError("calendar_result_unknown", uncertain=True) from None
+        if (
+            not isinstance(receipt, ExecutionReceipt)
+            or receipt.mode != "live"
+            or receipt.external_id != event_id(key)
+        ):
+            raise CalendarError("calendar_result_unknown", uncertain=True)
+        return self.repository.finish_reregister(owner, suggestion_id, version, receipt)
+
     def conflicts(self, owner, suggestion_id, payload):
         row = self.repository.get(owner, suggestion_id)
         if row.type != "calendar":
