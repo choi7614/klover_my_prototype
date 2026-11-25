@@ -15,7 +15,7 @@ test('수정·겹침·테스트 승인·무시와 안전한 본문 표시', asyn
   await expect(page.getByText('✓ 캘린더에 추가했어요')).toHaveCount(0);
   await page.getByTestId('suggestion-todo').getByRole('button', { name: '무시' }).click();
   await expect(page.getByTestId('suggestion-todo').getByText('무시함')).toBeVisible();
-  await expect(page.getByRole('button', { name: '◆ 회신 초안 만들기' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '회신 초안 만들기' })).toBeDisabled();
   await expect(page.getByTestId('mail-evidence').locator('script')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/f5/s04-desktop.png', fullPage: true });
   expect(errors).toEqual([]);

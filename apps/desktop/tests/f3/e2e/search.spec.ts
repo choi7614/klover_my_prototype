@@ -13,7 +13,7 @@ test('S07 합성 결과·근거·메일/초안 연결 계약과 기본 창 크�
   await expect(page.getByRole('article', { name: '검색 결과 2' })).toBeFocused();
   await page.getByRole('button', { name: '출장비 예산 초과분 처리 문의' }).click();
   await expect(page.getByRole('status')).toContainText('메일 열기 계약: m2');
-  await page.getByRole('article', { name: '검색 결과 1' }).getByRole('button', { name: '◆ 답장 초안' }).click();
+  await page.getByRole('article', { name: '검색 결과 1' }).getByRole('button', { name: '답장 초안' }).click();
   await expect(page.getByRole('status')).toContainText('초안 열기 계약: m1');
   for (const [width, height] of [[1440, 900], [1280, 720], [760, 900]]) {
     await page.setViewportSize({ width, height });

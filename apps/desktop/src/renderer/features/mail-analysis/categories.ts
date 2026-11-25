@@ -16,6 +16,6 @@ export const STATUS_TAGS = {
   due: { label: (date: string) => `마감 ${date}`, tag: 'bg-warning-subtle text-warning' },
 } as const;
 
-export const TAG_BASE = 'inline-flex h-5 items-center whitespace-nowrap rounded-sm px-1.5 text-caption font-medium';
+export const TAG_BASE = 'inline-flex h-5 items-center whitespace-nowrap rounded-leaf-sm px-2 text-caption font-medium';
 
 export const PRIORITY_LABELS = { high: '높음', normal: '보통', low: '낮음' } as const;

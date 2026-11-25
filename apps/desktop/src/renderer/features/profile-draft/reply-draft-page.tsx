@@ -140,7 +140,7 @@ export function ReplyDraftPage({ client, mailId, draftId, autoGenerate = true, o
       {original ? <>
         <div><h1 className="text-title font-semibold">{original.subject}</h1><p className="mt-1 text-caption text-muted-foreground">{original.from_name || original.from_addr} · {new Date(original.received_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}</p></div>
         <p className="whitespace-pre-wrap text-body leading-7">{original.body_text}</p>
-        <div className="rounded-md border border-ai-border bg-ai-subtle p-3 text-body"><h3 className="mb-2 font-semibold text-ai-text">◆ 요청사항</h3><p className="text-caption text-muted-foreground">요청사항 분석 연결이 준비되지 않았어요. 원본 내용을 확인해 주세요.</p></div>
+        <div className="rounded-md border border-ai-border bg-ai-subtle p-3 text-body"><h3 className="mb-2 font-semibold text-ai-text">요청사항</h3><p className="text-caption text-muted-foreground">요청사항 분석 연결이 준비되지 않았어요. 원본 내용을 확인해 주세요.</p></div>
       </> : <Skeleton label="원본 메일을 불러오고 있어요" />}
     </aside>
     <section aria-label="답장 초안" className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -149,14 +149,14 @@ export function ReplyDraftPage({ client, mailId, draftId, autoGenerate = true, o
       <div className="flex min-h-16 flex-wrap items-center gap-2 border-b px-6 py-3" aria-label="답장 방향">
         <AIChoiceControl purpose="draft" value={provider} onChange={setProvider} disabled={busy} />
         {!draft && <Button disabled={busy} onClick={() => void generate()}>초안 만들기</Button>}
-        <h2 className="mr-1 text-body font-semibold text-ai-text">◆ 답장 방향</h2>
+        <h2 className="mr-1 text-body font-semibold text-ai-text">답장 방향</h2>
         {draft?.directions.map(direction => <button type="button" key={direction} aria-pressed={direction === draft.selected_direction} disabled={busy} onClick={() => void generate('rewrite', direction)} className={`min-h-8 rounded-full border border-ai-border px-3 text-caption focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 ${direction === draft.selected_direction ? 'bg-ai text-ai-foreground' : 'bg-ai-subtle text-ai-text'}`}>{direction}</button>)}
         {profile && <span className="ml-auto text-caption text-muted-foreground">격식 {profile.formality} · 길이 {{ short: '짧게', normal: '보통', long: '자세히' }[profile.reply_length]}</span>}
       </div>
       <AIExecutionNotice value={draft?.ai_execution} />
       {error && <div role="alert" className="flex flex-wrap items-center gap-3 border-b bg-warning-subtle px-6 py-3 text-caption"><p className="flex-1">{error}</p><Button variant="secondary" disabled={busy} onClick={() => void generate()}>다시 시도</Button><Button variant="secondary" disabled={busy} onClick={() => { setManual(true); onManualReply?.(mailId, bodyRef.current); }}>직접 쓰기</Button></div>}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {busy && !body && !manual ? <div className="p-6"><p className="mb-4 text-body text-ai-text">◆ 답장 초안을 만들고 있어요…</p><p className="mb-4 text-caption text-muted-foreground">로컬 AI는 시간이 걸릴 수 있어요. 최대 2분 동안 기다립니다.</p><Skeleton label="초안 생성 중" /></div>
+        {busy && !body && !manual ? <div className="p-6"><p className="mb-4 text-body text-ai-text">답장 초안을 만들고 있어요…</p><p className="mb-4 text-caption text-muted-foreground">로컬 AI는 시간이 걸릴 수 있어요. 최대 2분 동안 기다립니다.</p><Skeleton label="초안 생성 중" /></div>
           : <div className="relative min-h-56 flex-1">
             <div ref={mirror} aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-6 py-5 text-[15px] leading-[26px]"><EvidenceBody body={body} evidence={evidence} />{'\n'}</div>
             <textarea aria-label="답장 본문" maxLength={25000} spellCheck={false} value={body} onChange={e => edit(e.target.value)} onScroll={e => { if (mirror.current) mirror.current.scrollTop = e.currentTarget.scrollTop; }} className="relative h-full min-h-56 w-full resize-none whitespace-pre-wrap break-words bg-transparent px-6 py-5 text-[15px] leading-[26px] text-transparent caret-foreground selection:bg-ai-highlight selection:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" />
@@ -168,7 +168,7 @@ export function ReplyDraftPage({ client, mailId, draftId, autoGenerate = true, o
         </div>}
       </div>
       <footer className="shrink-0 border-t px-6 py-3">
-        <p role="status" className="mb-2 text-caption text-muted-foreground">{notice || (busy && draft ? '◆ 고치고 있어요. 현재 본문은 계속 편집할 수 있어요.' : '초안은 자동 발송되지 않아요. 실제 발송 연결은 이번 범위에 포함되지 않아요.')}</p>
+        <p role="status" className="mb-2 text-caption text-muted-foreground">{notice || (busy && draft ? '고치고 있어요. 현재 본문은 계속 편집할 수 있어요.' : '초안은 자동 발송되지 않아요. 실제 발송 연결은 이번 범위에 포함되지 않아요.')}</p>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" disabled={busy || !draft} onClick={() => void generate('shorter')}>더 짧게</Button>
           <Button variant="secondary" disabled={busy || !draft} onClick={() => void generate('politer')}>더 정중하게</Button>

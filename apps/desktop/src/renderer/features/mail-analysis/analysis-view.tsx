@@ -64,12 +64,12 @@ function Tags({ view }: { view: MailAnalysisView }) {
   </span>;
 }
 
-/** S03 메일 한 줄의 ◆ 요약·태그 자리. 분석 결과가 없으면 미리보기를 그대로 보여 준다. */
+/** S03 메일 한 줄의 요약·태그 자리. 분석 결과가 없으면 미리보기를 그대로 보여 준다. */
 export function MailAnalysisLine({ view, state, preview }: { view?: MailAnalysisView; state: AutoAnalysisState | null; preview: string }) {
   if (!view) return <span className="mt-1 line-clamp-2 text-caption text-muted-foreground">{preview}</span>;
   if (view.analysis_status === 'done' && view.summary) {
     return <>
-      <span className="mt-1 block truncate text-caption text-ai-text"><span aria-hidden="true">◆ </span>{firstSentence(view.summary)}</span>
+      <span className="mt-1 block truncate text-caption text-ai-text">{firstSentence(view.summary)}</span>
       <Tags view={view} />
     </>;
   }
@@ -77,7 +77,7 @@ export function MailAnalysisLine({ view, state, preview }: { view?: MailAnalysis
   return <>
     <span className="mt-1 line-clamp-1 text-caption text-muted-foreground">{preview}</span>
     <span className="mt-1 block truncate text-caption text-muted-foreground">
-      {failed ? '요약을 만들지 못했어요' : <><span aria-hidden="true">◆ </span>{waitingText(state)}</>}
+      {failed ? '요약을 만들지 못했어요' : <>{waitingText(state)}</>}
     </span>
     {!failed && state === 'ready'
       ? <span className="mt-1.5 flex gap-1" aria-hidden="true"><span className="h-5 w-14 animate-pulse rounded-sm bg-muted" /><span className="h-5 w-12 animate-pulse rounded-sm bg-muted" /></span>
@@ -108,11 +108,11 @@ export function AiSummaryBox({ view, state, onRetry, retryNotice, onCategoryChan
   if (view.analysis_status !== 'done' || !view.summary) {
     if (state !== 'ready') {
       return <p className="mb-4 rounded-md bg-muted px-4 py-2 text-caption text-muted-foreground" data-testid="ai-summary-waiting">
-        <span aria-hidden="true">◆ </span>{waitingText(state)}. 원문은 아래에 그대로 있어요.
+        {waitingText(state)}. 원문은 아래에 그대로 있어요.
       </p>;
     }
-    return <div role="status" className="mb-4 space-y-3 rounded-md border border-ai-border bg-ai-subtle px-4 py-3.5" data-testid="ai-summary-loading">
-      <p className="text-body font-semibold text-ai-text"><span aria-hidden="true">◆ </span>AI가 분석하고 있어요…</p>
+    return <div role="status" className="mb-4 space-y-3 rounded-leaf bg-ai-subtle px-4 py-3.5" data-testid="ai-summary-loading">
+      <p className="text-body font-semibold text-ai-text">AI가 분석하고 있어요…</p>
       <div className="h-4 w-4/5 animate-pulse rounded-sm bg-ai-border" />
       <div className="h-4 w-3/5 animate-pulse rounded-sm bg-ai-border" />
     </div>;
@@ -120,8 +120,8 @@ export function AiSummaryBox({ view, state, onRetry, retryNotice, onCategoryChan
   const action = view.action_items[0];
   const due = earliestDue(view);
   return <div className="mb-4">
-    <section aria-label="AI 요약" className="rounded-md border border-ai-border bg-ai-subtle px-4 py-3.5" data-testid="ai-summary-box">
-      <p className="text-body font-semibold text-ai-text"><span aria-hidden="true">◆ </span>AI 요약</p>
+    <section aria-label="AI 요약" className="rounded-leaf bg-ai-subtle px-4 py-3.5" data-testid="ai-summary-box">
+      <p className="text-body font-semibold text-ai-text">AI 요약</p>
       <p className="mt-2 whitespace-pre-wrap text-body">{view.summary}</p>
       {(action || due || view.priority) && <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-ai-border pt-3 text-caption">
         {action && <span><span className="text-muted-foreground">내가 할 일 </span><strong>{action.text}</strong>{view.action_items.length > 1 && <span className="text-muted-foreground"> 외 {view.action_items.length - 1}건</span>}</span>}

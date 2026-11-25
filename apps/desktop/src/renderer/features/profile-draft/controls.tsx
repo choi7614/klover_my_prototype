@@ -19,7 +19,7 @@ export function Area({ label, ...props }: ComponentProps<'textarea'> & { label: 
 
 export function Panel({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
   return <section aria-label={title} className={cn('flex min-w-0 flex-col gap-3 rounded-md border bg-card p-4', className)}>
-    <h2 className="text-title font-semibold">{title.startsWith('◆') ? <><span className="text-ai">◆</span>{title.slice(1)}</> : title}</h2>{children}
+    <h2 className="text-title font-semibold">{title}</h2>{children}
   </section>;
 }
 

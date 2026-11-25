@@ -62,7 +62,7 @@ function ResultCard({ row, highlighted, navigation }: {
         <Button variant="secondary" className="f3-draft" disabled={!navigation.openDraft}
           title={navigation.openDraft ? undefined : '답장 초안 연결 준비 중'}
           onClick={() => navigation.openDraft?.({ mail_id: row.mail_id, source: 'F3' })}>
-          ◆ 답장 초안
+          답장 초안
         </Button>
       </div>
     </div>
@@ -163,7 +163,6 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
       <h1>자연어 검색</h1>      <AIExecutionNotice value={state.aiExecution} />
       <AIChoiceControl purpose="search" value={provider} onChange={setProvider} disabled={['parsing', 'searching', 'answering'].includes(state.phase)} />
       <form onSubmit={submit} className="f3-query-form">
-        <span className="f3-ai" aria-hidden="true">◆</span>
         <label className="sr-only" htmlFor="f3-query">검색 질문</label>
         <input ref={input} id="f3-query" value={query} maxLength={2000}
           placeholder="무엇이든 물어보세요" onChange={(event) => setQuery(event.target.value)} />
@@ -175,7 +174,7 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
     <div className="f3-understood" aria-live="polite">
       <strong>이렇게 이해했어요</strong>
       {state.phase === 'parsing' && !state.parsed ? <>
-        <span>◆ 질문을 이해하고 있어요…</span>
+        <span>질문을 이해하고 있어요…</span>
         {[1, 2, 3].map((number) => <span key={number} className="f3-skeleton f3-chip-skeleton" />)}
       </> : chips.map((chip) => <button className="f3-chip" key={chip.key}
         aria-label={`${chip.label} 조건 삭제`} onClick={() => void reSearch({ [chip.key]: null })}>
@@ -201,8 +200,8 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
           {[1, 2, 3].map((number) => <div key={number} className="f3-skeleton f3-card-skeleton" />)}</div>}
         {showResults && <>
           <div className="f3-answer" aria-label="AI 답변">
-            <h2>◆ AI 답변</h2>
-            {state.phase === 'answering' && <p role="status">◆ 근거를 확인하고 있어요…</p>}
+            <h2>AI 답변</h2>
+            {state.phase === 'answering' && <p role="status">근거를 확인하고 있어요…</p>}
             {state.answerError && <p role="status">{state.answerError.message}</p>}
             {state.answer && state.results.length > 0 && state.answer.sentences.length === 0 &&
               <p>관련 후보는 있지만 답변할 근거가 부족해요. 메일을 확인해 주세요.</p>}
@@ -230,7 +229,7 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
             조건을 일부만 만족하는 메일 {state.partial.length}건 더 보기
           </summary>{state.partial.map((row) => <ResultCard key={row.mail_id} row={row} highlighted={highlighted === row.mail_id} navigation={navigation} />)}</details>}
         </>}
-        <div className="f3-followup" aria-disabled="true">◆ 이어서 질문하기… <span>2차</span></div>
+        <div className="f3-followup" aria-disabled="true">이어서 질문하기… <span>2차</span></div>
       </main>
       <aside className="f3-filter-panel" aria-label="검색 필터">
         <h2>필터</h2>
