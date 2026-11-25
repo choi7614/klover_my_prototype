@@ -2,6 +2,8 @@
 
 2026-11-25 · `integrate/colleague-setup` · 기준 develop `9946b87`(#48).
 구현·검사 보고 후 커밋·Push·PR 생성과 검사 통과 시 develop 병합을 승인받았다. main은 변경하지 않는다.
+[PR #49](https://github.com/choi7614/klover_my_prototype/pull/49) · 구현 커밋 `02c9e42`.
+최종 병합 여부와 커밋은 PR 이력을 따른다.
 
 ## 기존 작업 재사용
 
@@ -20,7 +22,7 @@
 - 실행 도구: `.command`/`.cmd` → Python 공통 실행기. 사전 설치된 도구만 사용하며 자동 설치·마이그레이션 없음.
 - Windows 잠금 검사에서 이미 잠긴 바이트를 읽지 않도록 개선했다. Windows에서 없는 POSIX API의 합성 검사도 분리했다.
 - 실제 자식 프로세스를 종료하면서 무관한 프로세스를 유지하는 검사 추가.
-- Linux/macOS/Windows 단위 검사 워크플로 준비. PR 생성 전이므로 원격 OS별 CI 실행 결과는 아직 없다.
+- Linux/macOS/Windows 실행 도구 단위 검사 워크플로를 추가하고 세 OS 모두 통과했다.
 
 ## 검증 결과
 
@@ -29,6 +31,12 @@
 - 앱 제품 코드는 변경하지 않아 앱 빌드/전체 테스트를 반복하지 않았다.
 - 분리 PostgreSQL을 사용하는 서버 전체: **713 통과 / 1 skip** (98.98초). 생략 항목은 위 Windows 시작 파일 검사다.
 - 현재 사용자 안내·현황·status 문서의 로컬 참조 경로 검사 통과. 과거 원문 보관본은 현재 안내와 구분했다.
+- 구현 커밋 `02c9e42`의 [공통 CI](https://github.com/choi7614/klover_my_prototype/actions/runs/45548562234):
+  서버 Ruff·pytest **529 통과/185 skip**, 앱 lint·typecheck·단위 **215 통과**.
+  서버 CI의 DB 관련 생략은 위 분리 DB 전체 검사와 구분한다.
+- 같은 커밋의 [OS별 실행 도구 CI](https://github.com/choi7614/klover_my_prototype/actions/runs/45548562324):
+  macOS/Linux 각각 **20 통과/1 skip**, Windows **19 통과/2 skip**, 세 OS Ruff 통과.
+  macOS/Linux는 cmd 전용 검사를, Windows는 bash 전용 검사 두 개를 생략했다.
 
 새 의존성 재설치·실제 사용자 설정 복사·실제 Gmail·Calendar·유료 Claude·Ollama 모델 생성은 수행하지 않았다.
 

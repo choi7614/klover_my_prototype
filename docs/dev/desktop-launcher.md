@@ -67,8 +67,8 @@ OS 잠금 파일 `.local-run/launcher.lock`만 만들 수 있습니다. 비밀 �
 
 ## 확인 수준
 
-Linux의 합성 프로세스·가짜 HTTP와 시작 파일 검사를 통과했습니다. Windows 분기 대역 검사는 실제 Windows 실행과 다릅니다.
-PR에는 Linux/macOS/Windows용 실행 도구 단위 검사도 추가합니다. 실제 Finder/탐색기→Docker/Ollama→Electron→Google의
+Linux/macOS/Windows CI에서 합성 프로세스·가짜 HTTP·해당 OS 시작 파일 검사를 통과했습니다.
+실제 Finder/탐색기→Docker/Ollama→Electron→Google의
 새 설치 전체 흐름은 각 OS에서 따로 확인해야 합니다.
 
 기존 맥 사용자에게 앱 사용 확인 보고가 있으나, 이 더블클릭 도구의 실기 성공 보고는 아직 없습니다.

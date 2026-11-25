@@ -16,6 +16,8 @@
 - `integrate/colleague-setup` · Codex · README/설치 안내 최신화, 보류된 실행 도구 재검토·재사용.
 - 원본 `/workspace/klover-desktop-launcher`와 미커밋 11개 파일 보존. 최신 develop에서 별도 worktree로 진행.
 - 보고 후 커밋·Push·PR 생성과 검사 통과 시 develop 병합을 승인받았다. main은 변경하지 않는다.
+- [PR #49](https://github.com/choi7614/klover_my_prototype/pull/49) · 구현 `02c9e42` Push 완료.
+  서버·앱 및 세 OS 실행 도구 CI 통과. 최종 병합 여부/커밋은 PR 이력을 따른다.
 - 이번 검사: 분리 DB 서버 713 통과/Windows 전용 1 skip, Ruff·시작 파일 문법·문서 참조 확인 통과.
 - 실제 사용자 DB·Google·유료 AI에는 접근하지 않는다. [검증 기록](colleague-setup-verification.md).
 
