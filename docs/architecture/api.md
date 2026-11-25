@@ -160,6 +160,7 @@ F1 입력 전달·F0 IPC/화면은 #28·#32·#34에서 연결됐다. WebSocket·
 | GET | `/suggestions/{suggestion_id}` | 인증된 사용자·계정의 제안 1건 |
 | POST | `/suggestions/{suggestion_id}/approve` | 필수 version, 선택 payload(유형별 전체 수정값) |
 | POST | `/suggestions/{suggestion_id}/dismiss` | 필수 version; 무시 이력 저장 |
+| POST | `/suggestions/{suggestion_id}/reregister` | 필수 version(본문 payload 불가); 등록한 일정을 사용자가 구글 캘린더에서 지웠을 때 새 일정 ID로 다시 등록. 아직 있으면 409 `calendar_event_exists`, 등록 완료 상태가 아니면 409 `reregister_not_available` |
 | POST | `/suggestions/{suggestion_id}/conflicts` | 수정한 Calendar payload로 읽기 전용 겹침 확인 |
 | GET | `/todos` | status(open/completed), limit, cursor; items/next_cursor |
 | POST | `/todos` | request_id, title, due?, mail_id?; 재시도 중복 제거 |

@@ -16,7 +16,7 @@ from app.google_config import GMAIL_SCOPE, GoogleSettings
 from app.schemas.f5 import ApproveRequest
 from app.services.f5 import F5Service
 from app.services.f5_calendar import ConnectedCalendar
-from app.services.f5_errors import CalendarError
+from app.services.f5_errors import CalendarError, F5Error
 
 from .helpers import OTHER, OWNER, analysis
 
@@ -359,3 +359,32 @@ def test_explicit_google_rejection_stays_failed_pending(f5db):
     failed = f5db.repository.get(OWNER, row.suggestion_id)
     assert failed.status == "pending" and failed.execution_status == "failed"
     assert not google.events
+
+
+def test_reregister_after_the_user_deleted_the_event(f5db):
+    """DB 필요: 구글 캘린더에서 지운 일정을 새 ID로 다시 등록하고, 아직 있으면 만들지 않는다."""
+    repo, google, service = setup(f5db)
+    row = service.scan(OWNER, analysis()).items[0]
+    payload = row.payload.model_dump(mode="json")
+    done = service.approve(
+        OWNER, row.suggestion_id, ApproveRequest(version=row.version, payload=payload)
+    )
+    old_id = done.result.external_id
+    # 아직 캘린더에 있으면 아무것도 만들지 않는다.
+    with pytest.raises(F5Error, match="calendar_event_exists"):
+        service.reregister(OWNER, row.suggestion_id, done.version)
+    assert len(google.events) == 1
+    # 사용자가 구글 캘린더에서 지움(구글은 취소 상태로 남긴다).
+    google.events[old_id] = {**google.events[old_id], "status": "cancelled"}
+    again = service.reregister(OWNER, row.suggestion_id, done.version)
+    assert again.status == "approved" and again.execution_mode == "live"
+    assert again.result.external_id != old_id and again.version == done.version + 1
+    assert len(google.events) == 2
+    # 같은 요청을 한 번 더 보내도(중복 클릭) 새 일정을 또 만들지 않는다.
+    with pytest.raises(F5Error, match="stale_version"):
+        service.reregister(OWNER, row.suggestion_id, done.version)
+    assert len(google.events) == 2
+    # 다시 등록한 일정마저 지우면 한 번 더 다시 등록할 수 있다.
+    google.events[again.result.external_id]["status"] = "cancelled"
+    third = service.reregister(OWNER, row.suggestion_id, again.version)
+    assert third.result.external_id not in {old_id, again.result.external_id}

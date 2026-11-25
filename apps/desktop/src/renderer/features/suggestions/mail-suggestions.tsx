@@ -32,7 +32,7 @@ export function MailSuggestions({ mailId, body, client, header, fallback }: {
       {fallback}
     </>;
   }
-  return <>{client.calendar && <CalendarConnectionPanel client={client.calendar} onChange={setCalendar} />}
+  return <>{client.calendar && <CalendarConnectionPanel compact client={client.calendar} onChange={setCalendar} />}
     <SuggestionReader calendarReady={calendar?.status === 'connected'} calendars={calendar?.calendars ?? []} mailId={mailId} body={body} suggestions={rows} client={client} header={header}
     onChange={row => setRows(current => (current ?? []).map(item => item.suggestion_id === row.suggestion_id ? row : item))} /></>;
 }

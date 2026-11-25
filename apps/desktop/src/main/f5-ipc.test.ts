@@ -40,6 +40,10 @@ describe('F5 제안·할 일 통로', () => {
     expect(f5Arguments('approve', ['s1', { version: 2, payload: { title: 'x' } }])).toEqual({ id: 's1', body: { version: 2, payload: { title: 'x' } } });
     expect(f5Arguments('dismiss', ['s1', { version: 1, payload: {} }])).toBeNull();
     expect(f5Arguments('dismiss', ['s1', { version: 3 }])).toEqual({ id: 's1', body: { version: 3 } });
+    // 다시 등록은 version만 받고 내용(payload)은 받지 않는다.
+    expect(f5Arguments('reregister', ['s1', { version: 3, payload: {} }])).toBeNull();
+    expect(f5Arguments('reregister', ['s1', { version: 3 }])).toEqual({ id: 's1', body: { version: 3 } });
+    expect(f5Routes.reregister.path({ id: 's1' })).toBe('/suggestions/s1/reregister');
     expect(f5Arguments('approve', ['s1', { version: 1, payload: { title: 'x'.repeat(30000) } }])).toBeNull();
   });
   it('경로 조작·소유자 주입·허용하지 않은 조회 조건을 거부한다', () => {

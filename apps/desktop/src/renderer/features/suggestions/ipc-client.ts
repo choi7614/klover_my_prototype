@@ -22,6 +22,7 @@ export function createSuggestionsIPCClient(bridge: SuggestionsIPC): F5Client {
     get: id => unwrap(bridge.get(id)),
     approve: (id, request) => unwrap(bridge.approve(id, request)),
     dismiss: (id, request) => unwrap(bridge.dismiss(id, request)),
+    ...(bridge.reregister ? { reregister: (id: string, request: { version: number }) => unwrap(bridge.reregister!(id, request)) } : {}),
     conflicts: (id, payload) => unwrap(bridge.conflicts(id, payload)),
     todos: query => unwrap(bridge.todos(query)),
     createTodo: request => unwrap(bridge.createTodo(request)),

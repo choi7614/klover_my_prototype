@@ -10,7 +10,7 @@ export class F5APIClient {
     if (!local) return f5Failure('configuration');
     const route = f5Routes[operation];
     try {
-      const { url, init } = localRequest(local, { method: route.method, path: route.path(request), body: request.body, timeoutMs: operation === 'approve' ? 30000 : 15000 });
+      const { url, init } = localRequest(local, { method: route.method, path: route.path(request), body: request.body, timeoutMs: operation === 'approve' || operation === 'reregister' ? 30000 : 15000 });
       const response = await this.fetcher(url, init);
       const text = await response.text();
       if (text.length > MAX_RESPONSE_CHARS) return f5Failure('invalid_response');
