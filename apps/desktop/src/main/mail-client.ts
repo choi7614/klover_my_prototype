@@ -3,8 +3,8 @@ import { constants } from 'node:fs';
 import { isAbsolute } from 'node:path';
 import { localRequest } from './local-api';
 import {
-  mailFailure, validInboxQuery, validMailId, validSyncResult,
-  type InboxQuery, type MailDetail, type MailPage, type MailReadBridge,
+  mailFailure, validCategoryCounts, validInboxQuery, validMailId, validSyncResult,
+  type InboxQuery, type MailCategoryCounts, type MailDetail, type MailPage, type MailReadBridge,
   type MailResult, type MailSession, type MailSummary, type MailSyncResult,
 } from '../shared/mail-read';
 
@@ -105,12 +105,21 @@ export class MailAPIClient implements MailReadBridge {
     if (!validInboxQuery(query)) return Promise.resolve(mailFailure('invalid_request'));
     const parameters = new URLSearchParams({ box: 'inbox', limit: String(query?.limit ?? 20) });
     if (query?.cursor) parameters.set('cursor', query.cursor);
+    if (query?.category) parameters.set('category', query.category);
     return this.request(`/mails?${parameters}`, value => {
       const page = record(value);
       if (!Array.isArray(page.items) || page.items.length > (query?.limit ?? 20) ||
           !(page.next_cursor === null || (typeof page.next_cursor === 'string' && page.next_cursor.length > 0 && page.next_cursor.length <= 1024)) ||
           (query?.cursor && page.next_cursor === query.cursor)) throw new Error('response');
       return { items: page.items.map(summary), next_cursor: page.next_cursor as string | null };
+    });
+  }
+
+  categoryCounts(): Promise<MailResult<MailCategoryCounts>> {
+    return this.request('/mails/category-counts', value => {
+      if (!validCategoryCounts(value)) throw new Error('response');
+      // 예상하지 않은 필드는 버리고 알려진 분류만 새로 구성해 넘긴다.
+      return { total: value.total, counts: { ...value.counts } };
     });
   }
 

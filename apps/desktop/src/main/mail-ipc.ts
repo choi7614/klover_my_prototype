@@ -1,5 +1,5 @@
 import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron';
-import { mailChannels, mailFailure, mailSyncChannel, validInboxQuery, validMailId, type MailReadBridge } from '../shared/mail-read';
+import { mailCategoryCountsChannel, mailChannels, mailFailure, mailSyncChannel, validInboxQuery, validMailId, type MailReadBridge } from '../shared/mail-read';
 
 export function developmentRendererURL(value: string | undefined): string | undefined {
   if (!value) return undefined;
@@ -44,5 +44,10 @@ export function registerMailReadIPC(
     if (!trustedMailSender(event, contents, rendererURL) || args.length) return mailFailure('invalid_request');
     return client.sync ? client.sync() : mailFailure('unavailable');
   });
-  return () => [...Object.values(mailChannels), mailSyncChannel].forEach(channel => ipc.removeHandler(channel));
+  // 분류별 건수: 인수 없이 서버의 GET /mails/category-counts만 호출한다.
+  ipc.handle(mailCategoryCountsChannel, (event, ...args: unknown[]) => {
+    if (!trustedMailSender(event, contents, rendererURL) || args.length) return mailFailure('invalid_request');
+    return client.categoryCounts ? client.categoryCounts() : mailFailure('unavailable');
+  });
+  return () => [...Object.values(mailChannels), mailSyncChannel, mailCategoryCountsChannel].forEach(channel => ipc.removeHandler(channel));
 }

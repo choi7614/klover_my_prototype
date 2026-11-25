@@ -5,12 +5,20 @@ import json
 import re
 from datetime import datetime
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.db.f1_models import MailAnalysisRecord as Analysis
 from app.db.models import GoogleCredential, Mail, MailAccount
 from app.db.repositories.google_connection import LOCAL_USER
-from app.schemas.mail_api import LocalSession, MailDetail, MailPage, MailSummary
+from app.schemas.mail_api import (
+    LocalSession,
+    MailCategoryCounts,
+    MailDetail,
+    MailPage,
+    MailSummary,
+)
+from app.schemas.report import MailCategory
 
 
 class MailAccountUnavailable(ValueError):
@@ -94,8 +102,9 @@ class MailQueryRepository:
                 sync_started_at=account.sync_started_at,
             )
 
-    def _received(self, account):
-        return select(Mail).where(
+    @staticmethod
+    def _received_where(account):
+        return (
             Mail.user_id == account.user_id,
             Mail.account_id == account.account_id,
             Mail.direction == "received",
@@ -103,11 +112,44 @@ class MailQueryRepository:
             or_(Mail.received_at >= account.sync_started_at, Mail.history_imported.is_(True)),
         )
 
-    def list(self, *, limit=20, cursor=None):
+    @staticmethod
+    def _analysis_join():
+        return and_(
+            Analysis.mail_id == Mail.mail_id,
+            Analysis.user_id == Mail.user_id,
+            Analysis.account_id == Mail.account_id,
+        )
+
+    def _received(self, account, category: MailCategory | None = None):
+        query = select(Mail).where(*self._received_where(account))
+        if category is not None:
+            # 사용자가 고친 분류(user_label)가 있으면 그것을, 없으면 AI 분류를 쓴다.
+            query = query.join(Analysis, self._analysis_join()).where(
+                func.coalesce(Analysis.user_label, Analysis.category) == category
+            )
+        return query
+
+    def category_counts(self):
+        with Session(self.engine) as session:
+            account = self._owner(session)
+            where = self._received_where(account)
+            total = session.scalar(select(func.count()).select_from(Mail).where(*where)) or 0
+            effective = func.coalesce(Analysis.user_label, Analysis.category)
+            rows = session.execute(
+                select(effective, func.count())
+                .select_from(Mail)
+                .join(Analysis, self._analysis_join())
+                .where(*where)
+                .group_by(effective)
+            )
+            counts = {name: count for name, count in rows if name is not None}
+            return MailCategoryCounts(total=total, counts=counts)
+
+    def list(self, *, limit=20, cursor=None, category: MailCategory | None = None):
         position = decode_cursor(cursor) if cursor else None
         with Session(self.engine) as session:
             account = self._owner(session)
-            query = self._received(account)
+            query = self._received(account, category)
             if position:
                 stamp, identifier = position
                 query = query.where(
