@@ -2,22 +2,14 @@
 
 2026-11-25 · `integrate/main-sharing` · 준비 기준 develop `f3c09f7`(#49).
 
-## 현재 단계와 반영 순서
+## 공유 버전 반영 결과
 
-현재 원격 main은 초기 `9575f47`이며 실행 코드가 없다. **이번 문서는 main 반영 후의 설치 안내를 준비한 상태**다.
-결과 보고 후 문서 커밋·Push·develop/main 대상 PR 생성과 검사 통과 시 develop 병합을 승인받았다.
-main 병합은 별도 승인 대기이며 최종 반영 상태는 각 PR 이력을 따른다.
+동료용 문서 정리는 [PR #50](https://github.com/choi7614/klover_my_prototype/pull/50)으로 develop에 반영했다.
+앱·서버·DB 설정·실행 파일과 문서 전체는 [PR #51](https://github.com/choi7614/klover_my_prototype/pull/51)로 main에 병합했다.
+첫 공유 커밋은 `6c43e30`이다. PR #51의 서버·앱과 Linux/macOS/Windows 실행 도구 자동 검사를 통과했다.
 
-1. 결과 보고 후 문서 변경의 커밋·Push·develop 대상 PR 생성 묶음 승인.
-2. 별도 develop 병합 승인 후 준비 문서 반영.
-3. 최신 develop을 main 대상으로 PR 생성하고 고정한 커밋의 코드·문서·CI 확인.
-   이 PR 생성도 묶음 승인 범위에 명시하며 main 병합 승인을 대신하지 않는다.
-4. **main 병합 별도 승인** 후 반영. main의 README·설치 파일 존재와 병합 결과 확인.
-5. 동료에게 저장소 첫 화면 URL과 main의 코드 버전을 전달.
-
-main은 현재 develop의 조상이다. main 반영 PR은 문서 몇 개만이 아니라 develop에 누적된 앱·서버·DB·기능 전체를 포함한다.
-초기 공유는 소스 실행용 데모이며 설치형 제품·모든 OS 실기 검증 완료로 소개하지 않는다.
-초대·공개 상태 변경·기존 작업/브랜치 삭제는 이번 범위에 없다. 원격 조회 당시 저장소는 공개 상태다.
+동료는 [저장소 첫 화면](https://github.com/choi7614/klover_my_prototype)에서 설치 안내를 볼 수 있다.
+Mac·Windows에서 소스로 실행하는 데모이며, 실제 새 사용자 환경 검증은 아래 확인 항목을 참고한다.
 
 ## 이번 정리
 
@@ -42,7 +34,6 @@ main은 현재 develop의 조상이다. main 반영 PR은 문서 몇 개만이 �
 - 실제 사용자 DB·Gmail·Calendar·유료 AI에 접근하거나 새 의존성을 설치하지 않았다.
 
 문서 수정만 있으므로 서버·앱 전체 검사와 DB 마이그레이션을 반복 실행하지 않았다.
-PR 생성 후 공통 CI 결과를 확인하고, main 반영 직전에 원격이 움직였는지 다시 확인한다.
 
 ### 기존 구현의 자동 검사 근거
 

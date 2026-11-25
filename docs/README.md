@@ -39,6 +39,7 @@
 | [tokens/](design/tokens/klover-theme.css) | 코드용 토큰 — `klover-theme.css`(Tailwind v4 + shadcn), `categories.ts` |
 | [brand/](design/brand/README.md) | 로고·앱 아이콘·트레이 아이콘·ICO와 사용 규칙 |
 | [screens/](design/screens/README.md) | **화면 정의서 S01~S10 + Klover 목업(HTML·PNG)** — 바이브 코딩 기준 |
+| [초기 디자인 이미지](design/archive/claude-outputs/README.md) | 첫 커밋의 디자인 시안 보관 |
 | [mockups/](design/mockups/README.md) | 설계안 v0.2 원본 PDF와 쪽별 이미지 (기능 검토용 와이어프레임) |
 
 ## architecture — 어떻게 동작하나

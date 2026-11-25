@@ -5,7 +5,7 @@
 ## 현재 작업
 
 README·설치·더블클릭 실행 정리는 #49로 병합됐다. [실행 도구 검증/제한](colleague-setup-verification.md).
-이번에는 main 공유용 안내와 쉬운 구성도를 준비한다. [점검/승인 단계](main-sharing-verification.md).
+main 공유용 안내와 구성도는 코드와 함께 #51로 반영했다. [공유 버전 점검](main-sharing-verification.md).
 
 ## 실제 확인이 필요한 것
 
@@ -19,7 +19,7 @@ README·설치·더블클릭 실행 정리는 #49로 병합됐다. [실행 도�
 - F2 관련 메일 검색·F1 요청 추출 활용, F5 회신 제안→F2 초안.
 - 앱 안 알림함부터 OS 알림·트레이·시작 프로그램으로 확장.
 - 주기 수신·추가 검색 필터·메일 정리·실제 문체 학습은 각각 별도 범위로 결정.
-- 설치형 exe/dmg·자동 업데이트와 main 공개용 버전은 별도 승인/검증.
+- 설치형 exe/dmg와 자동 업데이트는 후속 개발 후보.
 
 [과거 개발 요청](archive/2026-11-25/before-colleague-integration-followups.md)은 당시 기록이다.
 자동 프로필 미리보기 로컬 고정·로컬 전용·Claude→로컬 재시도·과거 메일·Calendar·의미 검색은 이미 반영됐다.
