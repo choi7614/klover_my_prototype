@@ -1,3 +1,14 @@
+> **2026-11-25 제출 갱신:** 사용자가 이번 변경의 커밋·Push·PR 생성과 검사 통과 후 develop 병합을 승인했다.
+> 제출을 진행하며 최종 반영 상태는 `integrate/F3-memory-search` → develop PR을 따른다. 아래 승인 대기/미커밋 설명은 검토 당시 기록이다.
+
+## F3 의미 검색 공통 연결 작업 (2026-11-25)
+
+- `integrate/F3-memory-search` · 작업 도구 없음(검사 완료·승인 대기) · 기준 `origin/develop 5b5d0c6`(PR #47 병합 확인).
+- `patches/F3/memory-search/01` 적용, 02는 실제 OpenAPI에서 재생성해 정확히 일치함을 확인했다. 기존 데이터·벡터·브랜치 보존.
+- 새 분리 DB 포함 서버 693/skip 0·앱 215·검색 Chromium 2·실제 앱 HTTP/IPC 통로 1 통과. 정적 검사·타입·빌드 통과. 실제 Gmail·유료 AI 호출 없음.
+- 미커밋·미Push, 신규 PR 없음. 커밋·Push·PR·develop 반영 승인 대기. [검사·실환경 제한·확인 방법](F3-memory-search-integration.md).
+- 아래 PR #47 제출 당시의 미적용/승인 대기는 과거 기록이다.
+
 > 2026-11-25 제출 갱신: 사용자 승인으로 구현 `63c25df` 커밋·Push, PR #47 제출 완료. 미커밋 작업 없음(이 문서 갱신도 제출). develop 병합 승인 있음; 최종 병합 상태는 PR #47을 따른다. 공통 패치 01~02는 미적용이며 운영 의미 검색은 미통합. 아래 승인 대기/미커밋 설명은 제출 전 기록이다.
 
 # 개발 현황판
@@ -58,7 +69,7 @@ CI [44583287544](https://github.com/choi7614/klover_my_prototype/actions/runs/44
 | F0 첫 실행·메일함 | 목록·본문·Gmail 새로고침·분석 표시·F2~F5 화면/IPC 연결 | Google/다음 버튼·5단계 완료·메일 쓰기·주기 수신·Windows 기능 미구현 | [status](F0-mailbox-status.md) |
 | F1 분석·저장 | 0007 분석·임베딩·자동 분석·앱 표시·F5 훅 연결 | 분류 수정 UI·근거 강조·건수·WebSocket 미구현, 실제 정확도·속도 미검증 | [status](F1-analysis-status.md) |
 | F2 프로필·초안 | 저장·초안/수정·선택 AI·인용·대기 시간 보완 | 관련 메일·문체 학습 수집·발송 미구현, 작업 브랜치에서 자동 미리보기 로컬 고정 보완 | [status](F2-profile-draft-status.md) |
-| F3 검색 | 기간·상대·키워드·선택 AI 해석/답변·최근 검색·앱 연결 | 의미 벡터·조직/미회신/분류/첨부 필터·보낸 메일 열기 미구현 | [status](F3-search-status.md) |
+| F3 검색 | PR #47의 기억/확장 검색·F1 벡터 어댑터 구현. 공통 실행 조립·생성 타입은 위 통합 브랜치에서 검사 완료·승인 대기 | 실제 모델 품질·속도 미검증. 조직/미회신/분류/첨부 필터·보낸 메일 열기 미구현 | [status](F3-search-status.md) |
 | F4 보고 | F1 입력·F2 프로필·0006 저장·API/앱·선택 AI·첫 주 생성 | Word·발송·예약 미구현, 실제 모델 품질·속도 미검증 | [status](F4-weekly-report-status.md) |
 | F5 제안 | 0005 제안/할 일·S04/할 일 화면·F1 변환/훅 연결 | 실제 Calendar·회신 실행·OS 알림·트레이·S10 미구현 | [status](F5-ai-scan-status.md) |
 

@@ -69,10 +69,13 @@ AI 설정에 mode(local_only/hybrid)를 추가한다. 새 설정은 local_only, 
   409 `sync_in_progress`, Gmail·토큰 갱신 실패는 502 `gmail_unavailable`(외부 응답 상세 미포함), DB·계정 준비 부족은 503.
   응답에는 건수만 있고 메일 내용·토큰은 없다. 주기적 자동 수신(WebSocket·작업 큐)은 후속이다.
 
-## F3 검색 API (선택 AI 연결·의미 벡터 미연결)
+## F3 검색 API (선택 AI·로컬 의미 검색 연결)
 
 `app.main`에 경로와 OpenAPI를 등록했고, `run_mail_api`는 기존 로컬 인증과 F3 저장소를
-함께 조립한다. PR #37의 SelectedGeneration으로 로컬/Claude 해석·답변을 요청별 선택한다. 벡터 포트는 미연결이다. AI 설정 부족을 가짜 검색 성공으로 대체하지 않는다.
+함께 조립한다. SelectedGeneration으로 로컬/Claude 해석·답변을 요청별 선택하고,
+`build_semantic_search(engine)`로 F1의 로컬 임베딩·저장 벡터를 연결한다.
+AI 설정 부족을 가짜 검색 성공으로 대체하지 않는다. 이번 연결의 반영 상태·검증은
+[통합 기록](../dev/F3-memory-search-integration.md)을 따른다.
 
 | 메서드 | 경로 | 계약 |
 | --- | --- | --- |
@@ -87,10 +90,16 @@ AI 설정에 mode(local_only/hybrid)를 추가한다. 새 설정은 local_only, 
 - `parser_unavailable`/`parse_unavailable`은 503, `parse_failed`/`unsupported_filter`는 422다.
   결과가 있으면 답변 실패는 결과와 함께 `answer_error`로 구분한다.
 - Claude 선택·동의 시 질문·필요한 결과를 외부 전송할 수 있다. 조직·미회신·분류·첨부 조건은 미지원이다.
+- `parsed.original_terms`는 질문에서 유지한 원래 표현이다. 결과에는 `search_warnings`와
+  `semantic_coverage`(대상 메일·호환 메일·검사 청크 수·후보 상한 도달 여부)가 있다.
+  JSON과 NDJSON `results` 프레임 모두 이 제한 정보를 전달한다.
+- 의미 검색은 같은 사용자·계정·기간의 F1 분석 완료 벡터 중 제공자·모델·차원·모드가
+  호환되는 것만 읽는다. 미설정·오류·호환 불일치는 제한 안내와 키워드 결과로 구분한다.
 - 최근 검색을 쓰려면 `0003_search_runs` 마이그레이션이 필요하다. 이번 작업에서는
   합성 테스트 DB에서만 적용·검사했다. F0/F2 화면 연결은 완료, 실제 모델 정확도·5초 성능은 미검증이다.
 
-세부 계약·검사·연결 요청은 [F3 전달 문서](../dev/F3-search-handoff.md)를 따른다.
+최신 연결·검사는 [F3 통합 기록](../dev/F3-memory-search-integration.md),
+기존 계약 이력은 [F3 전달 문서](../dev/F3-search-handoff.md)를 따른다.
 
 ## 맥북 전용 Google 연결 경로 (2026-11-19)
 

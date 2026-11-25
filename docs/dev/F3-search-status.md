@@ -1,3 +1,22 @@
+> **2026-11-25 제출 갱신:** 사용자가 이번 변경의 커밋·Push·PR 생성과 검사 통과 후 develop 병합을 승인했다.
+> 제출을 진행하며 최종 반영 상태는 `integrate/F3-memory-search` → develop PR을 따른다. 아래 승인 대기/미커밋 설명은 검토 당시 기록이다.
+
+# F3 자연어 검색 — 최신 상태
+
+> 2026-11-25 · `integrate/F3-memory-search` · 작업 도구 없음(검사 완료·승인 대기)
+
+- 실제 기준: PR #47 병합 `origin/develop 5b5d0c6` 확인. 이전 기능 브랜치는 보존했다.
+- 패치 01의 `build_semantic_search(engine)`를 실행 조립부에 연결했다.
+- 패치 02는 `pnpm gen:api-types`로 재생성했고 두 생성 파일 모두 패치와 정확히 일치했다.
+- 분리 PostgreSQL·합성 모델로 서버 693/skip 0, 앱 215, 검색 Chromium 2, 실제 HTTP→앱 IPC 통로 1 통과. 정적 검사·타입·빌드 통과.
+- 실제 Gmail·유료 AI·사용자 DB 미접근. 기존 데이터·벡터·브랜치 삭제/재생성 없음.
+- 실제 모델 품질·5초 성능·네이티브 Electron 창은 미검증이다.
+- 미커밋·미Push이며 신규 PR 없음. 커밋·Push·PR 생성과 develop 반영 승인을 기다린다. main 제외.
+- 변경 파일·검사 방법·실환경 확인: [통합 기록](F3-memory-search-integration.md).
+
+<details>
+<summary>이전 제출·검사 기록 (현재 실행 지시 아님)</summary>
+
 > 2026-11-25 제출 갱신: 사용자 승인으로 구현 `63c25df` 커밋·Push, PR #47 제출 완료. 미커밋 작업 없음(이 문서 갱신도 제출). develop 병합 승인 있음; 최종 병합 상태는 PR #47을 따른다. 공통 패치 01~02는 미적용이며 운영 의미 검색은 미통합. 아래 승인 대기/미커밋 설명은 제출 전 기록이다.
 
 > **2026-11-25 기억 검색 개선:** `feat/F3-memory-search`, `/workspace/f3-memory-search`, 기준 develop `7b48c68`.
@@ -254,5 +273,7 @@ Gmail 수신/연결/키·잠금 파일은 보존했다. 새 Alembic 이력과 �
 - 2026-11-19 사용자가 로컬 통합·커밋·Push·PR과 문제없을 경우 `develop` 병합까지 승인했다.
   통합 후 재검사에서 249개가 모두 통과했다. PR은 F3 기능·등록 범위이며 실제 AI 연결 완료를 뜻하지 않는다.
 - `main` 병합은 승인 범위에 포함하지 않는다.
+
+</details>
 
 </details>

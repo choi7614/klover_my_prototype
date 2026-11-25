@@ -1,8 +1,21 @@
-# F3 기억 검색 — 적용 전 공통 변경안
+> **2026-11-25 제출 갱신:** 사용자가 이번 변경의 커밋·Push·PR 생성과 검사 통과 후 develop 병합을 승인했다.
+> 제출을 진행하며 최종 반영 상태는 `integrate/F3-memory-search` → develop PR을 따른다. 아래 승인 대기/미커밋 설명은 검토 당시 기록이다.
+
+# F3 기억 검색 — 공통 변경안과 적용 기록
+
+## 최신 적용 상태 (2026-11-25)
+
+- PR #47이 병합된 `origin/develop 5b5d0c6`에서 `integrate/F3-memory-search`를 만들었다.
+- 01은 실행 명령 원본에 적용했다. 02는 `pnpm gen:api-types`로 원본에서 다시 생성했고 패치와 정확히 일치했다.
+- 분리 DB·합성 AI의 실행 조립/HTTP 검사, 앱 HTTP·IPC 연결 검사를 통과했다.
+- 현재 미커밋·미Push이며 PR 생성·develop 병합 승인 대기다. 적용된 작업 트리에는 재적용하지 않는다.
+- 원본 패치 파일은 보존한다. [최종 검사·제한·다음 단계](../../../docs/dev/F3-memory-search-integration.md).
+
+## PR #47에서 전달한 적용 전 기록
 
 기준: `origin/develop 7b48c68` (PR #46), 2026-11-25.
 기능 작업: `feat/F3-memory-search`, `/workspace/f3-memory-search`.
-**두 패치 모두 미적용이다. 운영 의미 검색 연결은 아직 미통합이다.**
+**아래는 PR #47 제출 당시 두 패치가 미적용이었던 기록이다. 최신 상태는 위 적용 기록을 따른다.**
 루트의 과거 `01-search-ai-wiring.patch`는 이미 반영된 기록이므로 재적용하지 않는다.
 
 | 순서 | 파일 | 목적 |

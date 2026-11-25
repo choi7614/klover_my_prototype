@@ -1834,6 +1834,16 @@
           "filters": {
             "$ref": "#/components/schemas/SearchFilters"
           },
+          "original_terms": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Original Terms",
+            "type": "array"
+          },
           "topic": {
             "anyOf": [
               {
@@ -2855,6 +2865,23 @@
             "title": "Search Id",
             "type": "string"
           },
+          "search_warnings": {
+            "items": {
+              "$ref": "#/components/schemas/SearchFailure"
+            },
+            "title": "Search Warnings",
+            "type": "array"
+          },
+          "semantic_coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SemanticCoverage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "semantic_enabled": {
             "title": "Semantic Enabled",
             "type": "boolean"
@@ -2968,6 +2995,38 @@
           "direction"
         ],
         "title": "SearchResult",
+        "type": "object"
+      },
+      "SemanticCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "compatible_mails": {
+            "minimum": 0.0,
+            "title": "Compatible Mails",
+            "type": "integer"
+          },
+          "eligible_mails": {
+            "minimum": 0.0,
+            "title": "Eligible Mails",
+            "type": "integer"
+          },
+          "limited": {
+            "default": false,
+            "title": "Limited",
+            "type": "boolean"
+          },
+          "scanned_chunks": {
+            "minimum": 0.0,
+            "title": "Scanned Chunks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "eligible_mails",
+          "compatible_mails",
+          "scanned_chunks"
+        ],
+        "title": "SemanticCoverage",
         "type": "object"
       },
       "StyleState": {

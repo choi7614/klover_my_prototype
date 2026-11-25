@@ -1316,6 +1316,8 @@ export interface components {
             /** Expansions */
             expansions?: string[];
             filters?: components["schemas"]["SearchFilters"];
+            /** Original Terms */
+            original_terms?: string[];
             /** Topic */
             topic?: string | null;
         };
@@ -1688,6 +1690,9 @@ export interface components {
             results: components["schemas"]["SearchResult"][];
             /** Search Id */
             search_id: string;
+            /** Search Warnings */
+            search_warnings?: components["schemas"]["SearchFailure"][];
+            semantic_coverage?: components["schemas"]["SemanticCoverage"] | null;
             /** Semantic Enabled */
             semantic_enabled: boolean;
             /** Truncated */
@@ -1727,6 +1732,20 @@ export interface components {
             sources: ("keyword" | "metadata" | "vector")[];
             /** Subject */
             subject: string;
+        };
+        /** SemanticCoverage */
+        SemanticCoverage: {
+            /** Compatible Mails */
+            compatible_mails: number;
+            /** Eligible Mails */
+            eligible_mails: number;
+            /**
+             * Limited
+             * @default false
+             */
+            limited: boolean;
+            /** Scanned Chunks */
+            scanned_chunks: number;
         };
         /** StyleState */
         StyleState: {
