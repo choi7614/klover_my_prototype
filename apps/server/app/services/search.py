@@ -28,6 +28,7 @@ from app.services.search_ports import (
     ModelOutputInvalid,
     QueryParser,
     SearchAnswerer,
+    SemanticBatch,
     SemanticSearch,
 )
 from app.services.search_rules import (
@@ -35,6 +36,7 @@ from app.services.search_rules import (
     SearchError,
     apply_overrides,
     condition_matches,
+    exact_terms_match,
     keyword_terms,
     korean_date,
     normalize_intent,
@@ -49,6 +51,14 @@ def _snippet(mail: SearchMail, terms: tuple[str, ...]) -> tuple[str, list[str]]:
     start = max(0, min(positions, default=0) - 60)
     snippet = text[start : start + 260]
     return snippet, [term for term in found if term in snippet.casefold()]
+
+
+def _evidence_excerpt(mail: SearchMail, parsed: ParsedQuery, snippet: str = "") -> str:
+    positions = [mail.body_text.casefold().find(term) for term in keyword_terms(parsed)]
+    if snippet:
+        positions.append(mail.body_text.find(snippet))
+    start = max(0, min((pos for pos in positions if pos >= 0), default=0) - 200)
+    return mail.body_text[start : start + 4000]
 
 
 def combine_results(
@@ -93,10 +103,21 @@ def combine_results(
         ):
             continue
         matches = condition_matches(mail, parsed.filters)
+        if matches.get("기간") is False or not exact_terms_match(mail, parsed):
+            continue
         missing = [key for key, value in matches.items() if not value]
         if missing and not (any(matches.values()) or terms):
             continue
         snippet, match_terms = _snippet(mail, terms)
+        for hit in sorted(vector_hits, key=lambda hit: -hit.score):
+            if (
+                hit.mail_id == mail.mail_id
+                and hit.excerpt
+                and any(hit.excerpt in part for part in (mail.subject, mail.body_text))
+            ):
+                snippet = hit.excerpt[:260]
+                match_terms = [term for term in terms if term in snippet.casefold()]
+                break
         reason = " · ".join(key + " 일치" for key, value in matches.items() if value)
         method = (
             "의미 검색 일치"
@@ -147,7 +168,9 @@ def validate_answer(draft: AnswerDraft, mails: tuple[SearchMail, ...], results) 
         citations[number] = Citation(number=number, mail_id=sentence.mail_id)
         text.append(f"{sentence.quote} [{number}]")
     return SearchAnswer(
-        text=" ".join(text),
+        text=" ".join(text)
+        if text
+        else ("관련 후보는 있지만 답변할 근거가 부족해요. 메일을 확인해 주세요."),
         sentences=draft.sentences,
         citations=list(citations.values()),
     )
@@ -234,21 +257,61 @@ class SearchService:
         identifiers = [mail.mail_id for mail in (*candidates.full, *candidates.partial)]
         vector_hits = []
         vector_truncated = False
-        semantic_enabled = bool(self.semantic and self.semantic.ready and parsed.topic)
-        if semantic_enabled:
+        semantic_enabled = False
+        semantic_coverage = None
+        warnings = []
+        semantic_available = bool(self.semantic and self.semantic.ready and parsed.topic)
+        if semantic_available:
             try:
                 hits = await asyncio.wait_for(
                     self.semantic.search(scope=scope, parsed=parsed, limit=self.result_limit * 2),
                     self.model_timeout,
                 )
+                if isinstance(hits, SemanticBatch):
+                    semantic_coverage = hits.coverage
+                    hits = hits.hits
+                    if semantic_coverage.compatible_mails < semantic_coverage.eligible_mails:
+                        warnings.append(
+                            SearchFailure(
+                                code="embedding_incomplete",
+                                message=(
+                                    "일부 메일의 임베딩이 없거나 모델·차원이 달라 "
+                                    "의미 검색에서 제외했어요."
+                                ),
+                            )
+                        )
+                    if semantic_coverage.limited:
+                        warnings.append(
+                            SearchFailure(
+                                code="semantic_limited",
+                                message=(
+                                    "의미 검색 후보 상한에 도달했어요. 기간이나 주제를 좁혀 주세요."
+                                ),
+                            )
+                        )
                 vector_truncated = len(hits) > self.result_limit * 2
                 vector_hits = [
                     RankedHit.model_validate(hit) for hit in hits[: self.result_limit * 2]
                 ]
+                semantic_enabled = (
+                    semantic_coverage is None or semantic_coverage.compatible_mails > 0
+                )
             except Exception:
-                raise SearchError(
-                    "semantic_failed", "의미 검색을 완료하지 못했어요.", 503
-                ) from None
+                vector_hits = []
+                semantic_coverage = None
+                warnings.append(
+                    SearchFailure(
+                        code="semantic_failed",
+                        message="의미 검색을 완료하지 못해 키워드 검색 결과만 표시해요.",
+                    )
+                )
+        elif parsed.topic:
+            warnings.append(
+                SearchFailure(
+                    code="semantic_unavailable",
+                    message="로컬 의미 검색이 연결되지 않아 키워드 검색 결과만 표시해요.",
+                )
+            )
         identifiers.extend(hit.mail_id for hit in vector_hits)
         mails = await run_in_threadpool(
             self.repository.hydrate, scope, list(dict.fromkeys(identifiers))
@@ -267,6 +330,8 @@ class SearchService:
                 "results": [result.model_dump(mode="json") for result in results],
                 "partial": [result.model_dump(mode="json") for result in partial],
                 "semantic_enabled": semantic_enabled,
+                "semantic_coverage": semantic_coverage.model_dump() if semantic_coverage else None,
+                "search_warnings": [warning.model_dump() for warning in warnings],
                 "truncated": candidates.truncated or truncated or vector_truncated,
             },
         }
@@ -283,11 +348,32 @@ class SearchService:
             return
         else:
             evidence = tuple(
-                mail for mail in mails if mail.mail_id in {row.mail_id for row in results}
+                mail for mail in mails if mail.mail_id in {row.mail_id for row in results[:8]}
             )
             try:
                 output = await asyncio.wait_for(
-                    self.answerer.answer(query=request.query, parsed=parsed, mails=evidence),
+                    self.answerer.answer(
+                        query=request.query,
+                        parsed=parsed,
+                        mails=tuple(
+                            mail.model_copy(
+                                update={
+                                    "subject": mail.subject[:500],
+                                    "from_name": mail.from_name[:200],
+                                    "body_text": _evidence_excerpt(
+                                        mail,
+                                        parsed,
+                                        next(
+                                            row.snippet
+                                            for row in results
+                                            if row.mail_id == mail.mail_id
+                                        ),
+                                    ),
+                                }
+                            )
+                            for mail in evidence
+                        ),
+                    ),
                     self.model_timeout,
                 )
             except ProvidersNotConfigured:

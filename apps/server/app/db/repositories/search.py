@@ -1,5 +1,6 @@
 """F3 전용 읽기 저장소. 최소 저장 모델의 실제 열만 검색한다."""
 
+import re
 from dataclasses import dataclass
 
 from sqlalchemy import and_, case, func, not_, or_, select
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Mail, MailAccount
 from app.schemas.search import ParsedQuery, SearchMail, SearchScope
-from app.services.search_rules import keyword_terms, midnight, require_supported
+from app.services.search_rules import exact_terms, keyword_terms, midnight, require_supported
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,16 @@ def _literal_pattern(value):
 
 def _like(column, value):
     return column.ilike(_literal_pattern(value), escape="\\")
+
+
+def _exact_conditions(parsed):
+    return [
+        or_(
+            Mail.subject.op("~*")(r"(?<![[:alnum:]_])" + re.escape(term) + r"(?![[:alnum:]_])"),
+            Mail.body_text.op("~*")(r"(?<![[:alnum:]_])" + re.escape(term) + r"(?![[:alnum:]_])"),
+        )
+        for term in exact_terms(parsed)
+    ]
 
 
 def _conditions(filters):
@@ -110,7 +121,12 @@ class SQLSearchRepository:
             )
             for term in terms
         )
-        query = _scope_query(scope)
+        query = _scope_query(scope).where(*_exact_conditions(parsed))
+        if parsed.filters.period:
+            query = query.where(
+                Mail.received_at >= midnight(parsed.filters.period.start),
+                Mail.received_at < midnight(parsed.filters.period.end_before),
+            )
         if terms:
             query = query.where(or_(*term_matches))
         if terms:

@@ -12,8 +12,9 @@ from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
 from app.ai.interfaces import GenerationRequest, ProvidersNotConfigured, TextGeneration
-from app.schemas.search import AnswerDraft, ParsedQuery, ParseOutput, SearchMail
+from app.schemas.search import AnswerDraft, MonthPart, ParsedQuery, ParseOutput, SearchMail
 from app.services.search_ports import ModelOutputInvalid
+from app.services.search_rules import normalize_intent
 
 PROMPTS = Path(__file__).parent / "prompts"
 # 형식을 어기기 쉬운 로컬 모델을 위해 한 번만 다시 묻는다.
@@ -81,11 +82,76 @@ class SharedQueryParser:
 
     async def parse(self, *, query: str, reference_date: date) -> ParseOutput:
         # 질문과 기준 날짜만 보낸다. 메일 원문·사용자 식별 정보는 넣지 않는다.
+        def grounded(output: ParseOutput) -> None:
+            fragments = list(
+                re.finditer(
+                    r"(?:(\d{4})년\s*)?(\d{1,2})월\s*(초순|초|중순|하순|말)",
+                    query,
+                )
+            )
+            if len(fragments) == 1:
+                year, month, part = fragments[0].groups()
+                source_period = MonthPart(
+                    year=int(year) if year else None,
+                    month=int(month),
+                    part={
+                        "초": "early",
+                        "초순": "early",
+                        "중순": "middle",
+                        "말": "late",
+                        "하순": "late",
+                    }[part],
+                )
+                expected = normalize_intent(
+                    ParseOutput(
+                        filters={"period": source_period},
+                        topic=None,
+                    ),
+                    reference_date,
+                ).filters.period
+                if normalize_intent(output, reference_date).filters.period != expected:
+                    raise ValueError("질문에 적힌 월 구간을 넓히거나 바꿀 수 없습니다")
+            if (
+                output.topic
+                and not output.original_terms
+                and output.topic.casefold() not in query.casefold()
+            ):
+                raise ValueError("질문의 핵심 표현을 유지해야 합니다")
+            if any(
+                term.casefold()
+                in {
+                    "메일",
+                    "문의",
+                    "관련",
+                    "요청",
+                    "자료",
+                    "내용",
+                    "검토",
+                    "안내",
+                    "email",
+                    "mail",
+                    "inquiry",
+                    "request",
+                }
+                for term in output.expansions
+            ):
+                raise ValueError("너무 넓은 확장어는 사용할 수 없습니다")
+            if any(term.casefold() not in query.casefold() for term in output.original_terms):
+                raise ValueError("원래 표현은 질문에서 그대로 골라야 합니다")
+            unknown_sender = re.search(
+                r"(누가.{0,15}(모르|기억.{0,5}안)|발신자.{0,10}(모르|기억.{0,5}안)|"
+                r"보낸.{0,8}(사람|분).{0,10}(모르|기억.{0,5}안))",
+                query,
+            )
+            if unknown_sender and output.filters.counterparty is not None:
+                raise ValueError("모르는 발신자를 조건으로 만들 수 없습니다")
+
         return await _generate_valid(
             self.generator,
             prompt_file="search_parse.md",
             payload={"query": query, "reference_date": reference_date.isoformat()},
             model=ParseOutput,
+            check=grounded,
         )
 
 

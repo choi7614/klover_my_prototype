@@ -94,7 +94,7 @@ def test_korean_range_boundaries_and_full_partial_separation(search_database):
     )
     rows = repository.candidates(SCOPE, parsed)
     assert {row.mail_id for row in rows.full} == {"m1"}
-    assert {row.mail_id for row in rows.partial} == {"m2", "m3", "sent"}
+    assert {row.mail_id for row in rows.partial} == {"sent"}
 
 
 @pytest.mark.parametrize(

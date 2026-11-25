@@ -1,6 +1,7 @@
 """F3 입출력 포트. F1의 공통 AI SDK/임베딩 구현을 대신 만들지 않는다."""
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date
 from typing import Protocol
 
@@ -11,6 +12,7 @@ from app.schemas.search import (
     RankedHit,
     SearchMail,
     SearchScope,
+    SemanticCoverage,
 )
 
 
@@ -32,14 +34,20 @@ class SearchAnswerer(Protocol):
         ...
 
 
+@dataclass(frozen=True)
+class SemanticBatch:
+    hits: tuple[RankedHit, ...]
+    coverage: SemanticCoverage
+
+
 class SemanticSearch(Protocol):
     @property
     def ready(self) -> bool:
-        """실제 제공자와 저장 벡터의 provider/model/차원/mode가 일치하고 준비된 경우만 참."""
+        """로컬 제공자가 연결된 경우 참. 저장 범위의 호환성과 누락은 매 질의에 검사한다."""
         ...
 
     async def search(
         self, *, scope: SearchScope, parsed: ParsedQuery, limit: int
-    ) -> Sequence[RankedHit]:
+    ) -> Sequence[RankedHit] | SemanticBatch:
         """사용자·계정·시작 시점은 절대 완화하지 않는다. 조건은 동일하게 적용한다."""
         ...

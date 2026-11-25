@@ -1,5 +1,13 @@
 # 개발 현황판
 
+## F3 기억 검색 개선 (2026-11-25)
+
+- `feat/F3-memory-search` · 작업 도구 Codex(검사 완료/승인 대기) · `/workspace/f3-memory-search` · 기준 `origin/develop 7b48c68` (#46).
+- 질문/약어·동의어 확장·월 구간·원래 표현 유지·F1 벡터 읽기·키워드 결합·제한 안내 구현. 기존 F3 브랜치와 원본 작업 폴더 보존.
+- 공통 조립·생성 타입은 `patches/F3/memory-search/01~02` 미적용. 미커밋·미Push 작업이 위 폴더에 있으며 신규 PR 없음. 운영 의미 검색은 미통합.
+- 서버 689/skip 0·앱 215·합성 Chromium 2·정적 검사/빌드/패치 사전 검사 통과. [최신 구현·검사·미검증·통합 전달](F3-memory-search-handoff.md). 실제 모델 정확도/5초 성능·사용자 DB·Gmail·네이티브 앱 미검증.
+
+
 ## 분류 변경·설정 UI (2026-11-25)
 
 - `integrate/category-settings-ui` · 작업 도구 없음(검사 완료·제출) · 기준 `0fa3dd9` (#45).

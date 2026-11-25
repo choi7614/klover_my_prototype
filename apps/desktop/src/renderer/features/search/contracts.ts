@@ -11,7 +11,7 @@ export type Filters = {
   category?: string | null;
   has_attachment?: boolean | null;
 };
-export type ParsedQuery = { filters: Filters; topic: string | null; expansions: string[] };
+export type ParsedQuery = { filters: Filters; topic: string | null; expansions: string[]; original_terms?: string[] };
 export type Overrides = Filters & { topic?: string | null };
 export type SearchRequest = { ai_provider?: import('../../../shared/ai-bridge').AIChoice; query: string; overrides?: Overrides; search_id?: string };
 export type SearchResult = {
@@ -35,12 +35,14 @@ export type SearchAnswer = {
   sentences: { mail_id: string; quote: string }[];
   citations: { number: number; mail_id: string }[];
 };
-export type SearchFailure = { code: string; message: string };
+export type SearchFailure = { code: string; message: string; ai_execution?: unknown };
+export type SemanticCoverage = { eligible_mails: number; compatible_mails: number; scanned_chunks: number; limited: boolean };
 export type RecentSearch = { search_id: string; query: string; created_at: string };
 export type SearchEvent =
   | { type: 'parsed'; data: { search_id: string; parsed: ParsedQuery; reference_date: string } }
   | { type: 'results'; data: {
     results: SearchResult[]; partial: SearchResult[]; semantic_enabled: boolean; truncated: boolean;
+    semantic_coverage?: SemanticCoverage | null; search_warnings?: SearchFailure[];
   } }
   | { type: 'answer'; data: SearchAnswer }
   | { type: 'answer_error' | 'error'; data: SearchFailure };
@@ -110,15 +112,28 @@ export function readSearchEvent(value: unknown): SearchEvent {
       valid = typeof data.search_id === 'string' && /^[a-f0-9]{32}$/.test(data.search_id)
         && day(data.reference_date) && record(data.parsed)
         && filters(data.parsed.filters) && strings(data.parsed.expansions)
+        && data.parsed.expansions.length <= 8 && data.parsed.expansions.every((term) => term.length <= 200)
+        && (data.parsed.original_terms === undefined || (strings(data.parsed.original_terms)
+          && data.parsed.original_terms.length <= 4 && data.parsed.original_terms.every((term) => term.length <= 200)))
         && (data.parsed.topic === null || typeof data.parsed.topic === 'string');
       break;
     case 'results': {
       const rows = [...(Array.isArray(data.results) ? data.results : []),
         ...(Array.isArray(data.partial) ? data.partial : [])];
+      const coverage = data.semantic_coverage;
       valid = Array.isArray(data.results) && Array.isArray(data.partial) && rows.every(result)
         && new Set(rows.map((row) => row.mail_id)).size === rows.length
         && new Set(rows.map((row) => row.number)).size === rows.length
-        && typeof data.semantic_enabled === 'boolean' && typeof data.truncated === 'boolean';
+        && typeof data.semantic_enabled === 'boolean' && typeof data.truncated === 'boolean'
+        && (data.search_warnings === undefined || (Array.isArray(data.search_warnings)
+          && data.search_warnings.length <= 4 && data.search_warnings.every((warning) => record(warning)
+            && typeof warning.code === 'string' && typeof warning.message === 'string')))
+        && (data.semantic_coverage === undefined || data.semantic_coverage === null
+          || (record(coverage)
+            && ['eligible_mails', 'compatible_mails', 'scanned_chunks'].every((key) =>
+              Number.isSafeInteger(coverage[key])
+              && Number(coverage[key]) >= 0)
+            && typeof coverage.limited === 'boolean'));
       break;
     }
     case 'answer':

@@ -63,3 +63,6 @@
 .f3-chip-skeleton { width: 160px; height: 30px; }
 .f3-card-skeleton { width: 100%; height: 140px; margin-top: 12px; }
 @media (max-width: 900px) { .f3-search-header { flex-wrap: wrap; gap: 12px; } .f3-query-form { flex-basis: 100%; } .f3-search-body { flex-direction: column; } .f3-filter-panel { width: auto; border-left: 0; border-top: 1px solid var(--border); } .f3-results { padding: 16px; } }
+
+.f3-scope-summary { padding: 12px 24px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 4px 24px; font-size: var(--text-caption); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.f3-scope-summary p:first-child { flex-basis: 100%; }

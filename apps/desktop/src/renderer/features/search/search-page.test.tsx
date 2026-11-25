@@ -25,7 +25,7 @@ describe('F3 독립 검색 화면', () => {
     fireEvent.click(within(screen.getByRole('article', { name: '검색 결과 2' })).getByRole('button', { name: '◆ 답장 초안' }));
     expect(openDraft).toHaveBeenCalledWith({ mail_id: 'm2', source: 'F3' });
     fireEvent.click(screen.getByText('조건을 일부만 만족하는 메일 1건 더 보기'));
-    expect(screen.getByText('미충족: 기간')).toBeVisible();
+    expect(screen.getByText('미충족: 대상')).toBeVisible();
   });
 
   it('칩 삭제와 필터 수정은 기존 해석 ID를 유지하고 누적한 override로 재검색한다', async () => {
@@ -154,4 +154,33 @@ it('이번 검색의 제공자를 전달하고 조건 변경·재시도에서도
   fireEvent.click(screen.getByRole('button', { name: '기간 조건 삭제' }));
   await waitFor(() => expect(client.requests).toHaveLength(2));
   expect(client.requests[1].ai_provider).toBe('claude');
+});
+
+it('자동 확장어·실제 기간·임베딩 제한을 보여 주며 의미 실패를 성공으로 표시하지 않는다', async () => {
+  const synthetic = new SyntheticSearchClient();
+  const client: SearchClient = {
+    recent: () => synthetic.recent(),
+    async *search(request) {
+      for await (const event of synthetic.search(request)) {
+        if (event.type === 'parsed') {
+          yield { ...event, data: { ...event.data, parsed: { ...event.data.parsed,
+            topic: '고속트레이딩', original_terms: ['고속트레이딩'], expansions: ['HFT', '고빈도 매매'],
+            filters: { period: { start: '2026-10-01', end_before: '2026-10-11' } } } } };
+        } else if (event.type === 'results') {
+          yield { ...event, data: { ...event.data, semantic_enabled: false,
+            search_warnings: [{ code: 'semantic_failed', message: '의미 검색을 완료하지 못해 키워드 검색 결과만 표시해요.' }],
+            semantic_coverage: null } };
+        } else yield event;
+      }
+    },
+  };
+  render(<SearchPage client={client} identityKey="memory:test" />);
+  search('누가 보낸진 모르겠고 10월 초 고속트레이딩 문의');
+  await results();
+  expect(screen.queryByRole('button', { name: '상대 조건 삭제' })).not.toBeInTheDocument();
+  expect(screen.getByText('자동 확장어: HFT, 고빈도 매매')).toBeVisible();
+  expect(screen.getByText(/적용 기간\(한국 시간\): 2026-10-01 ~ 2026-10-10/)).toBeVisible();
+  expect(screen.getByText(/가져오지 않은 과거 메일/)).toBeVisible();
+  expect(screen.getByText('의미 검색을 완료하지 못해 키워드 검색 결과만 표시해요.')).toBeVisible();
+  expect(screen.queryByText('키워드·의미 검색 결과')).not.toBeInTheDocument();
 });
