@@ -37,7 +37,7 @@ def test_synthetic_exact_three_results_and_only_result_evidence_in_order():
     target = service(answerer=answerer)
     result = search(target)
     assert {row.mail_id for row in result.results} == {"m1", "m2", "m3"}
-    assert [row.mail_id for row in result.partial] == ["partial"]
+    assert result.partial == []  # 명시 기간 밖은 일부 일치에도 섞지 않는다.
     assert {mail.mail_id for mail in answerer.calls[0]["mails"]} == {"m1", "m2", "m3"}
     assert result.answer and len(result.answer.citations) == 3
     numbers = {row.mail_id: row.number for row in result.results}
@@ -76,7 +76,7 @@ def test_zero_results_does_not_call_answer_model_even_with_partial_results():
             answerer=answerer,
         )
     )
-    assert result.results == [] and len(result.partial) == 1
+    assert result.results == [] and result.partial == []
     assert result.answer.text == "찾은 메일이 없습니다" and result.answer.citations == []
     assert answerer.calls == []
 
@@ -149,7 +149,7 @@ def test_vector_duplicate_chunks_do_not_inflate_rank_and_foreign_ids_do_not_leak
     assert len({row.mail_id for row in result.results}) == 3
     assert "vector" in result.results[0].sources
     assert "foreign" not in str(result) and "old" not in {row.mail_id for row in result.results}
-    assert result.partial[0].missing_conditions == ["기간"]
+    assert result.partial == []
     assert [row.number for row in result.results] == [1, 2, 3]
 
 
@@ -243,9 +243,9 @@ def test_invalid_or_excessive_vector_response_is_bounded_and_not_fake_success():
         async def search(self, **_):
             return [{"mail_id": "m1", "score": float("nan")}]
 
-    with pytest.raises(SearchError) as error:
-        search(service(semantic=BrokenVectors()))
-    assert error.value.code == "semantic_failed"
+    failed = search(service(semantic=BrokenVectors()))
+    assert len(failed.results) == 3 and not failed.semantic_enabled
+    assert failed.search_warnings[0].code == "semantic_failed"
 
     class TooManyVectors:
         ready = True

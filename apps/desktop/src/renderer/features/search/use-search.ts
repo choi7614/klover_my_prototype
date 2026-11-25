@@ -14,12 +14,15 @@ export type SearchState = {
   answerError: SearchFailure | null;
   error: string | null;
   semantic: boolean;
+  warnings: SearchFailure[];
+  coverage: import('./contracts').SemanticCoverage | null;
+  aiExecution: unknown;
   truncated: boolean;
   referenceDate: string | null;
 };
 const emptyState: SearchState = {
   phase: 'idle', parsed: null, results: [], partial: [], answer: null,
-  answerError: null, error: null, semantic: false, truncated: false, referenceDate: null,
+  answerError: null, error: null, semantic: false, warnings: [], coverage: null, aiExecution: null, truncated: false, referenceDate: null,
 };
 
 function validAnswer(answer: SearchAnswer, results: SearchResult[]): boolean {
@@ -28,7 +31,8 @@ function validAnswer(answer: SearchAnswer, results: SearchResult[]): boolean {
   return answer.sentences.every((sentence) => numbers.has(sentence.mail_id)
     && citations.get(sentence.mail_id) === numbers.get(sentence.mail_id))
     && answer.citations.every((citation) => numbers.get(citation.mail_id) === citation.number)
-    && (results.length === 0 ? answer.sentences.length === 0 : answer.sentences.length > 0);
+    && (answer.sentences.length > 0 || answer.citations.length === 0)
+    && (results.length > 0 || answer.sentences.length === 0);
 }
 
 export function useSearch(client: SearchClient, identityKey: string, provider: import('../../../shared/ai-bridge').AIChoice = 'default') {
@@ -101,13 +105,14 @@ export function useSearch(client: SearchClient, identityKey: string, provider: i
           results = event.data.results;
           setState((previous) => ({ ...previous, phase: 'answering', results,
             partial: event.data.partial, semantic: event.data.semantic_enabled,
-            truncated: event.data.truncated }));
+            truncated: event.data.truncated, warnings: event.data.search_warnings ?? [],
+            coverage: event.data.semantic_coverage ?? null }));
         } else if ((event.type === 'answer' || event.type === 'answer_error') && phase === 'results') {
           phase = 'finished';
           if (event.type === 'answer' && validAnswer(event.data, results)) {
-            setState((previous) => ({ ...previous, phase: 'done', answer: event.data }));
+            setState((previous) => ({ ...previous, phase: 'done', answer: event.data, aiExecution: event.data.ai_execution }));
           } else {
-            setState((previous) => ({ ...previous, phase: 'done', answerError: event.type === 'answer_error'
+            setState((previous) => ({ ...previous, phase: 'done', aiExecution: event.data.ai_execution, answerError: event.type === 'answer_error'
               ? event.data : { code: 'invalid_answer', message: '답변의 근거를 확인하지 못했어요.' } }));
           }
         } else {

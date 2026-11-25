@@ -160,7 +160,7 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
 
   return <section className="f3-search-page" aria-label="자연어 검색">
     <header className="f3-search-header">
-      <h1>자연어 검색</h1>      <AIExecutionNotice value={state.answer?.ai_execution} />
+      <h1>자연어 검색</h1>      <AIExecutionNotice value={state.aiExecution} />
       <AIChoiceControl purpose="search" value={provider} onChange={setProvider} disabled={['parsing', 'searching', 'answering'].includes(state.phase)} />
       <form onSubmit={submit} className="f3-query-form">
         <span className="f3-ai" aria-hidden="true">◆</span>
@@ -185,6 +185,12 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
         + 조건 추가
       </button>}
     </div>
+    {state.parsed && <div className="f3-scope-summary" aria-label="실제 검색 범위">
+      <p>검색 범위: 이 계정에 저장된 메일만 검색해요. 가져오지 않은 과거 메일은 포함되지 않아요.</p>
+      {filters?.period && <p>적용 기간(한국 시간): {filters.period.start} ~ {nextDay(filters.period.end_before, -1)} · 종료일 포함</p>}
+      <p>원래 검색어: {[state.parsed.topic, ...(state.parsed.original_terms ?? [])].filter(Boolean).filter((term, index, terms) => terms.indexOf(term) === index).join(', ') || '조건만 검색'}</p>
+      <p>자동 확장어: {state.parsed.expansions.join(', ') || '없음'}</p>
+    </div>}
     <div className="f3-search-body">
       <main className="f3-results" aria-busy={busy}>
         {state.phase === 'idle' && <div className="f3-empty"><Search aria-hidden="true" />
@@ -198,6 +204,8 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
             <h2>◆ AI 답변</h2>
             {state.phase === 'answering' && <p role="status">◆ 근거를 확인하고 있어요…</p>}
             {state.answerError && <p role="status">{state.answerError.message}</p>}
+            {state.answer && state.results.length > 0 && state.answer.sentences.length === 0 &&
+              <p>관련 후보는 있지만 답변할 근거가 부족해요. 메일을 확인해 주세요.</p>}
             {state.answer && state.results.length > 0 && state.answer.sentences.map((sentence, index) => {
               const citation = state.answer!.citations.find((item) => item.mail_id === sentence.mail_id)!;
               return <p key={index}>{sentence.quote} <button className="f3-citation"
@@ -214,6 +222,8 @@ function SearchScreen({ client, identityKey, navigation = {}, initialQuery = '',
               <option value="relevance">관련도순</option><option value="newest">최신순</option>
             </select></label></div>
           <p className="f3-search-method">{state.semantic ? '키워드·의미 검색 결과' : '키워드·조건 검색 결과 · 이번 검색은 의미 검색을 사용하지 않았어요.'}</p>
+          {state.warnings.map((warning) => <p role="status" key={warning.code}>{warning.message}</p>)}
+          {state.coverage && <p className="f3-search-method">의미 검색 가능 메일 {state.coverage.compatible_mails} / 조건 내 저장 메일 {state.coverage.eligible_mails}건 · 검사한 청크 {state.coverage.scanned_chunks}개</p>}
           {state.truncated && <p role="status">일부 결과만 표시하고 있어요. 조건을 좁혀 주세요.</p>}
           {results.map((row) => <ResultCard key={row.mail_id} row={row} highlighted={highlighted === row.mail_id} navigation={navigation} />)}
           {state.partial.length > 0 && <details className="f3-partial"><summary>

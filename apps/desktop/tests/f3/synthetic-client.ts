@@ -33,7 +33,7 @@ export class SyntheticSearchClient implements SearchClient {
     const search_id = (this.records.size + 1).toString(16).padStart(32, '0');
     this.records.set(search_id, { query: request.query, overrides });
     const parsed: ParsedQuery = {
-      filters: { period: { start: '2026-10-01', end_before: '2026-11-01' } }, topic: '예산', expansions: [],
+      filters: { period: { start: '2026-10-01', end_before: '2026-11-01' }, directions: ['received'] }, topic: '예산', expansions: [],
     };
     const { topic, ...filters } = overrides;
     Object.assign(parsed.filters, filters);
@@ -42,8 +42,8 @@ export class SyntheticSearchClient implements SearchClient {
     await new Promise((resolve) => setTimeout(resolve, 30));
     const rows = request.query === '빈 결과' ? [] : syntheticRows.map((row) => ({ ...row }));
     const partial: SearchResult[] = rows.length && parsed.filters.period ? [{
-      ...syntheticRows[0], mail_id: 'm4', number: 4, subject: '기간 밖 합성 예산 메일',
-      missing_conditions: ['기간'], reason: '키워드 일치', received_at: '2026-11-10T09:00:00+09:00',
+      ...syntheticRows[0], mail_id: 'm4', number: 4, subject: '보낸 합성 예산 메일',
+      missing_conditions: ['대상'], reason: '키워드 일치', direction: 'sent', received_at: '2026-10-10T09:00:00+09:00',
     }] : [];
     yield { type: 'results', data: { results: rows, partial, semantic_enabled: false, truncated: false } };
     await new Promise((resolve) => setTimeout(resolve, 30));

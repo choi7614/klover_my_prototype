@@ -36,6 +36,12 @@ class RelativePeriod(Contract):
     relative: Literal["last_month", "this_week", "yesterday"]
 
 
+class MonthPart(Contract):
+    month: Annotated[int, Field(ge=1, le=12, strict=True)]
+    part: Literal["early", "middle", "late"]
+    year: Annotated[int, Field(ge=1900, le=9998, strict=True)] | None = None
+
+
 class Counterparty(Contract):
     kind: Literal["name", "address", "organization"]
     value: Text
@@ -59,17 +65,18 @@ class SearchFilters(Contract):
 
 
 class IntentFilters(SearchFilters):
-    period: DateRange | RelativePeriod | None = None
+    period: DateRange | RelativePeriod | MonthPart | None = None
 
 
 class ParsedQuery(Contract):
     filters: SearchFilters = Field(default_factory=SearchFilters)
     topic: Text | None = None
     expansions: Annotated[list[Text], Field(max_length=8)] = Field(default_factory=list)
+    original_terms: Annotated[list[Text], Field(max_length=4)] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def expansions_require_topic(self):
-        if self.topic is None and self.expansions:
+        if self.topic is None and (self.expansions or self.original_terms):
             raise ValueError("주제 없이 확장어만 사용할 수 없습니다")
         return self
 
@@ -78,6 +85,7 @@ class ParseOutput(Contract):
     filters: IntentFilters
     topic: Text | None
     expansions: Annotated[list[Text], Field(max_length=8)] = Field(default_factory=list)
+    original_terms: Annotated[list[Text], Field(max_length=4)] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def meaningful(self):
@@ -122,6 +130,7 @@ class SearchMail(Contract):
 class RankedHit(Contract):
     mail_id: MailID
     score: Annotated[float, Field(ge=0, le=1, allow_inf_nan=False)]
+    excerpt: Annotated[str, Field(max_length=1200)] | None = None
 
 
 class SearchResult(Contract):
@@ -147,7 +156,7 @@ class EvidenceSentence(Contract):
 
 class AnswerDraft(Contract):
     # 자유 생성 문장의 사실성을 보장할 공통 모델이 없어, 검증 가능한 발췌만 받는다.
-    sentences: Annotated[list[EvidenceSentence], Field(min_length=1, max_length=8)]
+    sentences: Annotated[list[EvidenceSentence], Field(min_length=0, max_length=8)]
 
 
 class Citation(Contract):
@@ -166,6 +175,13 @@ class SearchFailure(Contract):
     message: str
 
 
+class SemanticCoverage(Contract):
+    eligible_mails: int = Field(ge=0)
+    compatible_mails: int = Field(ge=0)
+    scanned_chunks: int = Field(ge=0)
+    limited: bool = False
+
+
 class SearchResponse(Contract):
     ai_execution: dict | None = None
     search_id: str
@@ -174,6 +190,8 @@ class SearchResponse(Contract):
     results: list[SearchResult]
     partial: list[SearchResult]
     semantic_enabled: bool
+    semantic_coverage: SemanticCoverage | None = None
+    search_warnings: list[SearchFailure] = Field(default_factory=list)
     truncated: bool
     answer: SearchAnswer | None = None
     answer_error: SearchFailure | None = None
