@@ -18,7 +18,12 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["httpx2>=2.16,<3", "pytest>=8,<10", "ruff>=0.11,<1"]
+dev = [
+    "httpx2>=2.16,<3",
+    "import-linter>=2.1",
+    "pytest>=8,<10",
+    "ruff>=0.11,<1",
+]
 
 [tool.uv]
 package = false
@@ -33,3 +38,67 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+# 구조 규칙 검사: uv run lint-imports
+# 처음 도입할 때 이미 있던 위반은 ignore_imports에 '동결'했다. 새 위반만 막는다.
+# 동결 항목을 고치면 이 목록에서 지워서 규칙을 더 조인다.
+[tool.importlinter]
+root_package = "app"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "AI 어댑터(app.ai)는 DB 계층을 모른다"
+type = "forbidden"
+allow_indirect_imports = true
+source_modules = ["app.ai"]
+forbidden_modules = ["app.db"]
+ignore_imports = [
+    # 동결: 의미 검색 조립 함수가 SQL 저장소를 직접 만든다 (run_mail_api 조립 정리 때 이동)
+    "app.ai.search_semantic -> app.db.repositories.search_semantic",
+]
+
+[[tool.importlinter.contracts]]
+name = "외부 AI SDK는 app.ai 안에서만 쓴다"
+type = "forbidden"
+allow_indirect_imports = true
+source_modules = ["app.api", "app.services", "app.pipeline", "app.db", "app.schemas"]
+forbidden_modules = ["anthropic"]
+
+[[tool.importlinter.contracts]]
+name = "저장소(db)는 API·서비스·파이프라인을 호출하지 않는다"
+type = "forbidden"
+allow_indirect_imports = true
+source_modules = ["app.db"]
+forbidden_modules = ["app.api", "app.services", "app.pipeline"]
+ignore_imports = [
+    # 동결: 저장소가 서비스 쪽 오류·포트 정의를 가져다 쓴다. 정의를 하위 계층(예: app.schemas)으로
+    # 옮기면 아래 줄을 지울 수 있다.
+    "app.db.repositories.mail_analysis -> app.pipeline.embed",
+    "app.db.repositories.f5 -> app.services.f5_errors",
+    "app.db.repositories.f5_calendar -> app.services.f5_errors",
+    "app.db.repositories.report_source -> app.services.report_ports",
+    "app.db.repositories.search -> app.services.search_rules",
+    "app.db.repositories.search_recent -> app.services.search_rules",
+    "app.db.repositories.search_semantic -> app.services.search_ports",
+]
+
+[[tool.importlinter.contracts]]
+name = "스키마(schemas)는 API·서비스·DB를 모른다"
+type = "forbidden"
+allow_indirect_imports = true
+source_modules = ["app.schemas"]
+forbidden_modules = ["app.api", "app.services", "app.db", "app.pipeline"]
+
+[[tool.importlinter.contracts]]
+name = "서비스는 API와 실행 명령(cli)을 모른다"
+type = "forbidden"
+allow_indirect_imports = true
+source_modules = ["app.services", "app.pipeline"]
+forbidden_modules = ["app.api", "app.cli", "app.main"]
+
+[[tool.importlinter.contracts]]
+name = "API는 SQLAlchemy 모델(app.db.models)을 직접 쓰지 않는다"
+type = "forbidden"
+allow_indirect_imports = true
+source_modules = ["app.api"]
+forbidden_modules = ["app.db.models", "app.db.f1_models", "app.db.f2_models"]
