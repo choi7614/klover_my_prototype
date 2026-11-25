@@ -51,4 +51,17 @@ describe('AI 설정', () => {
     rerender(<AIChoiceControl purpose="weekly_report" value="ollama" onChange={change} />);
     expect(screen.queryByText(/Anthropic으로 전송/)).not.toBeInTheDocument();
   });
+  it('Claude 안내는 같은 줄의 짧은 표시라서 선택을 바꿔도 줄 수가 늘지 않고, 자세한 문장은 툴팁에 있다', async () => {
+    bridge(); const { container, rerender } = render(<AIChoiceControl purpose="weekly_report" value="ollama" onChange={vi.fn()} />);
+    await screen.findByRole('option', { name: /기본 설정/ });
+    const row = container.firstElementChild as HTMLElement;
+    expect(row.className).not.toContain('flex-wrap');
+    const before = row.children.length;
+    rerender(<AIChoiceControl purpose="weekly_report" value="claude" onChange={vi.fn()} />);
+    const note = await screen.findByText('Anthropic으로 전송 · 요금 발생');
+    expect(note.parentElement).toBe(row);
+    expect(note.className).not.toContain('basis-full');
+    expect(note).toHaveAttribute('title', '필요한 메일·프로필이 Anthropic으로 전송되며 API 요금이 발생합니다.');
+    expect(row.children.length).toBeGreaterThan(before);
+  });
 });

@@ -108,11 +108,12 @@ class Evidence(F2Model):
     ]
 
 
-class GeneratedDraft(F2Model):
+class DraftCore(F2Model):
+    """AI가 직접 만드는 부분. 근거는 서버가 계산하므로 여기에 없다."""
+
     body: Annotated[str, Field(min_length=1, max_length=20000)]
     directions: tuple[Direction, ...] = Field(min_length=2, max_length=3)
     selected_direction: Direction
-    evidence: tuple[Evidence, ...] = Field(default=(), max_length=100)
 
     @model_validator(mode="after")
     def valid_directions(self) -> Self:
@@ -124,6 +125,10 @@ class GeneratedDraft(F2Model):
         ):
             raise ValueError("답장 방향 또는 본문을 확인하세요")
         return self
+
+
+class GeneratedDraft(DraftCore):
+    evidence: tuple[Evidence, ...] = Field(default=(), max_length=100)
 
 
 class DraftCreate(F2Model):

@@ -24,15 +24,6 @@ def output(**changes):
     }
 
 
-def quote(**changes):
-    return {
-        "text": "요청을 확인했습니다.",
-        "source": "mail:synthetic-only",
-        "source_quote": "합성 본문",
-        **changes,
-    }
-
-
 def adapter(response):
     generator = SharedSyntheticGeneration(
         response if isinstance(response, str) else json.dumps(response, ensure_ascii=False)
@@ -40,24 +31,28 @@ def adapter(response):
     return SharedDraftAI(generator, allow_test_provider=True), generator
 
 
-@pytest.mark.parametrize("fixed", [False, True])
-def test_repeated_exact_text_gets_distinct_nonoverlapping_verified_spans(fixed):
-    from app.services.profile_draft import compose
+MAIL = "3분기 부서별 예산 집행 현황 자료를 금요일까지 보내 주세요."
+REPLY = "요청하신 3분기 부서별 예산 집행 현황 자료는 확인 후 공유드리겠습니다."
 
-    request = input_for().model_copy(
+
+def mail_request(**profile):
+    request = input_for()
+    return request.model_copy(
         update={
-            "profile": Profile(
-                greeting="안녕하세요." if fixed else "",
-                closing="감사합니다." if fixed else "",
-            )
+            "profile": Profile(**profile),
+            "original": request.original.model_copy(update={"body_text": MAIL}),
         }
     )
-    target, generator = adapter(
-        output(
-            body="요청을 확인했습니다.\n확인할 내용:\n요청을 확인했습니다.",
-            evidence=[quote(), quote()],
-        )
+
+
+@pytest.mark.parametrize("fixed", [False, True])
+def test_repeated_sentences_get_distinct_nonoverlapping_verified_spans(fixed):
+    from app.services.profile_draft import compose
+
+    request = mail_request(
+        greeting="안녕하세요." if fixed else "", closing="감사합니다." if fixed else ""
     )
+    target, generator = adapter(output(body=f"{REPLY}\n확인할 내용:\n{REPLY}"))
     result = asyncio.run(target.generate(request))
     assert len(generator.requests) == 1
     assert len(result.evidence) == 2
@@ -66,7 +61,24 @@ def test_repeated_exact_text_gets_distinct_nonoverlapping_verified_spans(fixed):
     body, evidence = compose(result, request)
     for item in evidence:
         if item.source.startswith("mail:"):
-            assert body[item.span[0] : item.span[1]] == "요청을 확인했습니다."
+            assert body[item.span[0] : item.span[1]] == REPLY
+
+
+@pytest.mark.parametrize(
+    "evidence",
+    [
+        # 예전에는 거절되던 응답들. 이제 근거는 서버가 계산하므로 초안이 그대로 나온다.
+        [{"text": MAIL, "source": "mail:synthetic-only", "source_quote": MAIL}],
+        [{"text": REPLY.replace(" ", "\n"), "source": "mail:synthetic-only", "source_quote": MAIL}],
+        [{"text": "“확인 후” 공유", "source": "mail:synthetic-only", "source_quote": "…"}],
+        [{"text": REPLY, "source": "mail:private-id", "source_quote": "없는 인용"}] * 3,
+    ],
+)
+def test_previously_rejected_model_evidence_no_longer_blocks_the_draft(evidence):
+    target, generator = adapter(output(body=REPLY, evidence=evidence))
+    result = asyncio.run(target.generate(mail_request()))
+    assert len(generator.requests) == 1
+    assert [e.source for e in result.evidence] == ["mail:synthetic-only"]
 
 
 @pytest.mark.parametrize(
@@ -76,11 +88,6 @@ def test_repeated_exact_text_gets_distinct_nonoverlapping_verified_spans(fixed):
         (output(extra_private_field="private-response-canary"), "schema_invalid"),
         (output(body="  "), "body_or_directions_invalid"),
         (output(selected_direction="private-direction-canary"), "body_or_directions_invalid"),
-        (output(evidence=[quote(text="private-quote-canary")]), "body_quote_missing"),
-        (output(evidence=[quote(source="mail:private-id-canary")]), "source_not_allowed"),
-        (output(evidence=[quote(source_quote="private-source-canary")]), "source_quote_missing"),
-        (output(evidence=[quote(source="profile.greeting")]), "schema_invalid"),
-        (output(evidence=[quote(), quote()]), "evidence_overlap"),
         (output(body="합성 본문"), "incoming_echo"),
         (
             output(directions=["shorter", "추가 문의"], selected_direction="shorter"),
@@ -103,29 +110,25 @@ def test_failure_reasons_are_fixed_and_do_not_log_or_echo_private_values(respons
     assert reason in repair and "private-" not in repair
 
 
-def test_specific_repair_hint_recovers_without_discarding_valid_evidence():
+def test_specific_repair_hint_recovers_without_echoing_the_rejected_text():
     class Repair(SharedSyntheticGeneration):
         async def generate(self, request):
             self.requests.append(request)
+            first = len(self.requests) == 1
             return json.dumps(
-                output(
-                    evidence=[
-                        quote(source_quote="없는 인용") if len(self.requests) == 1 else quote()
-                    ]
-                ),
-                ensure_ascii=False,
+                output(body="합성 본문" if first else "요청을 확인했습니다."), ensure_ascii=False
             )
 
     generator = Repair()
     result = asyncio.run(SharedDraftAI(generator, allow_test_provider=True).generate(input_for()))
-    assert len(generator.requests) == 2 and len(result.evidence) == 1
+    assert len(generator.requests) == 2 and result.body == "요청을 확인했습니다."
     repair = json.loads(generator.requests[1].user_prompt)["previous_attempt_error"]
-    assert "source_quote_missing" in repair and "없는 인용" not in repair
+    assert "incoming_echo" in repair and "합성 본문" not in repair
 
 
 @pytest.mark.parametrize("operation", ["create", "revise"])
 def test_rejected_output_never_saves_or_replaces_draft_profile_or_user_edit(operation):
-    target, _ = adapter(output(evidence=[quote(source_quote="없는 인용")]))
+    target, _ = adapter(output(body="합성 본문"))
     api, repository = service(target)
     previous, profile = repository.previous.model_dump(), repository.profile().model_dump()
     request = (
@@ -151,12 +154,6 @@ def test_rejected_output_never_saves_or_replaces_draft_profile_or_user_edit(oper
             output(),
             "excluded_phrase",
         ),
-        (
-            {},
-            output(evidence=[quote(source="profile.phrase", source_quote="요청을 확인했습니다.")]),
-            "learned_phrase_mismatch",
-        ),
-        ({"purpose": "preview"}, output(evidence=[quote()]), "source_not_allowed"),
     ],
 )
 def test_request_specific_guards_remain_strict_and_diagnosable(change, response, reason):
@@ -164,13 +161,6 @@ def test_request_specific_guards_remain_strict_and_diagnosable(change, response,
     with pytest.raises(F2Error) as error:
         asyncio.run(target.generate(input_for().model_copy(update=change)))
     assert error.value.reason == reason and len(generator.requests) == 2
-
-
-def test_source_quote_whitespace_is_not_guessed_or_normalized_to_a_different_quote():
-    target, _ = adapter(output(evidence=[quote(source_quote="합성\n본문")]))
-    with pytest.raises(F2Error) as error:
-        asyncio.run(target.generate(input_for()))
-    assert error.value.reason == "source_quote_missing"
 
 
 @pytest.mark.parametrize(
