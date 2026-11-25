@@ -89,6 +89,12 @@ def approve(owner: Owner, service: Service, suggestion_id: str, body: ApproveReq
     return service.approve(owner, suggestion_id, body)
 
 
+@router.post("/suggestions/{suggestion_id}/reregister", response_model=SuggestionView)
+def reregister(owner: Owner, service: Service, suggestion_id: str, body: VersionRequest):
+    """등록한 일정을 사용자가 구글 캘린더에서 지웠을 때 다시 등록한다. 아직 있으면 만들지 않는다."""
+    return service.reregister(owner, suggestion_id, body.version)
+
+
 @router.post("/suggestions/{suggestion_id}/dismiss", response_model=SuggestionView)
 def dismiss(owner: Owner, service: Service, suggestion_id: str, body: VersionRequest):
     return service.repository.dismiss(owner, suggestion_id, body.version)

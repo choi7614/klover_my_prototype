@@ -21,6 +21,8 @@ export interface SuggestionsClient {
   get(suggestionId: string): Promise<Suggestion>;
   approve(suggestionId: string, request: { version: number; payload?: SuggestionPayload }): Promise<Suggestion>;
   dismiss(suggestionId: string, request: { version: number }): Promise<Suggestion>;
+  /** 등록한 일정을 사용자가 구글 캘린더에서 지웠을 때만 다시 등록한다. 아직 있으면 서버가 거절한다. */
+  reregister?(suggestionId: string, request: { version: number }): Promise<Suggestion>;
   conflicts(suggestionId: string, payload: CalendarPayload): Promise<ConflictResult>;
 }
 
@@ -41,6 +43,7 @@ export interface SuggestionsIPC {
   get(suggestionId: string): Promise<F5BridgeResult<Suggestion>>;
   approve(suggestionId: string, request: { version: number; payload?: SuggestionPayload }): Promise<F5BridgeResult<Suggestion>>;
   dismiss(suggestionId: string, request: { version: number }): Promise<F5BridgeResult<Suggestion>>;
+  reregister?(suggestionId: string, request: { version: number }): Promise<F5BridgeResult<Suggestion>>;
   conflicts(suggestionId: string, payload: CalendarPayload): Promise<F5BridgeResult<ConflictResult>>;
   todos(query: TodoListQuery): Promise<F5BridgeResult<Page<Todo>>>;
   createTodo(request: TodoCreateRequest): Promise<F5BridgeResult<Todo>>;

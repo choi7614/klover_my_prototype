@@ -32,6 +32,7 @@ export function TodoListPage({ client, mailboxPath = '/mail/inbox' }: { client: 
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [due, setDue] = useState('');
@@ -55,16 +56,21 @@ export function TodoListPage({ client, mailboxPath = '/mail/inbox' }: { client: 
     }
   }, [client, status]);
 
-  useEffect(() => { setItems([]); setCursor(null); void load(null, false); }, [load]);
+  useEffect(() => { setItems([]); setCursor(null); setNotice(''); void load(null, false); }, [load]);
 
   async function toggle(todo: Todo) {
     if (busy) return;
     setBusy(todo.todo_id);
     setError('');
+    setNotice('');
     try {
       const updated = await client.updateTodo(todo.todo_id, { version: todo.version, status: todo.status === 'open' ? 'completed' : 'open' });
       if (updated.todo_id !== todo.todo_id) throw new Error('invalid_response');
-      setItems(previous => previous.filter(item => item.todo_id !== todo.todo_id));
+      // 목록에서 바로 사라지면 삭제된 것처럼 보이므로 그 자리에 남기고(줄긋기), 어디로 갔는지 알려 준다.
+      setItems(previous => previous.map(item => item.todo_id === todo.todo_id ? updated : item));
+      setNotice(updated.status === 'completed'
+        ? `‘${updated.title}’을(를) 완료로 표시했어요. 삭제된 것이 아니라 ‘완료’ 탭에서 볼 수 있고, 체크를 다시 눌러 되돌릴 수 있어요.`
+        : `‘${updated.title}’을(를) 진행 중으로 되돌렸어요.`);
     } catch (failure) {
       setError(message(failure));
       void load(null, false);
@@ -106,6 +112,7 @@ export function TodoListPage({ client, mailboxPath = '/mail/inbox' }: { client: 
         <Button type="submit" variant="secondary" className="h-9 px-3" disabled={adding || !title.trim()}>{adding ? '추가 중…' : '+ 할 일 추가'}</Button>
       </form>}
       {error && <p role="alert" className="mb-3 text-caption text-danger">{error}</p>}
+      {notice && <p role="status" className="mb-3 rounded-leaf-sm bg-muted px-3 py-2 text-caption text-muted-foreground">{notice}</p>}
       {loading && !items.length && <div role="status" className="space-y-2"><span className="sr-only">할 일 불러오는 중</span>{[1, 2, 3].map(key => <div key={key} className="h-12 animate-pulse rounded-md bg-muted" />)}</div>}
       {!loading && !error && !items.length && <p className="py-10 text-center text-body text-muted-foreground">{status === 'open' ? '진행 중인 할 일이 없어요.' : '완료한 할 일이 없어요.'}</p>}
       <ul className="divide-y overflow-hidden rounded-leaf bg-background shadow-card" hidden={!items.length}>

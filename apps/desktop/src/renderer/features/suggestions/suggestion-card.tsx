@@ -39,6 +39,8 @@ function errorMessage(code: unknown) {
     stale_version: '제안 상태가 바뀌었어요. 새로 불러온 내용을 확인해 주세요.',
     execution_in_progress: '이미 처리 중이에요. 잠시 후 상태를 다시 확인해 주세요.',
     reply_executor_not_connected: '답장 초안 기능 연결을 기다리고 있어요.',
+    calendar_event_exists: '아직 구글 캘린더에 이 일정이 있어요. 캘린더에서 지운 뒤에 다시 눌러 주세요.',
+    reregister_not_available: '이 일정은 다시 추가할 수 없어요.',
   }[key] ?? '처리하지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.';
 }
 
@@ -56,6 +58,7 @@ export function SuggestionCard({ suggestion, client, onChange, onActive, calenda
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [conflict, setConflict] = useState<ConflictResult>();
+  const [notice, setNotice] = useState('');
   const inFlight = useRef(false);
   const conflictSequence = useRef(0);
   const isPending = row.status === 'pending';
@@ -102,6 +105,31 @@ export function SuggestionCard({ suggestion, client, onChange, onActive, calenda
     }
   }
 
+  /** 구글 캘린더에서 지운 일정을 사용자가 직접 요청했을 때만 다시 등록한다(자동 아님). */
+  async function registerAgain() {
+    if (inFlight.current || !client.reregister) return;
+    inFlight.current = true;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const updated = await client.reregister(row.suggestion_id, { version: row.version });
+      if (updated.suggestion_id !== row.suggestion_id || updated.mail_id !== row.mail_id
+        || updated.type !== row.type || !verifiedComplete(updated)) throw new Error('invalid_receipt');
+      onChange(updated);
+      setNotice('구글 캘린더에 다시 추가했어요. 캘린더에서 확인해 주세요.');
+    } catch (failure) {
+      setError(errorMessage(failure));
+      try {
+        const latest = await client.get(row.suggestion_id);
+        if (latest.suggestion_id === row.suggestion_id && latest.mail_id === row.mail_id) onChange(latest);
+      } catch { /* 오류 안내를 유지한다. */ }
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
+
   async function checkConflicts() {
     if (row.type !== 'calendar' || !('start' in draft)) return;
     const sequence = ++conflictSequence.current;
@@ -125,7 +153,15 @@ export function SuggestionCard({ suggestion, client, onChange, onActive, calenda
     </h3>
     {row.status === 'dismissed' ? <p role="status" className="text-body text-muted-foreground">무시함</p>
       : verifiedComplete(row)
-        ? <p role="status" className="text-body text-success">✓ {row.type === 'calendar' ? '캘린더에 추가했어요' : row.type === 'todo' ? '할 일에 추가했어요' : '답장 초안을 열었어요'}</p>
+        ? <>
+          <p role="status" className="text-body text-success">✓ {row.type === 'calendar' ? '캘린더에 추가했어요' : row.type === 'todo' ? '할 일에 추가했어요' : '답장 초안을 열었어요'}</p>
+          {row.type === 'calendar' && client.reregister && <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
+            <span className="text-caption text-muted-foreground">구글 캘린더에서 이 일정을 지우셨나요?</span>
+            <Button variant="secondary" className="h-8 px-3 text-caption" disabled={busy} onClick={() => void registerAgain()}>{busy ? '확인 중…' : '다시 추가'}</Button>
+          </div>}
+          {notice && <p role="status" className="mt-2 text-caption text-success">{notice}</p>}
+          {error && <p role="alert" className="mt-2 text-caption text-danger">{error}</p>}
+        </>
         : <>
           {'title' in draft && <label className="mb-2 grid gap-1 text-caption text-muted-foreground">제목
             <input className={inputClass} value={draft.title} disabled={!canEdit} maxLength={300}

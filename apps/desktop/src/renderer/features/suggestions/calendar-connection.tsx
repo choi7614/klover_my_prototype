@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { CalendarClient, CalendarConnection } from './types';
 
-export function CalendarConnectionPanel({ client, onChange }: { client: CalendarClient; onChange?: (state: CalendarConnection) => void }) {
+/** compact: 메일 읽기 화면용. 연결돼 있으면 아무것도 보이지 않고, 동의가 필요할 때만 짧게 안내한다. 관리는 설정 화면 패널을 쓴다. */
+export function CalendarConnectionPanel({ client, onChange, compact = false }: { client: CalendarClient; onChange?: (state: CalendarConnection) => void; compact?: boolean }) {
   const [state, setState] = useState<CalendarConnection>();
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -25,6 +26,18 @@ export function CalendarConnectionPanel({ client, onChange }: { client: Calendar
     calendar_permission_expired: '캘린더 권한이 만료됐어요. 추가 동의를 다시 확인해 주세요.',
     calendar_connection_failed: '캘린더 연결을 확인하지 못했어요.',
   };
+  if (compact) {
+    // 확인 중이거나 연결돼 있으면 메일 본문을 가리지 않는다.
+    if (!error && (!state || state.status === 'connected')) return null;
+    return <section aria-label="캘린더 연결" className="mx-7 mt-4 flex flex-wrap items-center gap-3 rounded-leaf bg-muted p-3 text-caption">
+      <p role="status" className="min-w-0 flex-1">{error ? '캘린더 연결을 확인하지 못했어요.' : (state && messages[state.status]) || '캘린더 연결 상태를 확인해 주세요.'}</p>
+      {client.connectCalendar && <Button variant="secondary" disabled={busy} onClick={() => {
+        setBusy(true); setError(false);
+        client.connectCalendar!().catch(() => setError(true)).finally(() => setBusy(false));
+      }}>Google Calendar 추가 동의</Button>}
+      <Button variant="secondary" disabled={busy} onClick={() => void refresh()}>연결 상태 다시 확인</Button>
+    </section>;
+  }
   return <section aria-label="캘린더 연결" className="rounded-leaf bg-background p-4 text-body shadow-card">
     <h2 className="font-bold">Google Calendar 연결</h2>
     <p>{state?.email || '계정 확인 중…'}</p>

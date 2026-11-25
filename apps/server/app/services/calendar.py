@@ -93,14 +93,23 @@ class CalendarTransport(Protocol):
 
 class CalendarAdapter(Protocol):
     def execute(
-        self, owner: Principal, suggestion_id: str, payload: CalendarPayload
+        self,
+        owner: Principal,
+        suggestion_id: str,
+        payload: CalendarPayload,
+        event_key: str | None = None,
     ) -> ExecutionReceipt: ...
+
+    def registered(self, owner: Principal, payload: CalendarPayload, external_id: str) -> bool: ...
 
     def conflicts(self, owner: Principal, payload: CalendarPayload) -> ConflictResult: ...
 
 
 class BlockedCalendar:
-    def execute(self, owner, suggestion_id, payload):
+    def execute(self, owner, suggestion_id, payload, event_key=None):
+        raise CalendarError("calendar_not_connected", blocked=True)
+
+    def registered(self, owner, payload, external_id):
         raise CalendarError("calendar_not_connected", blocked=True)
 
     def conflicts(self, owner, payload):
@@ -128,10 +137,32 @@ class GoogleCalendarAdapter:
             raise CalendarError("calendar_execution_mismatch", uncertain=True)
         return ExecutionReceipt(mode=self.transport.mode, external_id=stored.event_id)
 
-    def execute(self, owner, suggestion_id, payload):
+    def registered(self, owner, payload, external_id):
+        """등록했던 일정이 아직 캘린더에 살아 있는지. 사용자가 지웠으면(취소 상태 포함) False."""
         self._check(owner, payload, WRITE_SCOPES)
+        try:
+            existing = self.transport.find(payload.calendar_id, external_id)
+        except CalendarTransportError as error:
+            if error.kind in {"auth", "permission"}:
+                raise CalendarError(
+                    "calendar_permission_expired"
+                    if error.kind == "auth"
+                    else "calendar_scope_required",
+                    blocked=True,
+                ) from None
+            raise CalendarError("calendar_unavailable") from None
+        # 취소된 일정은 find가 빈 request_hash로 돌려준다.
+        return bool(existing and existing.request_hash)
+
+    def execute(self, owner, suggestion_id, payload, event_key=None):
+        self._check(owner, payload, WRITE_SCOPES)
+        # event_key는 '지운 일정을 다시 추가'할 때만 쓴다.
+        # 같은 키는 항상 같은 일정 ID라 재시도해도 중복되지 않는다.
         request = CalendarWrite(
-            payload.calendar_id, event_id(suggestion_id), payload, payload_hash(payload)
+            payload.calendar_id,
+            event_id(event_key or suggestion_id),
+            payload,
+            payload_hash(payload),
         )
         inserting = False
         try:

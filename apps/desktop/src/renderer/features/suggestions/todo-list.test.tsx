@@ -31,8 +31,20 @@ describe('할 일 목록', () => {
     expect(screen.getByText('마감 11/20(금)')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '근거 메일' })[0]).toHaveAttribute('href', '#/mail/inbox/synthetic-mail');
     fireEvent.click(screen.getByRole('checkbox', { name: '합성 할 일 t1 완료로 표시' }));
-    await waitFor(() => expect(screen.queryByText('합성 할 일 t1')).not.toBeInTheDocument());
+    expect(await screen.findByRole('status')).toHaveTextContent('삭제된 것이 아니라');
+    // 삭제처럼 사라지지 않고 그 자리에 줄긋기로 남는다.
+    expect(screen.getByText('합성 할 일 t1')).toHaveClass('line-through');
+    expect(screen.getByRole('checkbox', { name: '합성 할 일 t1 진행 중으로 되돌리기' })).toBeChecked();
     expect(value.updateTodo).toHaveBeenCalledWith('t1', { version: 1, status: 'completed' });
+  });
+  it('완료한 할 일은 체크를 다시 눌러 진행 중으로 되돌릴 수 있다', async () => {
+    const value = client();
+    render(<TodoListPage client={value} />);
+    await screen.findByText('합성 할 일 t1');
+    fireEvent.click(screen.getByRole('checkbox', { name: '합성 할 일 t1 완료로 표시' }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: '합성 할 일 t1 진행 중으로 되돌리기' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('진행 중으로 되돌렸어요'));
+    expect(screen.getByText('합성 할 일 t1')).not.toHaveClass('line-through');
   });
   it('완료 탭을 따로 불러오고, 직접 추가는 버튼을 눌렀을 때만 요청한다', async () => {
     const value = client();

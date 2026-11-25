@@ -58,6 +58,7 @@ const suggestions = Object.freeze<F5Bridge>({
   get: suggestionId => ipcRenderer.invoke('klover:suggestions:get', suggestionId),
   approve: (suggestionId, request) => ipcRenderer.invoke('klover:suggestions:approve', suggestionId, request),
   dismiss: (suggestionId, request) => ipcRenderer.invoke('klover:suggestions:dismiss', suggestionId, request),
+  reregister: (suggestionId, request) => ipcRenderer.invoke('klover:suggestions:reregister', suggestionId, request),
   conflicts: (suggestionId, payload) => ipcRenderer.invoke('klover:suggestions:conflicts', suggestionId, payload),
   todos: query => ipcRenderer.invoke('klover:suggestions:todos', query),
   createTodo: request => ipcRenderer.invoke('klover:suggestions:createTodo', request),

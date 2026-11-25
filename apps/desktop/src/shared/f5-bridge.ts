@@ -3,10 +3,10 @@
 import type { SuggestionsIPC } from '../renderer/features/suggestions/types';
 
 export type F5Bridge = Readonly<SuggestionsIPC>;
-export type F5Operation = 'list' | 'get' | 'approve' | 'dismiss' | 'conflicts' | 'todos' | 'createTodo' | 'updateTodo' | 'calendarStatus' | 'disconnectCalendar' | 'connectCalendar';
+export type F5Operation = 'list' | 'get' | 'approve' | 'dismiss' | 'reregister' | 'conflicts' | 'todos' | 'createTodo' | 'updateTodo' | 'calendarStatus' | 'disconnectCalendar' | 'connectCalendar';
 export type F5Result = { ok: true; data: unknown } | { ok: false; error: { code: string; message: string } };
 export type F5Request = { id?: string; query?: string; body?: Record<string, unknown> };
-export const f5Operations: F5Operation[] = ['list', 'get', 'approve', 'dismiss', 'conflicts', 'todos', 'createTodo', 'updateTodo', 'calendarStatus', 'disconnectCalendar', 'connectCalendar'];
+export const f5Operations: F5Operation[] = ['list', 'get', 'approve', 'dismiss', 'reregister', 'conflicts', 'todos', 'createTodo', 'updateTodo', 'calendarStatus', 'disconnectCalendar', 'connectCalendar'];
 export const f5Channel = (operation: F5Operation) => `klover:suggestions:${operation}`;
 
 const suggestion = (id?: string) => `/suggestions/${encodeURIComponent(id ?? '')}`;
@@ -18,6 +18,7 @@ export const f5Routes: Record<F5Operation, { method: 'GET' | 'POST' | 'PATCH'; p
   get: { method: 'GET', path: ({ id }) => suggestion(id) },
   approve: { method: 'POST', path: ({ id }) => `${suggestion(id)}/approve` },
   dismiss: { method: 'POST', path: ({ id }) => `${suggestion(id)}/dismiss` },
+  reregister: { method: 'POST', path: ({ id }) => `${suggestion(id)}/reregister` },
   conflicts: { method: 'POST', path: ({ id }) => `${suggestion(id)}/conflicts` },
   todos: { method: 'GET', path: ({ query }) => `/todos${query ? `?${query}` : ''}`, page: true },
   createTodo: { method: 'POST', path: () => '/todos' },
@@ -95,7 +96,8 @@ export function f5Arguments(operation: F5Operation, args: unknown[]): F5Request 
       if (body.payload !== undefined && (!record(body.payload) || !small(body.payload))) return null;
       return { id, body: body.payload === undefined ? { version: body.version } : { version: body.version, payload: body.payload } };
     }
-    case 'dismiss': {
+    case 'dismiss':
+    case 'reregister': {
       const [id, body] = args;
       if (args.length !== 2 || !validId(id) || !record(body) || !onlyKeys(body, ['version']) || !validVersion(body.version)) return null;
       return { id, body: { version: body.version } };
