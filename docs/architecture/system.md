@@ -64,6 +64,13 @@ Electron renderer → 제한된 preload IPC → Electron main → 로컬 Bearer 
 - 메일 소스별 코드는 connectors, 모델 호출은 ai 인터페이스, DB 접근은 db/repositories 경계를 따른다.
 - AI는 제안하고 근거 메일을 연결한다. 사용자 승인 없는 외부 실행을 추가하지 않는다.
 
+## 구조를 지키는 장치 (2026-11-25)
+
+- **계층 규칙 검사**: `uv run --locked --directory apps/server lint-imports`(CI 포함). AI 어댑터는 DB를 모르고, 저장소·스키마는 API·서비스를 부르지 않으며, API는 DB 모델을 직접 쓰지 않는다. 도입 때 이미 있던 위반 8건은 `apps/server/pyproject.toml`의 `ignore_imports`에 동결했고 새 위반만 막는다. 동결 목록과 정리 후보는 [통합 후속 작업](../dev/integration-followups.md).
+- **앱 보관함 이름**: 실행 명령이 서비스를 `app.state`에 꽂고 API가 꺼내 쓰는 이름은 `apps/server/app/api/state.py`의 `StateName`에서만 정한다. 목록에 없는 이름을 쓰면 `tests/test_app_state_names.py`가 실패한다.
+- **앱 main의 서버 호출**: 토큰 헤더·리다이렉트 금지·캐시 금지·시간 제한은 `apps/desktop/src/main/local-api.ts`의 `localRequest` 한 곳에서 만든다. 응답 해석은 기능별 클라이언트가 맡는다.
+- **디자인 토큰**: 색·모서리는 `docs/design/tokens/klover-theme.css`와 앱 `globals.css`의 토큰만 쓴다(디자인 v1.1: 세이지 톤, ◆·보라색 폐지).
+
 ## 원본 설계와 기록
 
 [기존 구조 문서](../dev/archive/2026-11-24/system-before.md)와 [설계안 원본](../design/mockups/README.md)을 보존했다.
