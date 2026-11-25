@@ -369,13 +369,14 @@ AI 설정의 암호문과 키도 함께 보존한다. 코드 버전·DB 연결 �
 
 ## 12. 개발자용 안전한 검사
 
-CI는 서버 Ruff·pytest와 앱 lint·typecheck·단위 검사다. DB 검사는 전용 DB 변수가 없으면 skip된다.
+CI는 서버 Ruff·계층 규칙(import-linter)·pytest와 앱 lint·typecheck·단위 검사다. DB 검사는 전용 DB 변수가 없으면 skip된다.
 실제 DB 검사는 **분리된 테스트 DB만** `KLOVER_TEST_DATABASE_URL`, `KLOVER_F1_TEST_DATABASE_URL`,
 `KLOVER_F5_TEST_DATABASE_URL`에 지정한다. F1 DB 이름은 `_test`로 끝나야 하고 F5는 loopback의 정확한 이름 `klover_f5_test`만 허용한다. 운영 접속 주소를 넣지 않는다.
 
 ```bash
 uv run --locked --directory apps/server ruff check .
 uv run --locked --directory apps/server ruff format --check .
+uv run --locked --directory apps/server lint-imports
 uv run --locked --directory apps/server pytest -q -rs
 corepack pnpm --filter desktop lint
 corepack pnpm --filter desktop typecheck
