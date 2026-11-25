@@ -1,10 +1,11 @@
 from contextlib import nullcontext
 
 from app.ai.selection import execution_info, selected
+from app.api.state import StateName, get_state
 
 
 def ai_scope(request, choice=None):
-    store = getattr(request.app.state, "ai_settings", None)
+    store = get_state(request, StateName.AI_SETTINGS)
     return selected(store, choice) if store is not None else nullcontext()
 
 

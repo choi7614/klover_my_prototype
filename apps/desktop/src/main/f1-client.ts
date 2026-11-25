@@ -1,5 +1,6 @@
 // F1 분석 결과 표시 통로의 main 쪽 HTTP 클라이언트. 토큰은 main에서만 읽고, 응답은 검사기로 새로 만든다.
 import { readLocalAPI, type LocalAPIConfiguration } from './mail-client';
+import { localRequest } from './local-api';
 import { validMailId } from '../shared/mail-read';
 import {
   analysisFailure, validCategory, parseCategoryUpdated, type AnalysisCategory, type CategoryUpdated, parseAnalysisBatch, parseRetryResult, validBatchIds,
@@ -13,10 +14,8 @@ export class F1APIClient implements F1Bridge {
     const local = await readLocalAPI(this.configuration);
     if (!local) return analysisFailure('configuration');
     try {
-      const response = await this.fetcher(new URL(path, local.base), {
-        method, body: body ? JSON.stringify(body) : undefined, headers: { Authorization: `Bearer ${local.token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
-        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(10000),
-      });
+      const { url, init } = localRequest(local, { method, path, body, timeoutMs: 10000 });
+      const response = await this.fetcher(url, init);
       if (!response.ok) {
         let code: unknown;
         try { code = ((await response.json()) as { error?: { code?: unknown } })?.error?.code; } catch { code = undefined; }

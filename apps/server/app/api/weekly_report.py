@@ -9,6 +9,7 @@ from app.ai.interfaces import ProvidersNotConfigured
 from app.api.ai_scope import ai_scope, execution_result
 from app.api.errors import error_response
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state, set_state
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.db.repositories.weekly_report import ReportConflictError
 from app.schemas.common import ErrorResponse
@@ -27,10 +28,10 @@ from app.services.weekly_report_runtime import WeeklyReportRuntime
 
 def register_weekly_report_api(application, service=None):
     if service is not None:
-        application.state.weekly_reports = service
-    if getattr(application.state, "f4_registered", False):
+        set_state(application, StateName.WEEKLY_REPORTS, service)
+    if get_state(application, StateName.F4_REGISTERED, False):
         return
-    application.state.f4_registered = True
+    set_state(application, StateName.F4_REGISTERED, True)
 
     router = APIRouter(
         prefix="/reports/weekly",
@@ -41,7 +42,7 @@ def register_weekly_report_api(application, service=None):
     def context(request: Request, repository: Annotated[object, Depends(authorize)]):
         if request.query_params:
             raise WeeklyReportError("validation_error", "요청 형식을 확인해 주세요.", 422)
-        service = getattr(request.app.state, "weekly_reports", None)
+        service = get_state(request, StateName.WEEKLY_REPORTS)
         if service is None:
             raise WeeklyReportError(
                 "report_unavailable", "주간 보고가 아직 연결되지 않았습니다.", 503

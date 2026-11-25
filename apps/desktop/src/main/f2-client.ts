@@ -1,8 +1,8 @@
 // F2 프로필·답장 초안 서버 호출. main에서만 쓴다. 토큰은 화면으로 넘기지 않는다.
 import { readLocalAPI, type LocalAPIConfiguration } from './mail-client';
+import { localRequest, MAX_RESPONSE_CHARS } from './local-api';
 import { f2Failure, f2Routes, type F2Operation, type F2Result } from '../shared/f2-bridge';
 
-const MAX_RESPONSE = 2_000_000;
 // 초안 생성·다시 쓰기는 AI 응답을 기다리므로 더 길게 기다린다.
 const SLOW: ReadonlySet<F2Operation> = new Set(['preview', 'createDraft', 'reviseDraft']);
 
@@ -23,23 +23,15 @@ export class F2APIClient {
     const local = await readLocalAPI(this.configuration);
     if (!local) return f2Failure('configuration');
     // 서버 생성 제한 120초 뒤의 오류 응답까지 받을 여유를 둔다.
-    const signal = AbortSignal.timeout(SLOW.has(operation) ? 150000 : 15000);
+    const { url, init, signal } = localRequest(local, { method: route.method, path: route.path(id), body, timeoutMs: SLOW.has(operation) ? 150000 : 15000 });
     let response: Response;
     try {
-      response = await this.fetcher(new URL(route.path(id), local.base), {
-        method: route.method,
-        headers: {
-          Authorization: `Bearer ${local.token}`, Accept: 'application/json',
-          ...(body ? { 'Content-Type': 'application/json' } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        redirect: 'error', cache: 'no-store', signal,
-      });
+      response = await this.fetcher(url, init);
     } catch { return f2Failure(signal.aborted ? 'timeout' : 'connection'); }
     let payload: unknown;
     try {
       const text = await response.text();
-      if (text.length > MAX_RESPONSE) return f2Failure('invalid_response');
+      if (text.length > MAX_RESPONSE_CHARS) return f2Failure('invalid_response');
       payload = JSON.parse(text);
     } catch {
       if (signal.aborted) return f2Failure('timeout');

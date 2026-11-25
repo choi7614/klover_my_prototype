@@ -1,6 +1,7 @@
 import { open } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { isAbsolute } from 'node:path';
+import { localRequest } from './local-api';
 import {
   mailFailure, validInboxQuery, validMailId, validSyncResult,
   type InboxQuery, type MailDetail, type MailPage, type MailReadBridge,
@@ -73,13 +74,10 @@ export class MailAPIClient implements MailReadBridge {
   private async request<T>(path: string, parse: (value: unknown) => T, method: 'GET' | 'POST' = 'GET', timeout = 10000): Promise<MailResult<T>> {
     const local = await readLocalAPI(this.configuration);
     if (!local) return mailFailure('configuration');
-    const { base, token } = local;
 
     try {
-      const response = await this.fetcher(new URL(path, base), {
-        method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(timeout),
-      });
+      const { url, init } = localRequest(local, { method, path, timeoutMs: timeout });
+      const response = await this.fetcher(url, init);
       if (!response.ok) {
         switch (response.status) {
           case 401: return mailFailure('unauthorized');

@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.errors import error_response
 from app.api.mail_read import authorize
+from app.api.state import StateName, get_state, set_state
 from app.db.repositories.mail_query import MailAccountUnavailable
 from app.schemas.common import ErrorResponse
 from app.schemas.f5 import (
@@ -42,7 +43,7 @@ def _owner(repository: Annotated[object, Depends(authorize)]):
 
 
 def _service(request: Request):
-    service = getattr(request.app.state, "f5_service", None)
+    service = get_state(request, StateName.F5_SERVICE)
     if service is None:
         raise HTTPException(503)
     return service
@@ -134,7 +135,7 @@ def ack(owner: Owner, service: Service, event_id: str):
 
 
 def register_f5_api(application, service=None):
-    application.state.f5_service = service
+    set_state(application, StateName.F5_SERVICE, service)
     application.include_router(router)
 
     @application.exception_handler(F5Error)
