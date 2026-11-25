@@ -66,8 +66,8 @@ AI는 제안만 합니다. 메일 발송은 미구현이고, Calendar 등록은 
 
 최초에 Git·Node.js/pnpm·uv·Docker Desktop·Ollama와 Google 설정을 준비해야 합니다.
 그 뒤 Mac은 `Klover-Start.command`, Windows는 `Klover-Start.cmd`를 더블클릭합니다.
-시작 파일은 기존 DB와 모델을 확인하고 서버·개발용 Electron 앱을 켭니다. 진행 창도 열립니다.
-설치용 exe/dmg·자동 업데이트·클라우드 공유 서버는 아직 제공하지 않습니다.
+시작 파일은 먼저 `main`의 새 버전을 안전하게 받고(직접 고친 파일이나 다른 브랜치는 건드리지 않음), 기존 DB와 모델을 확인한 뒤 서버·개발용 Electron 앱을 켭니다. 진행 창도 열립니다.
+설치용 exe/dmg·클라우드 공유 서버는 아직 제공하지 않습니다.
 
 자동 검사는 실제 Google·유료 Claude·모든 PC의 새 설치 성공을 보장하지 않습니다.
 [공유 준비 점검과 미검증 항목](../dev/main-sharing-verification.md), [개발자용 구조](system.md)를 참고하세요.
