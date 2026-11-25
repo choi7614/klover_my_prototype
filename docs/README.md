@@ -1,7 +1,7 @@
 # Klover 문서 지도
 
-현재 기준은 `develop f498d27`(PR #37), 2026-11-24 확인이다. 명세의 목표·과거 기록을 현재 구현으로 소개하지 않는다.
-문서 오류는 실제 코드/PR과 대조해 고치고, 새 개발이 필요한 항목은 계획·통합 요청으로 구분한다.
+2026-11-25 · 실행 기능의 기준은 develop입니다. 처음 사용하는 동료는 [설치 안내](dev/setup.md),
+설치 후 실행은 [더블클릭 안내](dev/desktop-launcher.md)를 따르세요. 아래 기능 명세의 미체크 항목과 과거 작업 기록을 현재 구현 상태로 해석하지 마세요.
 
 ## 처음 방문한 사람의 순서
 
@@ -18,7 +18,7 @@
 
 | 문서 | 내용 |
 | --- | --- |
-| [features/planned-mail-history-import.md](product/features/planned-mail-history-import.md) | 기간 선택 과거 메일 가져오기 — 확정 개발 예정·미구현 |
+| [features/planned-mail-history-import.md](product/features/planned-mail-history-import.md) | 기간 선택 과거 메일 가져오기 — 구현 범위와 제한 |
 | [overview.md](product/overview.md) | 서비스 개요, 기능 목록, 기능 간 연결, 원칙 |
 | [decisions.md](product/decisions.md) | 결정 사항 로그 |
 | [open-questions.md](product/open-questions.md) | 남은 확인 포인트와 데모 동안의 임시 가정 |
@@ -65,10 +65,10 @@
 | [F4-weekly-report-plan.md](dev/F4-weekly-report-plan.md) | F4 기반 점검, 작은 작업 단위, 수용 기준 진행 상태 |
 | [F0-mailbox-status.md](dev/F0-mailbox-status.md) | F0 현재 구현·제약·과거 기록 |
 | [F1-analysis-status.md](dev/F1-analysis-status.md) | F1 분석/표시/훅 연결·남은 UI와 실검증 |
-| [F2-profile-draft-status.md](dev/F2-profile-draft-status.md) | F2 프로필/초안/AI 연결·미리보기 주의 |
+| [F2-profile-draft-status.md](dev/F2-profile-draft-status.md) | F2 프로필/초안/개인정보·학습 수집 미구현 |
 | [F4-weekly-report-status.md](dev/F4-weekly-report-status.md) | F4 현재 상태·다음 단위 |
-| [F5-ai-scan-status.md](dev/F5-ai-scan-status.md) | F5 제안/할 일/훅 연결·OS/Calendar 미구현 |
-| [F3-search-status.md](dev/F3-search-status.md) | F3 앱/선택 AI 연결·벡터/조건 제한 |
+| [F5-ai-scan-status.md](dev/F5-ai-scan-status.md) | F5 제안/할 일·Calendar 연결·남은 OS 기능 |
+| [F3-search-status.md](dev/F3-search-status.md) | F3 앱/선택 AI·벡터 검색·추가 조건 제한 |
 | [F3-search-handoff.md](dev/F3-search-handoff.md) | F0/F1/F2·공통 서버 연결 계약과 확인 방법 |
 
 ## 기능 정의서 템플릿

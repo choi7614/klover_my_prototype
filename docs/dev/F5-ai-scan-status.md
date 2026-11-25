@@ -1,3 +1,15 @@
+# F5 제안·할 일·Calendar — 현재 상태
+
+2026-11-25 · 코드 기준 develop `9946b87`(#48).
+
+- 구현·연결: F1→제안·할 일·Calendar 추가 동의/별도 암호화 저장·수정 후 승인 등록·중복 방지 연결.
+- 남은 범위: 회신 제안→초안·알림함/OS 알림·트레이·시작·리마인더·양방향 동기화는 미구현.
+- 기존 사용자의 macOS 사용 확인 보고(API 키 제외)와 신규 사용자/실제 모델 전체 검증은 구분한다.
+- 현재 실행·업데이트는 [setup](setup.md), 실행 도구 작업/검사는 [이번 검증](colleague-setup-verification.md)을 따른다.
+
+<details>
+<summary>과거 작업·제출 기록 — 당시의 미적용/승인 대기는 현재 상태가 아님</summary>
+
 # F5 Calendar 추가 동의·일정 승인 — 2026-11-25
 
 ## 최신 통합 — 2026-11-25
@@ -208,5 +220,7 @@ KLOVER_F5_TEST_DATABASE_URL을 모두 이 DB로 지정했다.
 - 주의: F5 테스트 성공은 실제 Calendar 등록 성공이 아니다. 실행 중 프로세스 종료는 담당자 조정 대상이다.
 - 상세: [계약](F5-ai-scan-contract.md), [최초 분리 개발 기록](F5-ai-scan-report.md),
   [생성 입력/HTTP 계약](f5-contract/openapi.json), [합성 화면](../../apps/desktop/f5-preview/index.html).
+
+</details>
 
 </details>
