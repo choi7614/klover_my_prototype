@@ -1,14 +1,15 @@
 # Klover 문서 지도
 
-2026-11-25 · 실행 기능의 기준은 develop입니다. 처음 사용하는 동료는 [설치 안내](dev/setup.md),
+2026-11-25 · 동료 설치·실행의 기준은 main, 개발 통합은 develop입니다. 처음 사용하는 동료는 [설치 안내](dev/setup.md),
 설치 후 실행은 [더블클릭 안내](dev/desktop-launcher.md)를 따르세요. 아래 기능 명세의 미체크 항목과 과거 작업 기록을 현재 구현 상태로 해석하지 마세요.
 
 ## 처음 방문한 사람의 순서
 
 1. [루트 README](../README.md): 현재 제공 범위·브랜치·제약
 2. [setup.md](dev/setup.md): **새 설치·평소 실행·종료·업데이트·오류 해결의 단일 기준**
-3. [현황판](dev/progress.md): 구현·실환경 미검증·미구현·확정 예정·보류/장기 목표
-4. [실행 검증](dev/verification-2026-11-24.md) / [통합 전달 사항](dev/integration-followups.md): 근거와 남은 코드 작업
+3. [쉬운 구성 설명](architecture/overview.md): 앱·서버·DB·Google·AI의 역할
+4. [현황판](dev/progress.md): 구현·실환경 미검증·미구현·확정 예정·보류/장기 목표
+5. [공유 준비 점검](dev/main-sharing-verification.md) / [통합 전달 사항](dev/integration-followups.md): 근거와 남은 코드 작업
 
 과거 문서/패치의 사용법은 [보관 안내](dev/archive/2026-11-24/README.md)를 먼저 읽는다. 새 설치에 패치를 적용하지 않는다.
 
@@ -44,6 +45,7 @@
 
 | 문서 | 내용 |
 | --- | --- |
+| [overview.md](architecture/overview.md) | 비개발자를 위한 구성도·데이터 흐름·저장 위치 |
 | [system.md](architecture/system.md) | 전체 구조, 기술 스택, 설계 원칙 |
 | [data-model.md](architecture/data-model.md) | 테이블·메타데이터 스키마 |
 | [api.md](architecture/api.md) | API·WebSocket 목록 |

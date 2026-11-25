@@ -1,10 +1,11 @@
 # 다음 통합 작업
 
-2026-11-25 · develop `9946b87` 기준. 이미 반영된 패치는 다시 적용하지 않는다.
+2026-11-25 · 공유 준비 기준 develop `f3c09f7`(#49). 이미 반영된 패치는 다시 적용하지 않는다.
 
 ## 현재 작업
 
-README·설치·더블클릭 실행을 정리한다. [검증/제한](colleague-setup-verification.md).
+README·설치·더블클릭 실행 정리는 #49로 병합됐다. [실행 도구 검증/제한](colleague-setup-verification.md).
+이번에는 main 공유용 안내와 쉬운 구성도를 준비한다. [점검/승인 단계](main-sharing-verification.md).
 
 ## 실제 확인이 필요한 것
 
