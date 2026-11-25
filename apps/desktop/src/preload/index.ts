@@ -78,6 +78,7 @@ const ai = Object.freeze<AIBridge>({
   get: () => ipcRenderer.invoke('klover:ai:get'),
   save: update => ipcRenderer.invoke('klover:ai:save', update),
   check: provider => ipcRenderer.invoke('klover:ai:check', provider),
+  models: () => ipcRenderer.invoke('klover:ai:models'),
 });
 const history = Object.freeze<HistoryBridge>({ list: () => ipcRenderer.invoke('klover:history:list'), start: range => ipcRenderer.invoke('klover:history:start', range), action: (id, action) => ipcRenderer.invoke('klover:history:action', id, action) });
 contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, ai, history, mail, f2, search, weeklyReport, suggestions, analysis }));

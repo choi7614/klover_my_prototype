@@ -6,6 +6,8 @@
 - 키·메일 내용·응답 원문은 예외 메시지와 로그에 넣지 않는다.
 """
 
+import re
+
 from app.ai.config import ClaudeSettings
 from app.ai.interfaces import (
     GenerationRequest,
@@ -32,8 +34,21 @@ MESSAGES = {
 }
 
 
-def _error(code: str) -> ProviderCallError:
-    return ProviderCallError(MESSAGES[code], code=code)
+def _error(code: str, detail: str = "") -> ProviderCallError:
+    return ProviderCallError(MESSAGES[code], code=code, detail=detail)
+
+
+def safe_detail(error: Exception, secrets: tuple[str, ...] = ()) -> str:
+    """Anthropic이 준 요청 거부 사유를 연결 검사 화면용으로 다듬는다(키 제거, 한 줄, 길이 제한).
+
+    연결 검사는 메일 없는 합성 요청이라 사유에 메일 내용이 들어갈 수 없다.
+    """
+    text = str(getattr(error, "message", "") or "")
+    for secret in secrets:
+        if secret:
+            text = text.replace(secret, "…")
+    text = re.sub(r"sk-[A-Za-z0-9_\-]{8,}", "…", text)
+    return " ".join(text.split())[:200]
 
 
 def _bad_request_code(error: Exception) -> str:
@@ -124,7 +139,7 @@ class ClaudeGeneration:
                     raise
                 response = await self._create(request, with_effort=False)
         except Exception as error:
-            raise _error(_error_code(error)) from None
+            raise _error(_error_code(error), safe_detail(error, (self.settings.api_key,))) from None
         stop_reason = getattr(response, "stop_reason", None)
         if stop_reason == "refusal":
             raise _error("claude_refused")
@@ -141,3 +156,22 @@ class ClaudeGeneration:
         if not isinstance(text, str):
             raise _error("claude_invalid_response")
         return text
+
+
+async def list_models(api_key: str, *, timeout: float = 20.0) -> list[dict]:
+    """이 키로 쓸 수 있는 모델 목록(Models API). 메일은 보내지 않고 키만 쓴다."""
+    try:
+        import anthropic
+    except ImportError:
+        raise ProvidersNotConfigured("anthropic 패키지가 설치되지 않았어요") from None
+    client = anthropic.AsyncAnthropic(api_key=api_key, timeout=timeout, max_retries=1)
+    try:
+        page = await client.models.list(limit=100)
+        return [
+            {"id": str(model.id), "name": str(getattr(model, "display_name", "") or model.id)}
+            for model in page.data
+        ]
+    except Exception as error:
+        raise _error(_error_code(error), safe_detail(error, (api_key,))) from None
+    finally:
+        await client.close()
