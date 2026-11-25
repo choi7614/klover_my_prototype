@@ -1566,6 +1566,39 @@
         "title": "MailAnalysisView",
         "type": "object"
       },
+      "MailCategoryCounts": {
+        "description": "받은편지함 분류별 메일 수. 분석이 안 끝난 메일은 total에만 들어간다.",
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "enum": [
+                "work_request",
+                "meeting",
+                "approval",
+                "report_share",
+                "notice",
+                "external",
+                "newsletter"
+              ]
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "counts"
+        ],
+        "title": "MailCategoryCounts",
+        "type": "object"
+      },
       "MailDetail": {
         "properties": {
           "analysis_status": {
@@ -4744,7 +4777,7 @@
     },
     "/mails": {
       "get": {
-        "description": "받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.",
+        "description": "받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.\n\ncategory를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다.",
         "operationId": "list_mails_mails_get",
         "parameters": [
           {
@@ -4785,6 +4818,31 @@
                 }
               ],
               "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "work_request",
+                    "meeting",
+                    "approval",
+                    "report_share",
+                    "notice",
+                    "external",
+                    "newsletter"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
             }
           }
         ],
@@ -4960,6 +5018,93 @@
         "summary": "메일 목록용 분석 결과 묶음 조회",
         "tags": [
           "F1 분류 수정"
+        ]
+      }
+    },
+    "/mails/category-counts": {
+      "get": {
+        "description": "받은편지함의 분류별 메일 수. 왼쪽 목록의 숫자에 쓴다.",
+        "operationId": "category_counts_mails_category_counts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailCategoryCounts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "요청 형식 오류"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "서버 내부 오류"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "LocalMailBearer": []
+          }
+        ],
+        "summary": "Category Counts",
+        "tags": [
+          "메일 조회"
         ]
       }
     },

@@ -46,7 +46,8 @@ AI 설정에 mode(local_only/hybrid)를 추가한다. 새 설정은 local_only, 
 | 메서드 | 경로 | 응답 |
 | --- | --- | --- |
 | GET | `/auth/session` | `LocalSession`: 연결된 `user_id`, `account_id`, `email`, `sync_started_at` |
-| GET | `/mails?box=inbox&limit=20&cursor=...` | `MailPage`: `items`와 `next_cursor`(마지막은 null). limit 1~100, 기본 20 |
+| GET | `/mails?box=inbox&limit=20&cursor=...&category=meeting` | `MailPage`: `items`와 `next_cursor`(마지막은 null). limit 1~100, 기본 20. `category`(선택, 7개 분류 중 하나)를 주면 그 분류만 보여 준다. 사용자가 고친 분류(`user_label`)가 AI 분류보다 우선한다 |
+| GET | `/mails/category-counts` | `MailCategoryCounts`: `total`(받은편지함 전체)과 `counts`(분류별 건수, 분석 전 메일은 total에만 포함). 왼쪽 분류 목록의 숫자용 |
 | GET | `/mails/{mail_id}` | `MailDetail`: 해당 계정의 받은 메일 일반 텍스트 본문 |
 | POST | `/mails/sync` | `MailSyncResult`: `saved`, `skipped`, `mode`(`initial`/`history`/`rescan`), `token_refreshed`. 앱 새로고침용 Gmail 새 받은 메일 가져오기 |
 

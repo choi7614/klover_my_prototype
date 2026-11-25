@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { MailboxPage } from './mailbox-page';
@@ -92,6 +92,63 @@ describe('받은편지함 화면 (합성 API 응답)', () => {
   });
 });
 
+describe('왼쪽 분류 목록: 분류별로 메일 모아 보기 (합성 응답)', () => {
+  const counts = { total: 7, counts: { meeting: 3, notice: 1 } };
+  function withCounts() {
+    return { ...api(), categoryCounts: vi.fn().mockResolvedValue({ ok: true, data: counts }) };
+  }
+  it('분류 7개와 건수를 보여 주고, 고르면 그 분류만 처음부터 다시 읽는다', async () => {
+    const bridge = withCounts();
+    render(<MailboxPage api={bridge} session={session} onDisconnected={vi.fn()} />);
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    const nav = within(screen.getByRole('navigation', { name: '분류' }));
+    expect(nav.getAllByRole('button')).toHaveLength(7);
+    expect(await nav.findByRole('button', { name: /회의·일정\s*3/ })).toBeInTheDocument();
+    expect(nav.getByRole('button', { name: /업무 요청\s*0/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /받은편지함\s*7/ })).toHaveAttribute('aria-pressed', 'true');
+    bridge.inbox.mockResolvedValueOnce({ ok: true, data: { items: [mail('mail-meeting')], next_cursor: null } });
+    fireEvent.click(nav.getByRole('button', { name: /회의·일정/ }));
+    await screen.findByRole('button', { name: /합성 제목 mail-meeting/ });
+    expect(bridge.inbox).toHaveBeenLastCalledWith({ limit: 20, cursor: null, category: 'meeting' });
+    expect(nav.getByRole('button', { name: /회의·일정/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('받은편지함 · 회의·일정');
+    expect(screen.queryByRole('button', { name: /합성 제목 mail-1$/ })).not.toBeInTheDocument();
+  });
+  it('받은편지함을 누르면 필터가 풀리고, 분류가 비면 안내를 보여 준다', async () => {
+    const bridge = withCounts();
+    render(<MailboxPage api={bridge} session={session} onDisconnected={vi.fn()} />);
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    bridge.inbox.mockResolvedValueOnce({ ok: true, data: { items: [], next_cursor: null } });
+    fireEvent.click(within(screen.getByRole('navigation', { name: '분류' })).getByRole('button', { name: /공지/ }));
+    await screen.findByText('이 분류의 메일이 없습니다');
+    fireEvent.click(screen.getByRole('button', { name: /^받은편지함/ }));
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    expect(bridge.inbox).toHaveBeenLastCalledWith({ limit: 20, cursor: null });
+  });
+  it('건수를 읽지 못하거나 통로가 없어도 분류 목록은 숫자 없이 동작한다', async () => {
+    const bridge = { ...api(), categoryCounts: vi.fn().mockResolvedValue(mailFailure('unavailable')) };
+    render(<MailboxPage api={bridge} session={session} onDisconnected={vi.fn()} />);
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    await waitFor(() => expect(bridge.categoryCounts).toHaveBeenCalled());
+    const nav = within(screen.getByRole('navigation', { name: '분류' }));
+    expect(nav.getByRole('button', { name: '회의·일정' })).toBeInTheDocument();
+    cleanup();
+    render(<MailboxPage api={api()} session={session} onDisconnected={vi.fn()} />);
+    expect(within(await screen.findByRole('navigation', { name: '분류' })).getAllByRole('button')).toHaveLength(7);
+  });
+  it('새로고침하면 건수도 다시 읽고, 선택한 분류를 유지한다', async () => {
+    const bridge = { ...withCounts(), sync: vi.fn().mockResolvedValue({ ok: true, data: { saved: 1, skipped: 0, mode: 'history', token_refreshed: false } }) };
+    render(<MailboxPage api={bridge} session={session} onDisconnected={vi.fn()} />);
+    await screen.findByRole('button', { name: /합성 제목 mail-1/ });
+    fireEvent.click(within(screen.getByRole('navigation', { name: '분류' })).getByRole('button', { name: /회의·일정/ }));
+    await waitFor(() => expect(bridge.inbox).toHaveBeenLastCalledWith({ limit: 20, cursor: null, category: 'meeting' }));
+    const before = bridge.categoryCounts.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: '목록 새로고침' }));
+    await screen.findByText('새 메일 1건을 가져왔습니다.');
+    expect(bridge.categoryCounts.mock.calls.length).toBeGreaterThan(before);
+    await waitFor(() => expect(bridge.inbox).toHaveBeenLastCalledWith({ limit: 20, cursor: null, category: 'meeting' }));
+  });
+});
 describe('새로고침: Gmail 새 메일 가져오기 → 목록 다시 읽기 (합성 응답)', () => {
   function syncing(result: MailResult<MailSyncResult> | Promise<MailResult<MailSyncResult>>) {
     return { ...api(), sync: vi.fn().mockImplementation(() => Promise.resolve(result)) };

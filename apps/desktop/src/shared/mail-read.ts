@@ -1,4 +1,5 @@
 import type { components } from '@klover/api-types';
+import type { AnalysisCategory } from './f1-bridge';
 
 export type MailSession = components['schemas']['LocalSession'];
 export type MailSummary = components['schemas']['MailSummary'];
@@ -6,7 +7,12 @@ export type MailDetail = components['schemas']['MailDetail'];
 export type MailPage = components['schemas']['MailPage'];
 // 서버 MailSyncResult와 같은 형식. 공유 타입 재생성(패치 04) 뒤에는 components 타입으로 바꿀 수 있다.
 export type MailSyncResult = { saved: number; skipped: number; mode: 'initial' | 'history' | 'rescan'; token_refreshed: boolean };
-export type InboxQuery = { limit?: number; cursor?: string | null };
+// 받은편지함 분류 필터. 서버가 같은 7개 값만 받는다. (f1-bridge와 서로 불러오지 않도록 목록을 따로 둔다)
+export const MAIL_CATEGORIES: readonly AnalysisCategory[] =
+  ['work_request', 'meeting', 'approval', 'report_share', 'notice', 'external', 'newsletter'];
+export type InboxQuery = { limit?: number; cursor?: string | null; category?: AnalysisCategory };
+/** 서버 MailCategoryCounts와 같은 형식: 전체 건수와 분류별 건수(없는 분류는 0건). */
+export type MailCategoryCounts = { total: number; counts: Partial<Record<AnalysisCategory, number>> };
 export type MailErrorCode = 'configuration' | 'unauthorized' | 'forbidden' | 'unavailable' |
   'not_found' | 'invalid_request' | 'invalid_response' | 'connection' | 'sync_in_progress' | 'gmail_unavailable';
 export type MailError = { code: MailErrorCode; message: string };
@@ -17,6 +23,8 @@ export interface MailReadBridge {
   detail(mailId: string): Promise<MailResult<MailDetail>>;
   /** Gmail 새 받은 메일 가져오기(POST /mails/sync). main/preload 연결 전에는 없을 수 있다. */
   sync?(): Promise<MailResult<MailSyncResult>>;
+  /** 왼쪽 분류 목록의 숫자(GET /mails/category-counts). 없으면 숫자 없이 분류만 보여 준다. */
+  categoryCounts?(): Promise<MailResult<MailCategoryCounts>>;
 }
 
 export const mailChannels = {
@@ -24,6 +32,7 @@ export const mailChannels = {
 } as const;
 // 새 메일 가져오기 통로. 조회 통로와 따로 두어 main/preload 연결(패치 02) 전후 모두 기존 조회가 그대로 동작한다.
 export const mailSyncChannel = 'klover:mail:sync';
+export const mailCategoryCountsChannel = 'klover:mail:category-counts';
 
 const messages: Record<MailErrorCode, string> = {
   configuration: '메일 API 연결 설정을 확인해 주세요. 서버 실행 안내의 앱 환경 변수가 필요합니다.',
@@ -50,7 +59,8 @@ export function validInboxQuery(value: unknown): value is InboxQuery {
   if (value === undefined) return true;
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
   const query = value as Record<string, unknown>;
-  return Object.keys(query).every(key => key === 'limit' || key === 'cursor') &&
+  return Object.keys(query).every(key => key === 'limit' || key === 'cursor' || key === 'category') &&
+    (query.category === undefined || (typeof query.category === 'string' && (MAIL_CATEGORIES as readonly string[]).includes(query.category))) &&
     (query.limit === undefined || (Number.isInteger(query.limit) && Number(query.limit) >= 1 && Number(query.limit) <= 100)) &&
     (query.cursor === undefined || query.cursor === null ||
       (typeof query.cursor === 'string' && query.cursor.length > 0 && query.cursor.length <= 1024));
@@ -62,4 +72,12 @@ export function validSyncResult(value: unknown): value is MailSyncResult {
   const count = (item: unknown) => Number.isInteger(item) && Number(item) >= 0;
   return count(row.saved) && count(row.skipped) && ['initial', 'history', 'rescan'].includes(String(row.mode)) &&
     typeof row.token_refreshed === 'boolean';
+}
+
+export function validCategoryCounts(value: unknown): value is MailCategoryCounts {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  const count = (item: unknown) => Number.isInteger(item) && Number(item) >= 0;
+  if (!count(row.total) || !row.counts || typeof row.counts !== 'object' || Array.isArray(row.counts)) return false;
+  return Object.entries(row.counts).every(([key, item]) => (MAIL_CATEGORIES as readonly string[]).includes(key) && count(item));
 }
