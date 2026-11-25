@@ -1,0 +1,173 @@
+diff --git a/apps/desktop/src/main/mail-client.test.ts b/apps/desktop/src/main/mail-client.test.ts
+index 33feea2..3fb0c7f 100644
+--- a/apps/desktop/src/main/mail-client.test.ts
++++ b/apps/desktop/src/main/mail-client.test.ts
+@@ -100,4 +100,31 @@ describe('main 전용 메일 API', () => {
+     expect(await new MailAPIClient({ baseURL, tokenFile: file }).session()).toMatchObject({ ok: false, error: { code: 'connection' } });
+     expect(leaked).toBe(false);
+   });
++  it('새 메일 가져오기는 POST로 요청하고 건수만 반환하며 409·502를 구분한다', async () => {
++    const requests: { path?: string; method?: string; origin?: string }[] = [];
++    let status = 200;
++    const baseURL = await listen((request, response) => {
++      requests.push({ path: request.url, method: request.method, origin: request.headers.origin });
++      response.statusCode = status;
++      response.setHeader('Content-Type', 'application/json');
++      response.end(JSON.stringify(status === 200
++        ? { saved: 2, skipped: 1, mode: 'history', token_refreshed: false, token, subject: '숨김' }
++        : { error: { code: 'x', message: '서버 문구' } }));
++    });
++    const client = new MailAPIClient({ baseURL, tokenFile: file });
++    const result = await client.sync();
++    expect(result).toEqual({ ok: true, data: { saved: 2, skipped: 1, mode: 'history', token_refreshed: false } });
++    expect(JSON.stringify(result)).not.toContain(token);
++    expect(requests).toEqual([{ path: '/mails/sync', method: 'POST', origin: undefined }]);
++    status = 409;
++    expect(await client.sync()).toMatchObject({ ok: false, error: { code: 'sync_in_progress' } });
++    status = 502;
++    expect(await client.sync()).toMatchObject({ ok: false, error: { code: 'gmail_unavailable' } });
++    status = 503;
++    expect(await client.sync()).toMatchObject({ ok: false, error: { code: 'unavailable' } });
++  });
++  it('새 메일 가져오기 응답 형식이 다르면 일반 오류로 전달한다', async () => {
++    const baseURL = await listen((_request, response) => { response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify({ saved: '2' })); });
++    expect(await new MailAPIClient({ baseURL, tokenFile: file }).sync()).toMatchObject({ ok: false, error: { code: 'invalid_response' } });
++  });
+ });
+diff --git a/apps/desktop/src/main/mail-client.ts b/apps/desktop/src/main/mail-client.ts
+index 293347d..2f69f4f 100644
+--- a/apps/desktop/src/main/mail-client.ts
++++ b/apps/desktop/src/main/mail-client.ts
+@@ -2,9 +2,9 @@ import { open } from 'node:fs/promises';
+ import { constants } from 'node:fs';
+ import { isAbsolute } from 'node:path';
+ import {
+-  mailFailure, validInboxQuery, validMailId,
++  mailFailure, validInboxQuery, validMailId, validSyncResult,
+   type InboxQuery, type MailDetail, type MailPage, type MailReadBridge,
+-  type MailResult, type MailSession, type MailSummary,
++  type MailResult, type MailSession, type MailSummary, type MailSyncResult,
+ } from '../shared/mail-read';
+ 
+ type Configuration = { baseURL?: string; tokenFile?: string };
+@@ -50,7 +50,8 @@ function contacts(value: unknown): MailDetail['to'] {
+ export class MailAPIClient implements MailReadBridge {
+   constructor(private readonly configuration: Configuration, private readonly fetcher: typeof fetch = fetch) {}
+ 
+-  private async request<T>(path: string, parse: (value: unknown) => T): Promise<MailResult<T>> {
++  // 새 메일 가져오기는 Gmail 수신을 기다리므로 조회보다 길게 기다린다.
++  private async request<T>(path: string, parse: (value: unknown) => T, method: 'GET' | 'POST' = 'GET', timeout = 10000): Promise<MailResult<T>> {
+     let base: URL;
+     let token: string;
+     try {
+@@ -70,14 +71,16 @@ export class MailAPIClient implements MailReadBridge {
+ 
+     try {
+       const response = await this.fetcher(new URL(path, base), {
+-        method: 'GET', headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+-        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(10000),
++        method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
++        redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(timeout),
+       });
+       if (!response.ok) {
+         switch (response.status) {
+           case 401: return mailFailure('unauthorized');
+           case 403: return mailFailure('forbidden');
+           case 404: return mailFailure('not_found');
++          case 409: return mailFailure('sync_in_progress');
++          case 502: return mailFailure('gmail_unavailable');
+           case 422: return mailFailure('invalid_request');
+           default: return mailFailure('unavailable');
+         }
+@@ -107,6 +110,13 @@ export class MailAPIClient implements MailReadBridge {
+     });
+   }
+ 
++  sync(): Promise<MailResult<MailSyncResult>> {
++    return this.request('/mails/sync', value => {
++      if (!validSyncResult(value)) throw new Error('response');
++      return { saved: value.saved, skipped: value.skipped, mode: value.mode, token_refreshed: value.token_refreshed };
++    }, 'POST', 120000);
++  }
++
+   detail(mailId: string): Promise<MailResult<MailDetail>> {
+     if (!validMailId(mailId)) return Promise.resolve(mailFailure('invalid_request'));
+     return this.request(`/mails/${encodeURIComponent(mailId)}`, value => {
+diff --git a/apps/desktop/src/main/mail-ipc.test.ts b/apps/desktop/src/main/mail-ipc.test.ts
+index 9456fda..f6e3c5d 100644
+--- a/apps/desktop/src/main/mail-ipc.test.ts
++++ b/apps/desktop/src/main/mail-ipc.test.ts
+@@ -2,7 +2,7 @@
+ import { describe, expect, it, vi } from 'vitest';
+ import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron';
+ import { developmentRendererURL, registerMailReadIPC } from './mail-ipc';
+-import { mailChannels } from '../shared/mail-read';
++import { mailChannels, mailSyncChannel } from '../shared/mail-read';
+ 
+ function setup() {
+   const frame = { url: 'file:///app/renderer/index.html#/mail/inbox' };
+@@ -13,7 +13,7 @@ function setup() {
+     handle: vi.fn((channel, listener) => handlers.set(channel, listener)),
+     removeHandler: vi.fn(channel => handlers.delete(channel)),
+   } as unknown as Pick<IpcMain, 'handle' | 'removeHandler'>;
+-  const client = { session: vi.fn().mockResolvedValue({ ok: true, data: {} }), inbox: vi.fn(), detail: vi.fn() };
++  const client = { session: vi.fn().mockResolvedValue({ ok: true, data: {} }), inbox: vi.fn(), detail: vi.fn(), sync: vi.fn() };
+   const connected = vi.fn();
+   const dispose = registerMailReadIPC(ipc, contents, 'file:///app/renderer/index.html', client, connected);
+   return { frame, contents, event, handlers, client, connected, dispose };
+@@ -27,7 +27,7 @@ describe('제한된 메일 IPC', () => {
+   });
+   it('등록된 세 조회와 검증된 인수만 호출하고 성공한 계정 연결 후 창을 전환한다', async () => {
+     const s = setup();
+-    expect([...s.handlers.keys()]).toEqual(Object.values(mailChannels));
++    expect([...s.handlers.keys()]).toEqual([...Object.values(mailChannels), mailSyncChannel]);
+     await s.handlers.get(mailChannels.session)!(s.event);
+     s.handlers.get(mailChannels.inbox)!(s.event, { limit: 20, cursor: 'opaque' });
+     s.handlers.get(mailChannels.detail)!(s.event, 'safe-mail-id');
+@@ -66,4 +66,12 @@ describe('제한된 메일 IPC', () => {
+     expect(s.client.inbox).not.toHaveBeenCalled();
+     expect(s.client.detail).not.toHaveBeenCalled();
+   });
++  it('새 메일 가져오기는 신뢰한 화면의 인수 없는 요청만 서버에 전달한다', async () => {
++    const s = setup();
++    s.handlers.get(mailSyncChannel)!(s.event);
++    expect(s.client.sync).toHaveBeenCalledOnce();
++    expect(await s.handlers.get(mailSyncChannel)!(s.event, { url: 'http://outside.invalid' })).toMatchObject({ ok: false });
++    expect(await s.handlers.get(mailSyncChannel)!({ ...s.event, sender: {} } as unknown as IpcMainInvokeEvent)).toMatchObject({ ok: false });
++    expect(s.client.sync).toHaveBeenCalledOnce();
++  });
+ });
+diff --git a/apps/desktop/src/main/mail-ipc.ts b/apps/desktop/src/main/mail-ipc.ts
+index f833a9a..9d980c1 100644
+--- a/apps/desktop/src/main/mail-ipc.ts
++++ b/apps/desktop/src/main/mail-ipc.ts
+@@ -1,5 +1,5 @@
+ import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron';
+-import { mailChannels, mailFailure, validInboxQuery, validMailId, type MailReadBridge } from '../shared/mail-read';
++import { mailChannels, mailFailure, mailSyncChannel, validInboxQuery, validMailId, type MailReadBridge } from '../shared/mail-read';
+ 
+ export function developmentRendererURL(value: string | undefined): string | undefined {
+   if (!value) return undefined;
+@@ -39,5 +39,10 @@ export function registerMailReadIPC(
+     if (!trustedMailSender(event, contents, rendererURL) || args.length !== 1 || !validMailId(args[0])) return mailFailure('invalid_request');
+     return client.detail(args[0]);
+   });
+-  return () => Object.values(mailChannels).forEach(channel => ipc.removeHandler(channel));
++  // 새 메일 가져오기: 인수 없이 서버의 POST /mails/sync만 호출한다.
++  ipc.handle(mailSyncChannel, (event, ...args: unknown[]) => {
++    if (!trustedMailSender(event, contents, rendererURL) || args.length) return mailFailure('invalid_request');
++    return client.sync ? client.sync() : mailFailure('unavailable');
++  });
++  return () => [...Object.values(mailChannels), mailSyncChannel].forEach(channel => ipc.removeHandler(channel));
+ }
+diff --git a/apps/desktop/src/preload/index.ts b/apps/desktop/src/preload/index.ts
+index 5eac458..752c973 100644
+--- a/apps/desktop/src/preload/index.ts
++++ b/apps/desktop/src/preload/index.ts
+@@ -7,5 +7,6 @@ const mail = Object.freeze<MailReadBridge>({
+   session: () => ipcRenderer.invoke('klover:mail:session'),
+   inbox: query => ipcRenderer.invoke('klover:mail:inbox', query),
+   detail: mailId => ipcRenderer.invoke('klover:mail:detail', mailId),
++  sync: () => ipcRenderer.invoke('klover:mail:sync'),
+ });
+ contextBridge.exposeInMainWorld('klover', Object.freeze({ platform: process.platform, mail }));

@@ -1,0 +1,3 @@
+@import "../../src/renderer/styles/globals.css";
+@source "../../src/renderer/features/profile-draft";
+@source "./";

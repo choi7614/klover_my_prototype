@@ -1,0 +1,60 @@
+diff --git a/apps/server/app/db/f1_models.py b/apps/server/app/db/f1_models.py
+index 5a77a89..20aacef 100644
+--- a/apps/server/app/db/f1_models.py
++++ b/apps/server/app/db/f1_models.py
+@@ -27,6 +27,7 @@ from sqlalchemy.dialects.postgresql.base import ischema_names
+ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+ from sqlalchemy.types import UserDefinedType
+ 
++from app.db.repositories.f5_calendar import CalendarCredential  # noqa: F401
+ from app.db.repositories.f5_schema import F5Base
+ 
+ CATEGORIES = "'work_request','meeting','approval','report_share','notice','external','newsletter'"
+diff --git a/apps/server/migrations/versions/0009_f5_calendar.py b/apps/server/migrations/versions/0009_f5_calendar.py
+new file mode 100644
+index 0000000..1bea416
+--- /dev/null
++++ b/apps/server/migrations/versions/0009_f5_calendar.py
+@@ -0,0 +1,23 @@
++"""F5 Calendar 자격 증명만 별도 저장. Gmail 행은 변경하지 않는다."""
++
++import sqlalchemy as sa
++from alembic import op
++
++revision = "0009_f5_calendar"
++down_revision = "0008_history"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table(
++        "f5_calendar_credentials",
++        sa.Column(
++            "account_id", sa.Text(), sa.ForeignKey("mail_accounts.account_id"), primary_key=True
++        ),
++        sa.Column("token_ciphertext", sa.Text(), nullable=False),
++    )
++
++
++def downgrade():
++    op.drop_table("f5_calendar_credentials")
+diff --git a/apps/server/tests/f1/test_pending_migration.py b/apps/server/tests/f1/test_pending_migration.py
+index 5a5d62a..0337527 100644
+--- a/apps/server/tests/f1/test_pending_migration.py
++++ b/apps/server/tests/f1/test_pending_migration.py
+@@ -56,12 +56,12 @@ def pending_module():
+ 
+ 
+ def all_metadata():
+-    # 이 검사는 0007 자체를 왕복한다. 0008의 추가물만 제외한 스냅샷과 비교한다.
++    # 이 검사는 0007 자체를 왕복한다. 0008 이후 추가물을 제외한 스냅샷과 비교한다.
+     from sqlalchemy import MetaData
+ 
+     target = MetaData()
+     for table in F1Base.metadata.tables.values():
+-        if table.name == "history_import_jobs":
++        if table.name in {"history_import_jobs", "f5_calendar_credentials"}:
+             continue
+         copied = table.to_metadata(target)
+         if table.name == "mails" and "history_imported" in copied.c:

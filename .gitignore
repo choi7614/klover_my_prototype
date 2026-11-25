@@ -1,0 +1,24 @@
+node_modules/
+.pnpm-store/
+out/
+dist/
+coverage/
+test-results/
+playwright-report/
+artifacts/
+*.tsbuildinfo
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+.local-secrets/
+client_secret*.json
+*.log
+apps/desktop/*.config.*.mjs
+
+# 실행 도구의 OS 잠금(메일·키 저장 없음)
+.local-run/

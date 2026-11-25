@@ -1,6 +1,6 @@
 # S04. 메일 읽기 + AI 제안 (F5)
 
-> 기능 F5 · 담당 C · 라우트 `/mail/:box/:mailId` (제안이 있는 메일) · 목업 [S04-mail-suggestions.png](mockups/png/S04-mail-suggestions.png)
+> 기능 F5 · 라우트 `/mail/:box/:mailId` (제안이 있는 메일) · 목업 [S04-mail-suggestions.png](mockups/png/S04-mail-suggestions.png)
 
 ## 1. 목적
 

@@ -1,0 +1,226 @@
+# F5 제안·할 일·Calendar — 현재 상태
+
+2026-11-25 · 코드 기준 develop `9946b87`(#48).
+
+- 구현·연결: F1→제안·할 일·Calendar 추가 동의/별도 암호화 저장·수정 후 승인 등록·중복 방지 연결.
+- 남은 범위: 회신 제안→초안·알림함/OS 알림·트레이·시작·리마인더·양방향 동기화는 미구현.
+- 기존 사용자의 macOS 사용 확인 보고(API 키 제외)와 신규 사용자/실제 모델 전체 검증은 구분한다.
+- 현재 실행·업데이트는 [setup](setup.md), 실행 도구 작업/검사는 [이번 검증](colleague-setup-verification.md)을 따른다.
+
+<details>
+<summary>과거 작업·제출 기록 — 당시의 미적용/승인 대기는 현재 상태가 아님</summary>
+
+# F5 Calendar 추가 동의·일정 승인 — 2026-11-25
+
+## 최신 통합 — 2026-11-25
+
+- `integrate/settings-calendar`에서 기능 코드와 미적용 공통 연결을 통합했다. 작업 도구 없음(통합 제출).
+- [통합 검사·맥북 업데이트 안내](settings-calendar-integration.md)를 따른다. 실제 Google/모델/맥북은 미검증이다.
+- 사용자 develop 반영 승인. 최종 제출/병합 상태는 통합 PR을 따른다. 아래 미통합 설명은 제출 당시 기록이다.
+
+
+- 도구: 없음(제출 완료) · 브랜치 `feat/F5-ai-scan` · 구현 `7634286` · 최신 develop 로컬 통합 `f5046d7`.
+- 상태: 구현/합성 검사 완료. 사용자 승인으로 최신 develop `7668d94`를 기능 브랜치에 통합했다. 구현·통합 커밋 Push 완료, [PR #44](https://github.com/choi7614/klover_my_prototype/pull/44) 제출. 구현/검사 제출 커밋 `b5071c9`. 공통 패치는 미적용이며 develop/main 병합은 승인 범위 밖이다. 이 제출 기록의 문서 커밋도 Push하며 최종 HEAD·자동 검사 결과는 PR에서 확인한다.
+- 기능: 계정/소유 캘린더 표시·추가 OAuth 동의·별도 암호화 Calendar 자격 증명/갱신/해제·수정 후 명시적 승인·겹침 조회·고정 event ID·중복/동시 승인/시간 초과 재시도.
+- 기존 Gmail 자격 증명·계정·메일을 보존한다. 생성/분석은 등록을 호출하지 않는다. 초대/메일/OS 알림/트레이/양방향 동기화는 제외다.
+- 공통 미적용 패치: `patches/F5/calendar/03~08` (OAuth·0009·서버·main/preload·설정·생성 타입). 예약 `0009_f5_calendar`, 부모 `0008_history`.
+- 전체 파일 지도·검사·맥북 확인·통합 전달문: [F5-calendar-handoff.md](F5-calendar-handoff.md).
+- 실제 Google Calendar/Gmail·사용자 DB·유료 AI·네이티브 Electron은 미실행/미검증.
+
+## 이번 Calendar 검사 결과
+
+| 검사 | 결과 |
+| --- | --- |
+| 제출 브랜치 (공통 Calendar 패치 미적용) | 서버 **650 통과 / skip 4** (OAuth 확장 3·0009 이력 1, 패치 적용 사본에서 모두 검사) |
+| 최신 develop + 기능 파일 + 공통 변경안, 분리 PostgreSQL/pgvector | 서버 **654 통과 / skip 0** |
+| 같은 사본 앱 전체 | **195 통과**, lint/typecheck 통과 |
+| 서버 Ruff check/format | 통과 (196개 파일) |
+| Electron 생산 빌드 | 통과, 실제 창 미실행 |
+| 기존 S04 Chromium 합성 화면 | 2 통과, 심볼릭 링크 폰트 일부 차단으로 글꼴 품질 미확인 |
+| 패치 03~08 재구성/해시/git apply --check | 통과 (`scripts/f5/verify_calendar_patches.py`) |
+| 실제 계정/Google Calendar/사용자 DB/AI | 미실행·미검증 |
+
+서버 검사는 실제 운영 등록 성공을 의미하지 않는다. MockTransport와 일회용 테스트 DB에서만 승인 영수증을 검사했다.
+
+아래 기록은 이전 단위 당시 상태다. F1 변환/완료 훅·F0 S04는 이미 develop에 연결되어 있다(#32/#34). 이번 Calendar 변경은 위 상태를 따른다.
+
+---
+
+# F5 AI 스캔 — 현재 상태
+
+## 현재 상태 — 2026-11-24 통합 작업
+
+- 작업: `integrate/local-ai-mail-history` · 작업 도구 없음(제출 완료) · 기준 `origin/develop 5e2b7a7`(PR #38).
+- 과거 메일도 분석 완료 후 기존 로컬 제안 훅에서 처리할 수 있게 소유 계정/날짜 경계를 정비했다. 가져오기·자동 분석·제안만으로 Claude는 호출하지 않는다. Calendar·회신 실행·OS 알림·트레이·S10은 기존 미완료 범위다.
+- 서버 590개(분리 PostgreSQL, skip 0), 앱 185개, 합성 Chromium 4개 통과. Ruff·lint·typecheck·빌드 결과는 [통합 검증 기록](verification-local-ai-history.md)을 따른다.
+- 실제 사용자 DB·Gmail·Ollama·유료 Claude·네이티브 Electron은 미실행이다.
+- 기존 기능 브랜치·키·메일·설정은 보존했다. 코드 `0a357b3`을 커밋·Push하고 [PR #39](https://github.com/choi7614/klover_my_prototype/pull/39)을 develop 대상으로 제출했다. 사용자 develop 병합 승인도 받았다. 최종 병합 이력은 PR 상태를 따른다. main은 별도 승인이다.
+- 다음 할 일: PR 자동 검사 확인 후 승인된 develop 병합, [맥북 업데이트/실기 확인](local-ai-history-run.md). 이미 반영된 과거 공통 패치는 재적용하지 않는다.
+
+<details>
+<summary>PR #38 당시 요약 — 이번 작업 전 기준</summary>
+
+> 2026-11-24 · 실제 기준 `origin/develop f498d27` · PR #37 병합 확인 · 이번 작업은 문서만 수정
+
+## 현재 구현과 남은 일
+
+- 구현·자동 검사 완료: 0005 제안/할 일·승인 경계·S04 패널·할 일 화면·F1 결과 변환과 분석 완료 훅은 연결됨(#20·#28·#32·#34·#37).
+- 남은 일·실환경 제한: 실제 Calendar 전송·회신 제안→초안 실행·OS 알림·트레이·WebSocket·S10은 미구현. Calendar/회신 승인 버튼은 비활성. 실제 로컬 모델 제안 품질은 미검증.
+- 새 설치·평소 실행·업데이트는 [setup.md](setup.md), 공통 확인 수준은 [현황판](progress.md)·[이번 검증](verification-2026-11-24.md)을 따른다.
+- 과거의 '미연결/미커밋/승인 대기'는 아래 당시 기록이다. PR #37과 기존 공통 패치는 이미 병합되어 재적용하지 않는다.
+- 확정된 개발 예정: 기간 선택 과거 메일 가져오기, Claude→로컬 1회 자동 재시도, 로컬 전용 모드. 모두 현재 미구현이며 이번에 코드를 변경하지 않는다.
+
+</details>
+
+<details>
+<summary>이전 기능 브랜치·검사·인수인계 기록 (현재 실행 지시 아님)</summary>
+
+# F5 AI 스캔 — 상태
+
+## 양식 요약
+
+> 양식: [status-template.md](status-template.md) · 현황판: [progress.md](progress.md)
+
+| 항목 | 내용 |
+| --- | --- |
+| 브랜치 | `feat/F5-ai-scan` |
+| 작업 도구 | 없음 |
+| 상태 | develop 병합 ([#32](https://github.com/choi7614/klover_my_prototype/pull/32), `d9257c0`), F1 분석 완료 지점 연결(F1 패치 05, `integrate/F1-auto-analysis`) — 맥북 실기 확인 남음 |
+| 마지막 구현 커밋 | `06e41f6` — F1 분석 결과로 제안 만들기 |
+| 기준 develop | `905398b` |
+| 미커밋 변경 | 없음 (이 현황 갱신도 커밋·Push) |
+| 갱신일 | 2026-11-19 |
+
+## 현재 상태
+
+### F1 분석 완료 지점 연결 (2026-11-19, Claude, `integrate/F1-auto-analysis`)
+
+- F1 패치 05로 `run_mail_api.py`가 자동 분석 작업자가 ready(로컬 AI)일 때 `AnalysisScanHook`을 분석 완료 지점에 등록한다.
+  새 메일이 분석되면 제안이 자동으로 저장된다(pending, 실행 없음). Claude(외부) 설정이면 분석·제안 모두 하지 않는다.
+- 미실행: 실제 로컬 AI로 새 메일→제안 생성·S04 표시. 맥북에서 확인한다.
+
+### 이번 단위 (2026-11-19, Claude): F1 분석 결과로 F5 제안 만들기
+
+- 완료: `app/pipeline/scan_analysis.py` — F1 `AnalysisResult` + 원본 본문 → F5 `ScanInput` 변환.
+  제안 내용(일정 제목·시각·장소, 할 일 제목·마감)은 F1 결과 그대로, 근거 문장만 공통 `TextGeneration(purpose=scan)`이
+  원문에서 인용하고 F5가 원문에서 직접 찾아 위치를 확정한다. 프롬프트는 `app/ai/prompts/scan.md`.
+- 로컬 Qwen처럼 형식을 어길 수 있는 모델 대비: `<think>`·코드 블록 제거, 형식 위반·원문에 없는 인용·빠진 근거는
+  한 번 다시 묻고, 두 번째에도 형식 위반이면 제안 없이 `invalid_response`, 일부 인용만 없으면 그 항목만 버리고 이유를 남긴다.
+- 지어내지 않음: 종료 시각 없는 일정(`event_end_unknown`), 300자 넘는 제목, 원문에 없는 근거는 제안하지 않는다.
+- 입구: `F5Service.scan_from_analysis(owner, mail_id, analysis, generator)`(async),
+  F1 완료 지점용 `AnalysisScanHook(service, generator)`(예외 대신 결과 반환), 수동 명령 `python -m app.cli.f5_scan`.
+  저장소에 `scan_source`(본문·출처)와 `stored_analysis`(F1 성공 분석 읽기 전용) 추가.
+- 안전: 생성은 저장만 한다(pending·idle, 실행·Calendar 호출 없음). 실제 Gmail 본문은 `--allow-gmail-content` +
+  로컬 제공자에서만 AI에 보낸다(Claude면 `external_transfer_blocked`). 테스트 제공자는 기본 거부.
+- F1 파일·공통 영역·DB 이력은 바꾸지 않았다(0008 예약·patches/F5/03 불필요). F1 on_analyzed 연결 방법은
+  [F5-handoff.md](F5-handoff.md) 'F1 담당에게'에 적었다.
+- 미실행: 실제 AI(Claude·Ollama Qwen) 호출, 실제 메일·운영 DB. 실제 모델의 인용 정확도는 미측정이다.
+
+### 공통 패치 적용 (2026-11-19, 통합 채팅, `integrate/F5-patches`)
+
+- `patches/F5/` 01 → 02를 develop `5971346` 위에 적용했다. `baseline.json`의 대상 파일 12개가 현재 develop과 모두 같아 그대로 적용했다.
+- 이제 앱에서 보인다: 메일을 열면 S04 제안 패널, 사이드바 '할 일' 메뉴와 `/todos` 화면.
+- 통로는 `klover:suggestions:*` 8개만 추가됐다. 기존 메일 4·F2 10·검색·주간 보고 5개 통로와 메일함·검색·답장 초안·주간 보고 경로는 그대로다.
+- 토큰은 main(`readLocalAPI`)에서만 읽고 화면에는 `{ ok, data | error.code }`만 넘긴다.
+- 캘린더·회신 승인 버튼은 꺼져 있다(`calendarReady`·`replyReady` 기본 false, 운영 화면에서 켜지 않음). 승인·무시·할 일 추가·완료 요청은 버튼 클릭 처리 함수 안에서만 실행된다.
+- 검사: 데스크톱 lint·typecheck·build 통과, Vitest 22개 파일 154개 통과(F5 브랜치 기록과 같음). 서버·DB·공유 타입·잠금 파일은 바꾸지 않았다.
+- 미실행: Electron 실제 창, 실제 DB의 0005 설치. 제안을 만드는 쪽(F1 결과→F5 입력)이 아직 없어 실제 앱에서는 제안 목록이 비어 있는 것이 정상이다.
+
+### 이전 단위 (2026-11-19, Claude): 앱에서 F5 API 쓰기
+
+- 완료(F5 브랜치): `features/suggestions/ipc-client.ts`(통로 → `F5Client`, 통로 없으면 '준비 중'),
+  `mail-suggestions.tsx`(메일 ID로 제안 조회 → `SuggestionReader`, 없으면 S03 모양 유지),
+  `todo-list.tsx`(할 일 진행 중/완료 목록·완료 표시·직접 추가), `SuggestionReader`에 메일 머리 `header` 자리 추가, 테스트 3개 파일.
+- 적용 전 패치(`patches/F5/`): 01 main/preload 통로 8개(`klover:suggestions:*`)와 `shared/f5-bridge.ts` 인수 검사,
+  02 공통 App `/todos` 경로·F0 메일함 S04 패널·사이드바 '할 일' 메뉴. **통합 채팅 적용 전에는 앱에 보이지 않는다.**
+- 승인 경계: 캘린더·회신 승인 버튼은 꺼 둔 채(`calendarReady=false`, `replyReady=false`). 버튼을 누르기 전에는 아무 요청도 실행하지 않는다.
+- 이번 범위 아님(미구현): `/suggestion-events`·OS 알림·트레이·WebSocket·S10 놓친 제안, Calendar 실제 연결,
+  회신→F2 초안 실행, 사이드바 '할 일' 건수, **F1 결과→F5 입력 변환(F1 채팅의 AI 제공자 작업과 겹쳐 보류)**.
+- 할 일 목록은 전용 화면 명세·목업이 없어 디자인 시스템 기준의 단순 목록으로 만들었다(사용자 승인).
+
+### 이전 단위까지
+
+- 완료: 일정·할 일·회신 제안 입력 계약, 원본 mail_id·소유 계정·본문 해시·근거 위치 검증,
+  영속 저장·목록·재조회·무시 이력, 중복 생성·중복/동시 승인 방지, 앱 할 일 CRUD.
+- 완료: 사용자 승인 후 공통 라우터·실행 저장소 조립·공유 타입 등록, 0004_f2 뒤 0005_f5 추가.
+  기존 F2·F3 메타데이터와 경로를 유지했다. **운영 DB의 실제 마이그레이션은 실행하지 않았다.**
+- 부분 완료·미통합: Calendar 쓰기/freebusy 권한·입출력·오류·결정적 event ID 경계,
+  S04 전용 컴포넌트와 합성 화면, 놓친 제안 조회와 durable outbox·표시 확인 계약.
+- 미구현/미연결: F1 실입력 변환·수신 분석 연결, F0의 S04 라우팅·제안 IPC·S10 알림/트레이·WebSocket,
+  실제 Calendar HTTP transport·추가 동의·등록·겹침 조회, F5 회신 제안→F2 실행 연결, 할 일 리마인더.
+
+Calendar 기본 실행기는 차단된다. 테스트 결과는 pending/simulated/test이며 실제 등록 성공으로
+표시하지 않는다. 외부 결과가 불명확하면 후속 권한 오류가 나도 입력·캘린더 변경 잠금을 유지한다.
+메일 발송 경로는 없다. 실제 Calendar·Gmail·OS 알림을 실행하지 않았고 OAuth 범위·계정·키는 바꾸지 않았다.
+
+현재 develop에 있는 F1 AnalysisResult·공통 AI 인터페이스, F0 메일함·동기화, F2·F3 API/IPC를 확인했다.
+F1과 F5 계약 사이에는 행동 키·근거 인용·본문 해시 등의 변환이 남아 있다. 다른 채팅의 완료를 가정하지 않는다.
+
+## 검사 결과
+
+이번 단위(F1 결과→제안):
+
+| 검사 | 결과 | 비고 |
+| --- | --- | --- |
+| 서버 pytest (분리 F5 테스트 DB 포함) | **405 통과 / skip 108 / 실패 0** | 클라우드 세션 안 임시 PostgreSQL 16 `klover_f5_test`(루프백 32769). F1·공통 DB 검사는 pgvector가 없어 skip |
+| 서버 pytest (DB 없음, CI와 같은 조건) | **377 통과 / skip 136** | |
+| 새 F5 검사 | 변환 25개 + DB 4개 | 가짜 제공자(mode=test)만 사용. 형식 위반·인용 변형·누락·중복·시간 초과·외부 전송 차단·재실행 중복 없음 |
+| Ruff check·format | 통과 | |
+| 데스크톱 검사 | 미실행 | 화면 코드 변경 없음 |
+| 실제 AI·실제 메일 | **미실행** | 맥북·API 키·Ollama 없음 |
+
+이전 단위(앱 연결):
+
+| 검사 | 결과 | 비고 |
+| --- | --- | --- |
+| 데스크톱 lint·typecheck·Vitest (브랜치만) | 통과 / **143개 통과** | 패치 미적용 상태 |
+| 데스크톱 lint·typecheck·Vitest (패치 01·02 적용) | 통과 / **154개 통과** | 적용 후 되돌림, `git apply --check` 통과 |
+| Electron 빌드 (패치 적용) | 통과 | 실제 앱 창·실서버 연결 확인은 **미실행**(클라우드 환경, 실제 계정 없음) |
+| 서버 pytest | 미실행 | 서버 코드 변경 없음. PR CI에서 확인 |
+
+이전 단위(#20):
+
+| 검사 | 결과 | 비고 |
+| --- | --- | --- |
+| 서버 pytest | **343 통과 / skip 0 / 실패 0** | 새 PostgreSQL 16+pgvector DB, 공통·F1·F5 DB 검사 포함 |
+| 서버 Ruff·format | 통과 | 공통 통합 검사, 검사 스크립트 포함 |
+| 데스크톱 lint·typecheck·Vitest | 통과 / **106개 통과** | 기존 F0·F2·F3와 F5 포함 |
+| 브라우저 | **4개 통과** | F5 2개, 기존 F0 2개, 1440/1280 화면 |
+| Electron 빌드·F5 검사 화면 빌드 | 통과 | 실제 OS 알림/트레이 동작 검사 아님 |
+| 공유 타입 생성·typecheck | 통과 | `pnpm gen:api-types`로 재생성 |
+| 통합 패치 재검증 | 통과 | 새 임시 복사본의 동일 343개 검사, OpenAPI 일치 |
+| 마이그레이션 보존 | 통과 | 0004_f2 → 0005_f5 반복 upgrade·downgrade·재-upgrade. 합성 기존 메일·계정·수신 커서·암호문·F2 프로필·F3 검색 기록 보존 |
+| GitHub Actions | [PR #20 CI 통과](https://github.com/choi7614/klover_my_prototype/actions/runs/44470201568) | 서버·데스크톱 두 작업 통과. DB 검사는 CI에서 skip될 수 있어 위 로컬 결과와 구분 |
+
+검사 DB: 이 작업 전용 `klover_f5_test`, 루프백 포트 32769. 기존 DB·메일 계정은 사용하지 않았다.
+검사 당시 환경 변수는 KLOVER_TEST_DATABASE_URL, KLOVER_F1_TEST_DATABASE_URL,
+KLOVER_F5_TEST_DATABASE_URL을 모두 이 DB로 지정했다.
+
+## 공통 영역 요청
+
+- 적용 완료(승인된 범위): DB 소유자 제약·0005_f5·서버 등록·공유 타입.
+  [패치 기록](f5-patches/README.md)에 b147cfd 대비 변경을 보관했다. F2·F3 마이그레이션 비교를 보존했다.
+- 다음 통합 요청: [F0/F1/공통 서버 전달 문서](F5-handoff.md). F0 main/preload/app은 이번 변경으로 수정하지 않았다.
+- F1 저장 SQL의 Alembic 전환 후보 번호는 현황판의 다음 빈 번호(현재 0006)를 확인한다.
+- 실제 Calendar transport와 계정별 권한 확인·OS 연결은 별도 요청으로 진행한다.
+
+## 다음 할 일
+
+0. 통합 채팅: F1 분석 완료 알림 지점(on_analyzed)에 `AnalysisScanHook` 연결([F5-handoff.md](F5-handoff.md)).
+1. 맥북: fixture 메일로 F1 분석 → `python -m app.cli.f5_scan` → 앱 S04 패널·할 일 화면에서 제안 확인(로컬 Qwen 인용 정확도 확인).
+2. 알림·트레이(S10)·`/suggestion-events` 연결, Calendar 실제 연결은 별도 단위.
+3. 운영 DB의 0005_f5 실제 적용은 사용자 환경에서 별도로 확인한다.
+
+## 인수인계 메모
+
+- 멈춘 지점: F1 결과→F5 제안 변환·생성 단위 PR 생성(develop 병합 전). F1 완료 지점 연결은 통합 채팅 대기.
+- 이전: 앱 연결 단위 PR #25·공통 패치 01~02(#28) develop 병합 완료.
+- 이전: 구현·로컬 통합 검사·GitHub CI 통과, PR #20 develop 병합 완료.
+- 미실행: 실제 LLM·Google Calendar·메일 발송·OS 알림/트레이·운영 DB 마이그레이션.
+- 주의: F5 테스트 성공은 실제 Calendar 등록 성공이 아니다. 실행 중 프로세스 종료는 담당자 조정 대상이다.
+- 상세: [계약](F5-ai-scan-contract.md), [최초 분리 개발 기록](F5-ai-scan-report.md),
+  [생성 입력/HTTP 계약](f5-contract/openapi.json), [합성 화면](../../apps/desktop/f5-preview/index.html).
+
+</details>
+
+</details>

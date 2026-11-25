@@ -1,0 +1,33 @@
+diff --git a/apps/desktop/src/renderer/app.tsx b/apps/desktop/src/renderer/app.tsx
+index 922fc6f..c05cda5 100644
+--- a/apps/desktop/src/renderer/app.tsx
++++ b/apps/desktop/src/renderer/app.tsx
+@@ -13,6 +13,7 @@ import { createSearchIPCClient } from './bridges/search-ipc-client';
+ import { WeeklyReportPage } from './features/weekly-report/weekly-report-page';
+ import { createWeeklyReportIPCClient, unavailableWeeklyReportClient } from './features/weekly-report/ipc-client';
+ import { createSuggestionsIPCClient, unavailableSuggestionsClient } from './features/suggestions/ipc-client';
++import { CalendarConnectionPanel } from './features/suggestions/calendar-connection';
+ import { TodoListPage } from './features/suggestions/todo-list';
+ import { createAnalysisIPCClient } from './features/mail-analysis/client';
+ 
+@@ -64,6 +65,7 @@ export function App({ f2Client, searchClient }: { f2Client?: F2Client; searchCli
+         <Route path="/onboarding/1" element={<><OnboardingStartPage connectionNotice={notice} />{session && <a href="#/mail/inbox" className="fixed bottom-5 left-6 rounded-md bg-primary p-3 text-body text-primary-foreground">연결된 받은편지함 열기</a>}</>} />
+         {session && api && <Route path="/mail/inbox/:mailId?" element={<MailboxRoute api={api} session={session} onDisconnected={disconnected} suggestions={suggestions} analysis={analysis} />} />}
+         {session && <Route path="/search" element={<SearchRoute client={search} session={session} />} />}
++        {session && suggestions?.calendar && <Route path="/settings/calendar" element={<main className="mx-auto max-w-3xl p-6"><a href="#/mail/inbox">받은편지함</a><CalendarConnectionPanel client={suggestions.calendar} /></main>} />}
+         {session && <Route path="/todos" element={<TodoListPage key={session.account_id} client={suggestions ?? unavailableSuggestionsClient} />} />}
+         {session && <Route path="/report/weekly" element={<WeeklyReportPage autoGenerate={false} key={session.account_id} client={weeklyReport} />} />}
+         <Route path="/settings/profile" element={<F2ProfileRoute client={f2} mailboxPath={mailboxPath} />} />
+diff --git a/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx b/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx
+index 43f9c70..6152784 100644
+--- a/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx
++++ b/apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx
+@@ -157,7 +157,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
+         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-selected text-selected-foreground" aria-hidden="true">{session.email.slice(0, 1).toUpperCase()}</span>
+       </header>
+       <div className="border-b bg-muted px-5 py-2 text-caption text-muted-foreground">
+-        프로필과 AI 제공자는 설정에서 변경할 수 있습니다. <a href="#/settings/mail-history" className="underline">과거 메일 가져오기</a> · <a href="#/settings/ai" className="underline">AI 설정</a> · 알림 설정은 준비 중입니다. <a className="ml-3 underline underline-offset-2 focus-visible:outline-ring" href="#/onboarding/1">첫 실행 설정 보기</a>
++        프로필과 AI 제공자는 설정에서 변경할 수 있습니다. <a href="#/settings/mail-history" className="underline">과거 메일 가져오기</a> · <a href="#/settings/calendar" className="underline">캘린더 연결</a> · <a href="#/settings/ai" className="underline">AI 설정</a> · 알림 설정은 준비 중입니다. <a className="ml-3 underline underline-offset-2 focus-visible:outline-ring" href="#/onboarding/1">첫 실행 설정 보기</a>
+       </div>
+       <div className="flex min-h-0 flex-1">
+         <aside className="flex w-[220px] shrink-0 flex-col border-r bg-sidebar p-3" aria-label="메일함">

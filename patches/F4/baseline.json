@@ -1,0 +1,25 @@
+{
+  "develop": "9ac54216336e3a9f0dc606d653d8f3536c75c75d",
+  "sha256": {
+    "apps/server/app/main.py": "a107fb25cba9c9f3d0f55facddc11db726ea07a73717cfcde80d2c0f7ae44dc0",
+    "apps/server/app/cli/run_mail_api.py": "2ad72440c63ce3422971fbde7c3b0affc0e8aa9011c31bdf49c2641f2cf7d97b",
+    "apps/server/tests/test_weekly_report.py": "4785d019dba1fde5d1074f3da23f40cc789a92a0f22f1c06c7090f4437c59014",
+    "apps/server/tests/test_http_server.py": "c4323cb1eeee20e43e8aa2c83090ee4c23c90dbedda864ca4ec217e795c8bfa9",
+    "apps/server/app/db/models.py": "b4e9b7efefd8f6855af9ce791076bb0f8d12f18f2b756fe5a8d31f705c27a39c",
+    "apps/server/migrations/versions/0006_weekly_reports.py": null,
+    "apps/desktop/src/shared/f4-bridge.ts": null,
+    "apps/desktop/src/main/f4-client.ts": null,
+    "apps/desktop/src/main/f4-client.test.ts": null,
+    "apps/desktop/src/main/f4-ipc.ts": null,
+    "apps/desktop/src/main/f4-ipc.test.ts": null,
+    "apps/desktop/src/main/index.ts": "1d1766134ddfa02ca054f378090b63300a3cab557cf847ceaa4ffd2114057773",
+    "apps/desktop/src/preload/index.ts": "7710a34780b1ff87b8ef1af6e68164d30c44c24b3d98fe0837fb223c0c05cbd3",
+    "apps/desktop/src/renderer/env.d.ts": "3afb8462451a0af438ec34dcb1a3693ff76c35db5a5aa311c46e77e6be2e6205",
+    "apps/desktop/src/renderer/app.tsx": "9456ab21835ae210a2eddd541df1263053df867099de60b11ac46758a3b92b53",
+    "apps/desktop/src/renderer/features/mailbox/mailbox-page.tsx": "62eab7324ae3d6e83347a013f27626e48a5a94ac2013d29e40daf5748747ba73",
+    "docs/architecture/api.md": "e93faaa2d514112c68dec7a280dead464525c7a4f06a825020e4ece3729acc77",
+    "docs/architecture/data-model.md": "66271c0c6589686543453151661fe734b173aa129db69fe398779d8236b91197",
+    "packages/api-types/openapi.json": "ad2125e9d844df1d73877994d0aa12bb78a3bef6ce7822fa02c9272f67a21230",
+    "packages/api-types/src/schema.d.ts": "fbf15ad72c689cf845a8256e41e04d56e532e49c4813f730c3e16c6180e2caf8"
+  }
+}

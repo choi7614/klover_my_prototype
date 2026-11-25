@@ -1,5 +1,8 @@
 # Klover 서비스 개요
 
+> 현재 구현 기준: `develop 5e2b7a7` + 통합 작업 브랜치(2026-11-24, 통합 PR #39·사용자 병합 승인 완료). 아래 기능 간 연결은 목표 구조를 포함한다. 실제 지원/미검증은 [현황판](../dev/progress.md), 설치는 [setup.md](../dev/setup.md)를 따른다.
+> 앱·서버·PostgreSQL 유지·로컬 AI 기본, 필요한 F2/F3/F4만 Claude 선택. 클라우드 이전 보류·사내망 장기 목표. 과거 메일 가져오기는 [작업 브랜치 구현·자동 검사 완료](features/planned-mail-history-import.md)이며 기본 수신은 시작 이후 그대로다.
+
 > 최종 수정: 2026-10-16
 
 ## 이름
@@ -28,16 +31,17 @@
 
 ## 기능 목록
 
-| 번호 | 기능 | 정의서 | 담당 |
-| --- | --- | --- | --- |
-| F0 | 첫 실행 설정과 기본 메일함 | [F0-onboarding-mailbox.md](features/F0-onboarding-mailbox.md) | A |
-| F1 | 메일 분류 및 Vector DB 저장 | [F1-mail-analysis.md](features/F1-mail-analysis.md) | C |
-| F2 | 사용자 프로필·개인화와 답장 초안 | [F2-profile-draft.md](features/F2-profile-draft.md) | D |
-| F3 | 자연어 검색 | [F3-search.md](features/F3-search.md) | D |
-| F4 | 주간 보고 만들기 | [F4-weekly-report.md](features/F4-weekly-report.md) | D (화면 A 분담) |
-| F5 | AI 스캔 (수신 즉시 알림과 제안) | [F5-ai-scan.md](features/F5-ai-scan.md) | C |
+| 번호 | 기능 | 정의서 |
+| --- | --- | --- |
+| F0 | 첫 실행 설정과 기본 메일함 | [F0-onboarding-mailbox.md](features/F0-onboarding-mailbox.md) |
+| F1 | 메일 분류 및 Vector DB 저장 | [F1-mail-analysis.md](features/F1-mail-analysis.md) |
+| F2 | 사용자 프로필·개인화와 답장 초안 | [F2-profile-draft.md](features/F2-profile-draft.md) |
+| F3 | 자연어 검색 | [F3-search.md](features/F3-search.md) |
+| F4 | 주간 보고 만들기 | [F4-weekly-report.md](features/F4-weekly-report.md) |
+| F5 | AI 스캔 (수신 즉시 알림과 제안) | [F5-ai-scan.md](features/F5-ai-scan.md) |
 
-서버 기반(Gmail 커넥터, 수신 동기화, DB, 메일 API)은 B 담당. 담당 이름은 팀에서 정해 바꿔 넣는다.
+1인 개발로 진행하며 기능마다 기능별 채팅(`feat/Fn-이름` 브랜치)에서 작업한다. 서버 기반(Gmail 커넥터, 수신 동기화, DB, 메일 API)과
+공통 영역 변경은 통합 채팅에서 맡는다. 운영 방식은 [AGENTS.md](../../AGENTS.md), 진행 현황은 [progress.md](../dev/progress.md)를 본다.
 
 > 기능 정의서 원본에는 '기능 3'이 두 번 적혀 있어, 설계안 v0.2 기준으로 자연어 검색 = F3, 주간 보고 = F4, AI 스캔 = F5로 정리했다. F0는 설계안 4·6쪽의 첫 실행·기본 메일 기능을 따로 뺀 것이다.
 

@@ -1,0 +1,59 @@
+# PR마다 서버·데스크톱 기본 검사를 실행한다.
+# 실제 PostgreSQL이 필요한 서버 검사는 KLOVER_*_TEST_DATABASE_URL이 없어 skip된다.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: 서버 ruff·pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: 의존성 설치
+        run: uv sync --locked
+      - name: ruff check
+        run: uv run --locked ruff check .
+      - name: ruff format --check
+        run: uv run --locked ruff format --check .
+      - name: pytest (DB 필요 검사는 skip)
+        run: uv run --locked pytest -q -rs
+
+  desktop:
+    name: 데스크톱 lint·typecheck·test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+        env:
+          # lint·typecheck·test에는 Electron 실행 파일이 필요 없다.
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: lint
+        run: pnpm --filter desktop lint
+      - name: typecheck
+        run: pnpm --filter desktop typecheck
+      - name: test
+        run: pnpm --filter desktop test

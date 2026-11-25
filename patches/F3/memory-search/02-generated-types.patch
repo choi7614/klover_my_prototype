@@ -1,0 +1,124 @@
+--- a/packages/api-types/openapi.json
++++ b/packages/api-types/openapi.json
+@@ -1834,6 +1834,16 @@
+           "filters": {
+             "$ref": "#/components/schemas/SearchFilters"
+           },
++          "original_terms": {
++            "items": {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            "maxItems": 4,
++            "title": "Original Terms",
++            "type": "array"
++          },
+           "topic": {
+             "anyOf": [
+               {
+@@ -2854,6 +2864,23 @@
+           "search_id": {
+             "title": "Search Id",
+             "type": "string"
++          },
++          "search_warnings": {
++            "items": {
++              "$ref": "#/components/schemas/SearchFailure"
++            },
++            "title": "Search Warnings",
++            "type": "array"
++          },
++          "semantic_coverage": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/SemanticCoverage"
++              },
++              {
++                "type": "null"
++              }
++            ]
+           },
+           "semantic_enabled": {
+             "title": "Semantic Enabled",
+@@ -2968,6 +2995,38 @@
+           "direction"
+         ],
+         "title": "SearchResult",
++        "type": "object"
++      },
++      "SemanticCoverage": {
++        "additionalProperties": false,
++        "properties": {
++          "compatible_mails": {
++            "minimum": 0.0,
++            "title": "Compatible Mails",
++            "type": "integer"
++          },
++          "eligible_mails": {
++            "minimum": 0.0,
++            "title": "Eligible Mails",
++            "type": "integer"
++          },
++          "limited": {
++            "default": false,
++            "title": "Limited",
++            "type": "boolean"
++          },
++          "scanned_chunks": {
++            "minimum": 0.0,
++            "title": "Scanned Chunks",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "eligible_mails",
++          "compatible_mails",
++          "scanned_chunks"
++        ],
++        "title": "SemanticCoverage",
+         "type": "object"
+       },
+       "StyleState": {
+--- a/packages/api-types/src/schema.d.ts
++++ b/packages/api-types/src/schema.d.ts
+@@ -1316,6 +1316,8 @@
+             /** Expansions */
+             expansions?: string[];
+             filters?: components["schemas"]["SearchFilters"];
++            /** Original Terms */
++            original_terms?: string[];
+             /** Topic */
+             topic?: string | null;
+         };
+@@ -1688,6 +1690,9 @@
+             results: components["schemas"]["SearchResult"][];
+             /** Search Id */
+             search_id: string;
++            /** Search Warnings */
++            search_warnings?: components["schemas"]["SearchFailure"][];
++            semantic_coverage?: components["schemas"]["SemanticCoverage"] | null;
+             /** Semantic Enabled */
+             semantic_enabled: boolean;
+             /** Truncated */
+@@ -1728,6 +1733,20 @@
+             /** Subject */
+             subject: string;
+         };
++        /** SemanticCoverage */
++        SemanticCoverage: {
++            /** Compatible Mails */
++            compatible_mails: number;
++            /** Eligible Mails */
++            eligible_mails: number;
++            /**
++             * Limited
++             * @default false
++             */
++            limited: boolean;
++            /** Scanned Chunks */
++            scanned_chunks: number;
++        };
+         /** StyleState */
+         StyleState: {
+             /**

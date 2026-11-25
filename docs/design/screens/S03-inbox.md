@@ -1,6 +1,10 @@
 # S03. 받은편지함 (AI 분류) — 기준 화면
 
-> 기능 F0·F1 · 담당 A(틀·목록) · C(AI 표시) · 라우트 `/mail/:box/:mailId?` · 목업 [S03-inbox.png](mockups/png/S03-inbox.png)
+> 2026-11-25 작업 브랜치: 분석 완료 메일의 고정 7종 분류 변경과 `/settings` 첫 화면·공통 설정 이동을 연결했다.
+> 프로필 저장 전 이동 확인과 기존 토큰을 유지한다. [현재 검증/승인 상태](../../dev/category-settings-ui.md).
+
+
+> 기능 F0·F1 · 라우트 `/mail/:box/:mailId?` · 목업 [S03-inbox.png](mockups/png/S03-inbox.png)
 
 **이 화면을 가장 먼저 완성한다.** 나머지 화면은 "S03과 같은 스타일로"를 기준으로 만든다.
 

@@ -1,0 +1,3230 @@
+--- a/packages/api-types/openapi.json
++++ b/packages/api-types/openapi.json
+@@ -19,6 +19,32 @@
+           "mail_id"
+         ],
+         "title": "Citation",
++        "type": "object"
++      },
++      "ContextStatus": {
++        "additionalProperties": false,
++        "properties": {
++          "analysis": {
++            "default": "unavailable",
++            "enum": [
++              "unavailable",
++              "ready"
++            ],
++            "title": "Analysis",
++            "type": "string"
++          },
++          "related": {
++            "default": "unavailable",
++            "enum": [
++              "unavailable",
++              "empty",
++              "ready"
++            ],
++            "title": "Related",
++            "type": "string"
++          }
++        },
++        "title": "ContextStatus",
+         "type": "object"
+       },
+       "Counterparty": {
+@@ -68,6 +94,168 @@
+         "title": "DateRange",
+         "type": "object"
+       },
++      "DraftCreate": {
++        "additionalProperties": false,
++        "properties": {
++          "direction": {
++            "anyOf": [
++              {
++                "maxLength": 100,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Direction"
++          },
++          "mail_id": {
++            "pattern": "^[A-Za-z0-9_-]{1,128}$",
++            "title": "Mail Id",
++            "type": "string"
++          }
++        },
++        "required": [
++          "mail_id"
++        ],
++        "title": "DraftCreate",
++        "type": "object"
++      },
++      "DraftRevise": {
++        "additionalProperties": false,
++        "properties": {
++          "action": {
++            "enum": [
++              "shorter",
++              "politer",
++              "rewrite"
++            ],
++            "title": "Action",
++            "type": "string"
++          },
++          "body": {
++            "maxLength": 25000,
++            "title": "Body",
++            "type": "string"
++          },
++          "direction": {
++            "anyOf": [
++              {
++                "maxLength": 100,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "title": "Direction"
++          },
++          "expected_version": {
++            "minimum": 1.0,
++            "title": "Expected Version",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "body",
++          "expected_version",
++          "action"
++        ],
++        "title": "DraftRevise",
++        "type": "object"
++      },
++      "DraftSave": {
++        "additionalProperties": false,
++        "properties": {
++          "body": {
++            "maxLength": 25000,
++            "title": "Body",
++            "type": "string"
++          },
++          "expected_version": {
++            "minimum": 1.0,
++            "title": "Expected Version",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "body",
++          "expected_version"
++        ],
++        "title": "DraftSave",
++        "type": "object"
++      },
++      "DraftState": {
++        "additionalProperties": false,
++        "properties": {
++          "body": {
++            "title": "Body",
++            "type": "string"
++          },
++          "context_status": {
++            "$ref": "#/components/schemas/ContextStatus"
++          },
++          "directions": {
++            "items": {
++              "type": "string"
++            },
++            "title": "Directions",
++            "type": "array"
++          },
++          "draft_id": {
++            "pattern": "^[A-Za-z0-9_-]{1,128}$",
++            "title": "Draft Id",
++            "type": "string"
++          },
++          "evidence": {
++            "items": {
++              "$ref": "#/components/schemas/Evidence"
++            },
++            "title": "Evidence",
++            "type": "array"
++          },
++          "mail_id": {
++            "pattern": "^[A-Za-z0-9_-]{1,128}$",
++            "title": "Mail Id",
++            "type": "string"
++          },
++          "profile_version": {
++            "title": "Profile Version",
++            "type": "integer"
++          },
++          "references": {
++            "items": {
++              "$ref": "#/components/schemas/Reference"
++            },
++            "title": "References",
++            "type": "array"
++          },
++          "selected_direction": {
++            "title": "Selected Direction",
++            "type": "string"
++          },
++          "version": {
++            "title": "Version",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "draft_id",
++          "mail_id",
++          "directions",
++          "selected_direction",
++          "body",
++          "evidence",
++          "references",
++          "version",
++          "profile_version",
++          "context_status"
++        ],
++        "title": "DraftState",
++        "type": "object"
++      },
+       "ErrorDetail": {
+         "properties": {
+           "code": {
+@@ -96,6 +284,36 @@
+           "error"
+         ],
+         "title": "ErrorResponse",
++        "type": "object"
++      },
++      "Evidence": {
++        "additionalProperties": false,
++        "properties": {
++          "source": {
++            "pattern": "^(profile\\.(greeting|closing|signature|phrase)|mail:[A-Za-z0-9_-]{1,128})$",
++            "title": "Source",
++            "type": "string"
++          },
++          "span": {
++            "maxItems": 2,
++            "minItems": 2,
++            "prefixItems": [
++              {
++                "type": "integer"
++              },
++              {
++                "type": "integer"
++              }
++            ],
++            "title": "Span",
++            "type": "array"
++          }
++        },
++        "required": [
++          "span",
++          "source"
++        ],
++        "title": "Evidence",
+         "type": "object"
+       },
+       "EvidenceSentence": {
+@@ -371,6 +589,210 @@
+         "title": "ParsedQuery",
+         "type": "object"
+       },
++      "PreviewRequest": {
++        "additionalProperties": false,
++        "properties": {
++          "profile": {
++            "$ref": "#/components/schemas/Profile"
++          }
++        },
++        "required": [
++          "profile"
++        ],
++        "title": "PreviewRequest",
++        "type": "object"
++      },
++      "PreviewState": {
++        "additionalProperties": false,
++        "properties": {
++          "body": {
++            "title": "Body",
++            "type": "string"
++          },
++          "evidence": {
++            "items": {
++              "$ref": "#/components/schemas/Evidence"
++            },
++            "title": "Evidence",
++            "type": "array"
++          }
++        },
++        "required": [
++          "body",
++          "evidence"
++        ],
++        "title": "PreviewState",
++        "type": "object"
++      },
++      "Profile": {
++        "additionalProperties": false,
++        "properties": {
++          "closing": {
++            "default": "",
++            "maxLength": 1000,
++            "title": "Closing",
++            "type": "string"
++          },
++          "duties": {
++            "default": "",
++            "maxLength": 2000,
++            "title": "Duties",
++            "type": "string"
++          },
++          "excluded_phrases": {
++            "default": [],
++            "items": {
++              "maxLength": 200,
++              "type": "string"
++            },
++            "maxItems": 100,
++            "title": "Excluded Phrases",
++            "type": "array"
++          },
++          "formality": {
++            "default": 70,
++            "maximum": 100.0,
++            "minimum": 0.0,
++            "title": "Formality",
++            "type": "integer"
++          },
++          "frequent_contacts": {
++            "default": [],
++            "items": {
++              "maxLength": 200,
++              "type": "string"
++            },
++            "maxItems": 30,
++            "title": "Frequent Contacts",
++            "type": "array"
++          },
++          "greeting": {
++            "default": "",
++            "maxLength": 1000,
++            "title": "Greeting",
++            "type": "string"
++          },
++          "name": {
++            "default": "",
++            "maxLength": 100,
++            "title": "Name",
++            "type": "string"
++          },
++          "org": {
++            "default": "",
++            "maxLength": 200,
++            "title": "Org",
++            "type": "string"
++          },
++          "reply_length": {
++            "default": "normal",
++            "enum": [
++              "short",
++              "normal",
++              "long"
++            ],
++            "title": "Reply Length",
++            "type": "string"
++          },
++          "report_recipient": {
++            "default": "",
++            "maxLength": 200,
++            "title": "Report Recipient",
++            "type": "string"
++          },
++          "report_sections": {
++            "default": [
++              "highlights",
++              "ongoing",
++              "issues",
++              "next_week"
++            ],
++            "items": {
++              "enum": [
++                "highlights",
++                "ongoing",
++                "issues",
++                "next_week"
++              ],
++              "type": "string"
++            },
++            "title": "Report Sections",
++            "type": "array"
++          },
++          "report_style": {
++            "default": "bullet",
++            "enum": [
++              "bullet",
++              "prose"
++            ],
++            "title": "Report Style",
++            "type": "string"
++          },
++          "signature": {
++            "default": "",
++            "maxLength": 2000,
++            "title": "Signature",
++            "type": "string"
++          },
++          "style_learning_enabled": {
++            "default": false,
++            "title": "Style Learning Enabled",
++            "type": "boolean"
++          },
++          "title": {
++            "default": "",
++            "maxLength": 200,
++            "title": "Title",
++            "type": "string"
++          }
++        },
++        "title": "Profile",
++        "type": "object"
++      },
++      "ProfileState": {
++        "additionalProperties": false,
++        "properties": {
++          "exists": {
++            "default": false,
++            "title": "Exists",
++            "type": "boolean"
++          },
++          "profile": {
++            "$ref": "#/components/schemas/Profile"
++          },
++          "version": {
++            "default": 0,
++            "title": "Version",
++            "type": "integer"
++          }
++        },
++        "title": "ProfileState",
++        "type": "object"
++      },
++      "ProfileUpdate": {
++        "additionalProperties": false,
++        "properties": {
++          "consent_given": {
++            "default": false,
++            "title": "Consent Given",
++            "type": "boolean"
++          },
++          "expected_version": {
++            "minimum": 0.0,
++            "title": "Expected Version",
++            "type": "integer"
++          },
++          "profile": {
++            "$ref": "#/components/schemas/Profile"
++          }
++        },
++        "required": [
++          "profile",
++          "expected_version"
++        ],
++        "title": "ProfileUpdate",
++        "type": "object"
++      },
+       "RecentSearch": {
+         "additionalProperties": false,
+         "properties": {
+@@ -394,6 +816,32 @@
+           "created_at"
+         ],
+         "title": "RecentSearch",
++        "type": "object"
++      },
++      "Reference": {
++        "additionalProperties": false,
++        "properties": {
++          "mail_id": {
++            "pattern": "^[A-Za-z0-9_-]{1,128}$",
++            "title": "Mail Id",
++            "type": "string"
++          },
++          "received_at": {
++            "format": "date-time",
++            "title": "Received At",
++            "type": "string"
++          },
++          "subject": {
++            "title": "Subject",
++            "type": "string"
++          }
++        },
++        "required": [
++          "mail_id",
++          "subject",
++          "received_at"
++        ],
++        "title": "Reference",
+         "type": "object"
+       },
+       "SearchAnswer": {
+@@ -837,6 +1285,54 @@
+           "direction"
+         ],
+         "title": "SearchResult",
++        "type": "object"
++      },
++      "StyleState": {
++        "additionalProperties": false,
++        "properties": {
++          "analyzed_count": {
++            "default": 0,
++            "minimum": 0.0,
++            "title": "Analyzed Count",
++            "type": "integer"
++          },
++          "enabled": {
++            "default": false,
++            "title": "Enabled",
++            "type": "boolean"
++          },
++          "phrases": {
++            "default": [],
++            "items": {
++              "maxLength": 200,
++              "type": "string"
++            },
++            "maxItems": 10,
++            "title": "Phrases",
++            "type": "array"
++          },
++          "status": {
++            "default": "disabled",
++            "enum": [
++              "disabled",
++              "unavailable",
++              "ready"
++            ],
++            "title": "Status",
++            "type": "string"
++          },
++          "traits": {
++            "default": [],
++            "items": {
++              "maxLength": 200,
++              "type": "string"
++            },
++            "maxItems": 20,
++            "title": "Traits",
++            "type": "array"
++          }
++        },
++        "title": "StyleState",
+         "type": "object"
+       }
+     },
+@@ -937,6 +1433,534 @@
+         "summary": "Current Session",
+         "tags": [
+           "메일 조회"
++        ]
++      }
++    },
++    "/drafts": {
++      "post": {
++        "operationId": "create_draft_drafts_post",
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/DraftCreate"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "201": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/DraftState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Create Draft",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      }
++    },
++    "/drafts/{draft_id}": {
++      "get": {
++        "operationId": "read_draft_drafts__draft_id__get",
++        "parameters": [
++          {
++            "in": "path",
++            "name": "draft_id",
++            "required": true,
++            "schema": {
++              "pattern": "^[A-Za-z0-9_-]{1,128}$",
++              "title": "Draft Id",
++              "type": "string"
++            }
++          }
++        ],
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/DraftState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Read Draft",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      },
++      "patch": {
++        "operationId": "save_draft_drafts__draft_id__patch",
++        "parameters": [
++          {
++            "in": "path",
++            "name": "draft_id",
++            "required": true,
++            "schema": {
++              "pattern": "^[A-Za-z0-9_-]{1,128}$",
++              "title": "Draft Id",
++              "type": "string"
++            }
++          }
++        ],
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/DraftSave"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/DraftState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Save Draft",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      }
++    },
++    "/drafts/{draft_id}/revise": {
++      "post": {
++        "operationId": "revise_draft_drafts__draft_id__revise_post",
++        "parameters": [
++          {
++            "in": "path",
++            "name": "draft_id",
++            "required": true,
++            "schema": {
++              "pattern": "^[A-Za-z0-9_-]{1,128}$",
++              "title": "Draft Id",
++              "type": "string"
++            }
++          }
++        ],
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/DraftRevise"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/DraftState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Revise Draft",
++        "tags": [
++          "F2 프로필·답장 초안"
+         ]
+       }
+     },
+@@ -1212,6 +2236,602 @@
+         ]
+       }
+     },
++    "/profile": {
++      "get": {
++        "operationId": "profile_profile_get",
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProfileState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Profile",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      },
++      "put": {
++        "operationId": "save_profile_profile_put",
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/ProfileUpdate"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProfileState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Save Profile",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      }
++    },
++    "/profile/preview": {
++      "post": {
++        "operationId": "preview_profile_preview_post",
++        "requestBody": {
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/PreviewRequest"
++              }
++            }
++          },
++          "required": true
++        },
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/PreviewState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Preview",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      }
++    },
++    "/profile/style": {
++      "delete": {
++        "operationId": "delete_style_profile_style_delete",
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ProfileState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Delete Style",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      },
++      "get": {
++        "operationId": "style_profile_style_get",
++        "responses": {
++          "200": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/StyleState"
++                }
++              }
++            },
++            "description": "Successful Response"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unauthorized"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Forbidden"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Not Found"
++          },
++          "409": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Conflict"
++          },
++          "422": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Unprocessable Entity"
++          },
++          "500": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "서버 내부 오류"
++          },
++          "502": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Bad Gateway"
++          },
++          "503": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Service Unavailable"
++          },
++          "504": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ErrorResponse"
++                }
++              }
++            },
++            "description": "Gateway Timeout"
++          }
++        },
++        "security": [
++          {
++            "LocalMailBearer": []
++          }
++        ],
++        "summary": "Style",
++        "tags": [
++          "F2 프로필·답장 초안"
++        ]
++      }
++    },
+     "/search": {
+       "post": {
+         "operationId": "search_search_post",
+--- a/packages/api-types/src/schema.d.ts
++++ b/packages/api-types/src/schema.d.ts
+@@ -24,6 +24,58 @@
+         patch?: never;
+         trace?: never;
+     };
++    "/drafts": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        /** Create Draft */
++        post: operations["create_draft_drafts_post"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/drafts/{draft_id}": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Read Draft */
++        get: operations["read_draft_drafts__draft_id__get"];
++        put?: never;
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        /** Save Draft */
++        patch: operations["save_draft_drafts__draft_id__patch"];
++        trace?: never;
++    };
++    "/drafts/{draft_id}/revise": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        /** Revise Draft */
++        post: operations["revise_draft_drafts__draft_id__revise_post"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+     "/health": {
+         parameters: {
+             query?: never;
+@@ -84,6 +136,59 @@
+         patch?: never;
+         trace?: never;
+     };
++    "/profile": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Profile */
++        get: operations["profile_profile_get"];
++        /** Save Profile */
++        put: operations["save_profile_profile_put"];
++        post?: never;
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/profile/preview": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        get?: never;
++        put?: never;
++        /** Preview */
++        post: operations["preview_profile_preview_post"];
++        delete?: never;
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
++    "/profile/style": {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        /** Style */
++        get: operations["style_profile_style_get"];
++        put?: never;
++        post?: never;
++        /** Delete Style */
++        delete: operations["delete_style_profile_style_delete"];
++        options?: never;
++        head?: never;
++        patch?: never;
++        trace?: never;
++    };
+     "/search": {
+         parameters: {
+             query?: never;
+@@ -129,6 +234,21 @@
+             /** Number */
+             number: number;
+         };
++        /** ContextStatus */
++        ContextStatus: {
++            /**
++             * Analysis
++             * @default unavailable
++             * @enum {string}
++             */
++            analysis: "unavailable" | "ready";
++            /**
++             * Related
++             * @default unavailable
++             * @enum {string}
++             */
++            related: "unavailable" | "empty" | "ready";
++        };
+         /** Counterparty */
+         Counterparty: {
+             /**
+@@ -151,6 +271,56 @@
+              * Format: date
+              */
+             start: string;
++        };
++        /** DraftCreate */
++        DraftCreate: {
++            /** Direction */
++            direction?: string | null;
++            /** Mail Id */
++            mail_id: string;
++        };
++        /** DraftRevise */
++        DraftRevise: {
++            /**
++             * Action
++             * @enum {string}
++             */
++            action: "shorter" | "politer" | "rewrite";
++            /** Body */
++            body: string;
++            /** Direction */
++            direction?: string | null;
++            /** Expected Version */
++            expected_version: number;
++        };
++        /** DraftSave */
++        DraftSave: {
++            /** Body */
++            body: string;
++            /** Expected Version */
++            expected_version: number;
++        };
++        /** DraftState */
++        DraftState: {
++            /** Body */
++            body: string;
++            context_status: components["schemas"]["ContextStatus"];
++            /** Directions */
++            directions: string[];
++            /** Draft Id */
++            draft_id: string;
++            /** Evidence */
++            evidence: components["schemas"]["Evidence"][];
++            /** Mail Id */
++            mail_id: string;
++            /** Profile Version */
++            profile_version: number;
++            /** References */
++            references: components["schemas"]["Reference"][];
++            /** Selected Direction */
++            selected_direction: string;
++            /** Version */
++            version: number;
+         };
+         /** ErrorDetail */
+         ErrorDetail: {
+@@ -162,6 +332,16 @@
+         /** ErrorResponse */
+         ErrorResponse: {
+             error: components["schemas"]["ErrorDetail"];
++        };
++        /** Evidence */
++        Evidence: {
++            /** Source */
++            source: string;
++            /** Span */
++            span: [
++                number,
++                number
++            ];
+         };
+         /** EvidenceSentence */
+         EvidenceSentence: {
+@@ -273,6 +453,127 @@
+             /** Topic */
+             topic?: string | null;
+         };
++        /** PreviewRequest */
++        PreviewRequest: {
++            profile: components["schemas"]["Profile"];
++        };
++        /** PreviewState */
++        PreviewState: {
++            /** Body */
++            body: string;
++            /** Evidence */
++            evidence: components["schemas"]["Evidence"][];
++        };
++        /** Profile */
++        Profile: {
++            /**
++             * Closing
++             * @default
++             */
++            closing: string;
++            /**
++             * Duties
++             * @default
++             */
++            duties: string;
++            /**
++             * Excluded Phrases
++             * @default []
++             */
++            excluded_phrases: string[];
++            /**
++             * Formality
++             * @default 70
++             */
++            formality: number;
++            /**
++             * Frequent Contacts
++             * @default []
++             */
++            frequent_contacts: string[];
++            /**
++             * Greeting
++             * @default
++             */
++            greeting: string;
++            /**
++             * Name
++             * @default
++             */
++            name: string;
++            /**
++             * Org
++             * @default
++             */
++            org: string;
++            /**
++             * Reply Length
++             * @default normal
++             * @enum {string}
++             */
++            reply_length: "short" | "normal" | "long";
++            /**
++             * Report Recipient
++             * @default
++             */
++            report_recipient: string;
++            /**
++             * Report Sections
++             * @default [
++             *       "highlights",
++             *       "ongoing",
++             *       "issues",
++             *       "next_week"
++             *     ]
++             */
++            report_sections: ("highlights" | "ongoing" | "issues" | "next_week")[];
++            /**
++             * Report Style
++             * @default bullet
++             * @enum {string}
++             */
++            report_style: "bullet" | "prose";
++            /**
++             * Signature
++             * @default
++             */
++            signature: string;
++            /**
++             * Style Learning Enabled
++             * @default false
++             */
++            style_learning_enabled: boolean;
++            /**
++             * Title
++             * @default
++             */
++            title: string;
++        };
++        /** ProfileState */
++        ProfileState: {
++            /**
++             * Exists
++             * @default false
++             */
++            exists: boolean;
++            profile?: components["schemas"]["Profile"];
++            /**
++             * Version
++             * @default 0
++             */
++            version: number;
++        };
++        /** ProfileUpdate */
++        ProfileUpdate: {
++            /**
++             * Consent Given
++             * @default false
++             */
++            consent_given: boolean;
++            /** Expected Version */
++            expected_version: number;
++            profile: components["schemas"]["Profile"];
++        };
+         /** RecentSearch */
+         RecentSearch: {
+             /**
+@@ -284,6 +585,18 @@
+             query: string;
+             /** Search Id */
+             search_id: string;
++        };
++        /** Reference */
++        Reference: {
++            /** Mail Id */
++            mail_id: string;
++            /**
++             * Received At
++             * Format: date-time
++             */
++            received_at: string;
++            /** Subject */
++            subject: string;
+         };
+         /** SearchAnswer */
+         SearchAnswer: {
+@@ -397,6 +710,35 @@
+             /** Subject */
+             subject: string;
+         };
++        /** StyleState */
++        StyleState: {
++            /**
++             * Analyzed Count
++             * @default 0
++             */
++            analyzed_count: number;
++            /**
++             * Enabled
++             * @default false
++             */
++            enabled: boolean;
++            /**
++             * Phrases
++             * @default []
++             */
++            phrases: string[];
++            /**
++             * Status
++             * @default disabled
++             * @enum {string}
++             */
++            status: "disabled" | "unavailable" | "ready";
++            /**
++             * Traits
++             * @default []
++             */
++            traits: string[];
++        };
+     };
+     responses: never;
+     parameters: never;
+@@ -480,11 +822,118 @@
+             };
+         };
+     };
+-    get_health_health_get: {
+-        parameters: {
+-            query?: never;
+-            header?: never;
+-            path?: never;
++    create_draft_drafts_post: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["DraftCreate"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            201: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["DraftState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    read_draft_drafts__draft_id__get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path: {
++                draft_id: string;
++            };
+             cookie?: never;
+         };
+         requestBody?: never;
+@@ -495,6 +944,321 @@
+                     [name: string]: unknown;
+                 };
+                 content: {
++                    "application/json": components["schemas"]["DraftState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    save_draft_drafts__draft_id__patch: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path: {
++                draft_id: string;
++            };
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["DraftSave"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["DraftState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    revise_draft_drafts__draft_id__revise_post: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path: {
++                draft_id: string;
++            };
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["DraftRevise"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["DraftState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    get_health_health_get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
+                     "application/json": components["schemas"]["HealthResponse"];
+                 };
+             };
+@@ -672,85 +1436,7 @@
+             };
+         };
+     };
+-    search_search_post: {
+-        parameters: {
+-            query?: never;
+-            header?: never;
+-            path?: never;
+-            cookie?: never;
+-        };
+-        requestBody: {
+-            content: {
+-                "application/json": components["schemas"]["SearchRequest"];
+-            };
+-        };
+-        responses: {
+-            /** @description Successful Response */
+-            200: {
+-                headers: {
+-                    [name: string]: unknown;
+-                };
+-                content: {
+-                    "application/json": components["schemas"]["SearchResponse"];
+-                };
+-            };
+-            /** @description Unauthorized */
+-            401: {
+-                headers: {
+-                    [name: string]: unknown;
+-                };
+-                content: {
+-                    "application/json": components["schemas"]["ErrorResponse"];
+-                };
+-            };
+-            /** @description Forbidden */
+-            403: {
+-                headers: {
+-                    [name: string]: unknown;
+-                };
+-                content: {
+-                    "application/json": components["schemas"]["ErrorResponse"];
+-                };
+-            };
+-            /** @description Not Found */
+-            404: {
+-                headers: {
+-                    [name: string]: unknown;
+-                };
+-                content: {
+-                    "application/json": components["schemas"]["ErrorResponse"];
+-                };
+-            };
+-            /** @description Unprocessable Entity */
+-            422: {
+-                headers: {
+-                    [name: string]: unknown;
+-                };
+-                content: {
+-                    "application/json": components["schemas"]["ErrorResponse"];
+-                };
+-            };
+-            /** @description Internal Server Error */
+-            500: {
+-                headers: {
+-                    [name: string]: unknown;
+-                };
+-                content: {
+-                    "application/json": components["schemas"]["ErrorResponse"];
+-                };
+-            };
+-            /** @description Service Unavailable */
+-            503: {
+-                headers: {
+-                    [name: string]: unknown;
+-                };
+-                content: {
+-                    "application/json": components["schemas"]["ErrorResponse"];
+-                };
+-            };
+-        };
+-    };
+-    recent_search_recent_get: {
++    profile_profile_get: {
+         parameters: {
+             query?: never;
+             header?: never;
+@@ -765,7 +1451,7 @@
+                     [name: string]: unknown;
+                 };
+                 content: {
+-                    "application/json": components["schemas"]["RecentSearch"][];
++                    "application/json": components["schemas"]["ProfileState"];
+                 };
+             };
+             /** @description Unauthorized */
+@@ -795,6 +1481,15 @@
+                     "application/json": components["schemas"]["ErrorResponse"];
+                 };
+             };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
+             /** @description Unprocessable Entity */
+             422: {
+                 headers: {
+@@ -804,6 +1499,514 @@
+                     "application/json": components["schemas"]["ErrorResponse"];
+                 };
+             };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    save_profile_profile_put: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["ProfileUpdate"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ProfileState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    preview_profile_preview_post: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["PreviewRequest"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["PreviewState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    style_profile_style_get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["StyleState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    delete_style_profile_style_delete: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ProfileState"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Conflict */
++            409: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description 서버 내부 오류 */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Bad Gateway */
++            502: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Gateway Timeout */
++            504: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
++    search_search_post: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody: {
++            content: {
++                "application/json": components["schemas"]["SearchRequest"];
++            };
++        };
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["SearchResponse"];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
+             /** @description Internal Server Error */
+             500: {
+                 headers: {
+@@ -824,4 +2027,78 @@
+             };
+         };
+     };
++    recent_search_recent_get: {
++        parameters: {
++            query?: never;
++            header?: never;
++            path?: never;
++            cookie?: never;
++        };
++        requestBody?: never;
++        responses: {
++            /** @description Successful Response */
++            200: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["RecentSearch"][];
++                };
++            };
++            /** @description Unauthorized */
++            401: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Forbidden */
++            403: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Not Found */
++            404: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Unprocessable Entity */
++            422: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Internal Server Error */
++            500: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++            /** @description Service Unavailable */
++            503: {
++                headers: {
++                    [name: string]: unknown;
++                };
++                content: {
++                    "application/json": components["schemas"]["ErrorResponse"];
++                };
++            };
++        };
++    };
+ }
