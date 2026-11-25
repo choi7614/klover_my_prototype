@@ -2,15 +2,18 @@ import type { components } from '@klover/api-types';
 import type { AnalysisCategory } from './f1-bridge';
 
 export type MailSession = components['schemas']['LocalSession'];
-export type MailSummary = components['schemas']['MailSummary'];
-export type MailDetail = components['schemas']['MailDetail'];
-export type MailPage = components['schemas']['MailPage'];
+// 보낸 메일 구분 값(direction·to_label)은 서버가 항상 보내지만, 없어도 받은 메일로 보도록 선택값으로 둔다.
+type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type MailSummary = Optional<components['schemas']['MailSummary'], 'direction' | 'to_label'>;
+export type MailDetail = Optional<components['schemas']['MailDetail'], 'direction' | 'to_label'>;
+export type MailPage = { items: MailSummary[]; next_cursor: string | null };
 // 서버 MailSyncResult와 같은 형식. 공유 타입 재생성(패치 04) 뒤에는 components 타입으로 바꿀 수 있다.
 export type MailSyncResult = { saved: number; skipped: number; mode: 'initial' | 'history' | 'rescan'; token_refreshed: boolean };
 // 받은편지함 분류 필터. 서버가 같은 7개 값만 받는다. (f1-bridge와 서로 불러오지 않도록 목록을 따로 둔다)
 export const MAIL_CATEGORIES: readonly AnalysisCategory[] =
   ['work_request', 'meeting', 'approval', 'report_share', 'notice', 'external', 'newsletter'];
-export type InboxQuery = { limit?: number; cursor?: string | null; category?: AnalysisCategory };
+export type MailBox = 'inbox' | 'sent';
+export type InboxQuery = { limit?: number; cursor?: string | null; category?: AnalysisCategory; box?: MailBox };
 /** 서버 MailCategoryCounts와 같은 형식: 전체 건수와 분류별 건수(없는 분류는 0건). */
 export type MailCategoryCounts = { total: number; counts: Partial<Record<AnalysisCategory, number>> };
 export type MailErrorCode = 'configuration' | 'unauthorized' | 'forbidden' | 'unavailable' |
@@ -59,7 +62,8 @@ export function validInboxQuery(value: unknown): value is InboxQuery {
   if (value === undefined) return true;
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
   const query = value as Record<string, unknown>;
-  return Object.keys(query).every(key => key === 'limit' || key === 'cursor' || key === 'category') &&
+  return Object.keys(query).every(key => key === 'limit' || key === 'cursor' || key === 'category' || key === 'box') &&
+    (query.box === undefined || query.box === 'inbox' || (query.box === 'sent' && query.category === undefined)) &&
     (query.category === undefined || (typeof query.category === 'string' && (MAIL_CATEGORIES as readonly string[]).includes(query.category))) &&
     (query.limit === undefined || (Number.isInteger(query.limit) && Number(query.limit) >= 1 && Number(query.limit) <= 100)) &&
     (query.cursor === undefined || query.cursor === null ||

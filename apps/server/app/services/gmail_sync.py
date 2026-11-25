@@ -56,10 +56,10 @@ def _pages(client, path, access, params):
     raise GoogleConnectionError("조회 상한에 도달했습니다. 기존 데이터와 커서는 보존됩니다")
 
 
-def _initial_ids(client, access, start):
+def _initial_ids(client, access, start, label="INBOX"):
     params = {
         "q": f"after:{math.floor(start.timestamp()) - 1}",
-        "labelIds": "INBOX",
+        "labelIds": label,
         "maxResults": 100,
         "fields": "messages/id,nextPageToken",
     }
@@ -104,7 +104,9 @@ def synchronize(repository, client):
         stats = {"saved": 0, "skipped": 0, "mode": mode, "token_refreshed": refreshed}
         seen = set()
 
-        def collect(source_ids):
+        def collect(source_ids, label="INBOX"):
+            # 받은 메일(INBOX)은 받은편지함, 보낸 메일(SENT)은 보낸편지함에 저장한다.
+            sent = label == "SENT"
             for source_id in source_ids:
                 if source_id in seen:
                     continue
@@ -114,7 +116,8 @@ def synchronize(repository, client):
                         "메일 개수 제한에 도달했습니다. 기존 데이터는 보존됩니다"
                     )
                 if batch.contains(source_id):
-                    stats["skipped"] += 1
+                    if not sent:
+                        stats["skipped"] += 1
                     continue
                 path = "/messages/" + source_id
                 try:
@@ -123,8 +126,9 @@ def synchronize(repository, client):
                     )
                     if meta.get("id") != source_id:
                         raise GoogleConnectionError("메일 식별자를 확인하지 못했습니다")
-                    if received_at(meta) < batch.start or "INBOX" not in meta.get("labelIds", []):
-                        stats["skipped"] += 1
+                    if received_at(meta) < batch.start or label not in meta.get("labelIds", []):
+                        if not sent:
+                            stats["skipped"] += 1
                         continue
                     message = client.get(
                         path,
@@ -134,16 +138,22 @@ def synchronize(repository, client):
                 except GmailStatusError as error:
                     if error.status != 404:
                         raise
-                    stats["skipped"] += 1
+                    if not sent:
+                        stats["skipped"] += 1
                     continue
                 mail = parse_message(message)
                 if mail.source_id != source_id:
                     raise GoogleConnectionError("메일 식별자를 확인하지 못했습니다")
-                if mail.received_at < batch.start or "INBOX" not in message.get("labelIds", []):
-                    stats["skipped"] += 1
+                if mail.received_at < batch.start or label not in message.get("labelIds", []):
+                    if not sent:
+                        stats["skipped"] += 1
                     continue
-                batch.store(mail)
-                stats["saved"] += 1
+                if sent:
+                    # 보낸 메일은 보기만 한다. 건수(saved)는 새로 받은 메일만 센다.
+                    batch.store_sent(mail)
+                else:
+                    batch.store(mail)
+                    stats["saved"] += 1
 
         try:
             collect(ids)
@@ -152,5 +162,8 @@ def synchronize(repository, client):
                 raise
             stats["mode"] = "rescan"
             collect(_initial_ids(client, access, batch.start))
+        # 보낸 메일은 변경 이력 대신 사용 시작 이후 목록을 매번 훑는다.
+        # 이미 저장한 메일은 본문을 다시 받지 않고, 이 기능 이전에 연결한 계정도 저절로 채워진다.
+        collect(_initial_ids(client, access, batch.start, "SENT"), "SENT")
         batch.advance(baseline)
     return stats

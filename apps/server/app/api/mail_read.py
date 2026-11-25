@@ -82,20 +82,23 @@ def current_session(repository: Repository):
 def list_mails(
     repository: Repository,
     request: Request,
-    box: Literal["inbox"] = "inbox",
+    box: Literal["inbox", "sent"] = "inbox",
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     cursor: Annotated[str | None, Query(max_length=1024)] = None,
     category: MailCategory | None = None,
 ):
-    """받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.
+    """받은/보낸 메일을 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.
 
-    category를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다.
+    category를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다. 받은편지함에서만 쓴다.
     """
     if set(request.query_params) - {"box", "limit", "cursor", "category"} or any(
         len(request.query_params.getlist(key)) != 1 for key in request.query_params
     ):
         raise HTTPException(422)
-    return _read(lambda: repository.list(limit=limit, cursor=cursor, category=category))
+    if box == "sent" and category is not None:
+        # 보낸 메일은 AI 분류 대상이 아니다.
+        raise HTTPException(422)
+    return _read(lambda: repository.list(limit=limit, cursor=cursor, category=category, box=box))
 
 
 @router.get("/mails/category-counts", response_model=MailCategoryCounts)
@@ -110,8 +113,8 @@ def read_mail(
     repository: Repository,
     mail_id: Annotated[str, Path(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")],
 ):
-    """소유 계정의 일반 텍스트 본문. 다른 계정 ID도 같은 404로 처리한다."""
-    result = _read(lambda: repository.detail(mail_id))
+    """소유 계정의 받은·보낸 메일 일반 텍스트 본문. 다른 계정 ID도 같은 404로 처리한다."""
+    result = _read(lambda: repository.detail(mail_id, include_sent=True))
     if result is None:
         raise HTTPException(404)
     return result

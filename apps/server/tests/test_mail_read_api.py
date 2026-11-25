@@ -50,7 +50,7 @@ class NoReads:
     def list(self, **_):
         return self.session()
 
-    def detail(self, _):
+    def detail(self, _, **__):
         return self.session()
 
 
@@ -181,10 +181,21 @@ def test_session_list_detail_and_ownership_boundaries(database):
         assert detail.json()["body_text"] == "합성 전용 본문 <script>실행 금지</script>"
         assert "body_html" not in detail.json() and "token_ciphertext" not in detail.text
         assert detail.headers["referrer-policy"] == "no-referrer"
-        for mail_id in ["private-other", "private-same-user", "old", "sent", "unknown"]:
+        for mail_id in ["private-other", "private-same-user", "old", "unknown"]:
             response = client.get("/mails/" + mail_id, headers=auth())
             assert response.status_code == 404
             assert "남의" not in response.text
+        # 보낸 메일은 받은편지함 목록에는 없고, 보낸편지함 목록과 본문 조회로만 보인다.
+        assert "sent" not in [
+            x["mail_id"] for x in client.get("/mails", headers=auth()).json()["items"]
+        ]
+        sent_list = client.get("/mails", headers=auth(), params={"box": "sent"})
+        assert [x["mail_id"] for x in sent_list.json()["items"]] == ["sent"]
+        assert sent_list.json()["items"][0]["direction"] == "sent"
+        assert client.get("/mails/sent", headers=auth()).status_code == 200
+        # 받은 메일 답장 초안 등 다른 기능이 쓰는 기본 조회는 보낸 메일을 열지 못한다.
+        assert repository.detail("sent") is None
+        assert repository.detail("sent", include_sent=True) is not None
 
 
 def test_cursor_pagination_is_stable_for_equal_timestamps(database):
@@ -202,7 +213,7 @@ def test_cursor_pagination_is_stable_for_equal_timestamps(database):
             cursor = data["next_cursor"]
         assert identifiers == ["m-c", "m-b", "m-a"] and cursor is None
         assert client.get("/mails", headers=auth(), params={"limit": 0}).status_code == 422
-        assert client.get("/mails", headers=auth(), params={"box": "sent"}).status_code == 422
+        assert client.get("/mails", headers=auth(), params={"box": "trash"}).status_code == 422
         assert (
             client.get("/mails", headers=auth(), params={"user_id": "other-user"}).status_code
             == 422

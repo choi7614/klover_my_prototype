@@ -57,6 +57,84 @@ class MailRepository:
         history_imported: bool = False,
     ) -> str | None:
         """일반 수신은 시작 이후만, 명시적 가져오기는 과거도 저장한다. 중복은 기존 ID 반환."""
+        return self._store(
+            direction="received",
+            mailbox="inbox",
+            user_id=user_id,
+            account_id=account_id,
+            mail_id=mail_id,
+            source_message_id=source_message_id,
+            received_at=received_at,
+            from_addr=from_addr,
+            subject=subject,
+            body_text=body_text,
+            from_name=from_name,
+            to=to,
+            thread_id=thread_id,
+            cc=cc,
+            is_read=is_read,
+            history_imported=history_imported,
+        )
+
+    def store_sent(
+        self,
+        *,
+        user_id: str,
+        account_id: str,
+        mail_id: str,
+        source_message_id: str,
+        received_at: datetime,
+        from_addr: str,
+        subject: str,
+        body_text: str,
+        from_name: str = "",
+        to: list[dict] | None = None,
+        thread_id: str | None = None,
+        cc: list[dict] | None = None,
+    ) -> str | None:
+        """Gmail에서 읽어 온 보낸 메일을 보낸편지함에 저장한다(보기 전용). AI 분석 대상이 아니다.
+
+        received_at은 보낸 시각이다. 사용 시작 이전 메일은 저장하지 않는다. 중복은 기존 ID 반환.
+        """
+        return self._store(
+            direction="sent",
+            mailbox="sent",
+            user_id=user_id,
+            account_id=account_id,
+            mail_id=mail_id,
+            source_message_id=source_message_id,
+            received_at=received_at,
+            from_addr=from_addr,
+            subject=subject,
+            body_text=body_text,
+            from_name=from_name,
+            to=to,
+            thread_id=thread_id,
+            cc=cc,
+            is_read=True,
+            history_imported=False,
+        )
+
+    def _store(
+        self,
+        *,
+        direction: str,
+        mailbox: str,
+        user_id: str,
+        account_id: str,
+        mail_id: str,
+        source_message_id: str,
+        received_at: datetime,
+        from_addr: str,
+        subject: str,
+        body_text: str,
+        from_name: str,
+        to: list[dict] | None,
+        thread_id: str | None,
+        cc: list[dict] | None,
+        is_read: bool,
+        history_imported: bool,
+    ) -> str | None:
         _aware(received_at)
         account = self.session.scalar(
             select(MailAccount).where(
@@ -83,7 +161,8 @@ class MailRepository:
                 body_text=body_text,
                 to=to if to is not None else [],
                 thread_id=thread_id,
-                direction="received",
+                direction=direction,
+                mailbox=mailbox,
                 cc=cc if cc is not None else [],
                 is_read=is_read,
             )

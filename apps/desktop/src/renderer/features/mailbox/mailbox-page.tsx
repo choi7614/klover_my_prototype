@@ -9,7 +9,7 @@ import type { F5Client } from '../suggestions/types';
 import type { MailAnalysisClient } from '../mail-analysis/client';
 import { AiSummaryBox, MailAnalysisLine } from '../mail-analysis/analysis-view';
 import { useMailAnalysis } from '../mail-analysis/use-mail-analysis';
-import { MAIL_CATEGORIES, mailFailure, type MailCategoryCounts, type MailDetail, type MailError, type MailReadBridge, type MailSession, type MailSummary } from '../../../shared/mail-read';
+import { MAIL_CATEGORIES, mailFailure, type MailBox, type MailCategoryCounts, type MailDetail, type MailError, type MailReadBridge, type MailSession, type MailSummary } from '../../../shared/mail-read';
 import type { AnalysisCategory } from '../../../shared/f1-bridge';
 import { CATEGORIES } from '../mail-analysis/categories';
 
@@ -47,6 +47,9 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
   const [searchText, setSearchText] = useState('');
   // 왼쪽 '분류' 목록: null이면 받은편지함 전체. 건수는 서버가 센 값이고, 못 읽으면 숫자만 숨긴다.
   const [category, setCategoryFilter] = useState<AnalysisCategory | null>(null);
+  // 보낸편지함은 Gmail에서 가져온 보낸 메일을 보기만 한다(보내기·AI 분석 없음).
+  const [box, setBox] = useState<MailBox>('inbox');
+  const sentBox = box === 'sent';
   const [counts, setCounts] = useState<MailCategoryCounts | null>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const listRequest = useRef(0);
@@ -54,7 +57,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
   const mounted = useRef(true);
   const canSync = typeof api.sync === 'function';
   // F1: 목록에 보이는 메일과 선택한 메일의 분류·요약. 근거 메일은 mail_id로만 연결한다.
-  const analysisIds = useMemo(() => [...mails.map(mail => mail.mail_id), ...(selected ? [selected] : [])], [mails, selected]);
+  const analysisIds = useMemo(() => sentBox ? [] : [...mails.map(mail => mail.mail_id), ...(selected ? [selected] : [])], [mails, selected, sentBox]);
   const { setCategory, views, state: analysisState, retry: retryAnalysis, retryNotice } = useMailAnalysis(analysis, analysisIds);
 
   const loadList = useCallback(async (nextCursor: string | null = null) => {
@@ -64,7 +67,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
     setLoading(true);
     setListError(null);
     if (!nextCursor) { setMails([]); setCursor(null); }
-    const result = await api.inbox({ limit: 20, cursor: nextCursor, ...(category ? { category } : {}) }).catch(() => mailFailure('connection'));
+    const result = await api.inbox({ limit: 20, cursor: nextCursor, ...(sentBox ? { box: 'sent' as const } : category ? { category } : {}) }).catch(() => mailFailure('connection'));
     if (request !== listRequest.current) return;
     busy.current = false;
     setLoading(false);
@@ -75,7 +78,7 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
     }
     setMails(previous => [...new Map((nextCursor ? [...previous, ...result.data.items] : result.data.items).map(mail => [mail.mail_id, mail])).values()]);
     setCursor(result.data.next_cursor);
-  }, [api, category, onDisconnected]);
+  }, [api, category, onDisconnected, sentBox]);
 
   const loadCounts = useCallback(async () => {
     if (!api.categoryCounts) return;
@@ -122,10 +125,18 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
   }, [api, loadCounts, loadList, onDisconnected, syncing]);
 
   const chooseCategory = (next: AnalysisCategory | null) => {
-    if (next === category) return;
+    if (next === category && !sentBox) return;
     setSelected(null);
     setDetail(null);
+    setBox('inbox');
     setCategoryFilter(next);
+  };
+  const chooseSent = () => {
+    if (sentBox) return;
+    setSelected(null);
+    setDetail(null);
+    setCategoryFilter(null);
+    setBox('sent');
   };
   // 사용자가 메일 분류를 고치면 왼쪽 건수도 새로 읽는다.
   const changeMailCategory = setCategory && (async (mailId: string, next: AnalysisCategory) => {
@@ -188,16 +199,16 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-[220px] shrink-0 flex-col overflow-y-auto bg-sidebar p-3 text-sidebar-foreground" aria-label="메일함">
           <Button disabled className="mb-3 rounded-leaf-sm"><PenLine aria-hidden="true" />새 메일</Button>
-          <button type="button" aria-pressed={category === null} onClick={() => chooseCategory(null)}
+          <button type="button" aria-pressed={!sentBox && category === null} onClick={() => chooseCategory(null)}
             className={cn('flex h-[34px] w-full items-center gap-2 rounded-leaf-sm px-3 text-body focus-visible:outline-sidebar-ring',
-              category === null ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground')}>
+              !sentBox && category === null ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground')}>
             <Inbox className="size-4" aria-hidden="true" />받은편지함
             {counts && <span className="ml-auto text-caption opacity-80">{counts.total}</span>}
           </button>
           <nav aria-label="분류" className="mt-1 space-y-0.5">
             <p className="px-3 pb-0.5 pt-2 text-caption text-sidebar-muted">분류별 보기</p>
             {MAIL_CATEGORIES.map(key => {
-              const active = category === key;
+              const active = !sentBox && category === key;
               return <button key={key} type="button" aria-pressed={active} onClick={() => chooseCategory(key)}
                 className={cn('flex h-8 w-full items-center gap-2 rounded-leaf-sm px-3 text-body focus-visible:outline-sidebar-ring',
                   active ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground')}>
@@ -207,7 +218,12 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
               </button>;
             })}
           </nav>
-          {[[Send, '보낸편지함'], [File, '임시보관함'], [Archive, '보관함'], [Trash2, '스팸·휴지통']].map(([Icon, label]) => {
+          <button type="button" aria-pressed={sentBox} onClick={chooseSent}
+            className={cn('mt-1 flex h-[34px] w-full items-center gap-2 rounded-leaf-sm px-3 text-body focus-visible:outline-sidebar-ring',
+              sentBox ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground')}>
+            <Send className="size-4" aria-hidden="true" />보낸편지함
+          </button>
+          {[[File, '임시보관함'], [Archive, '보관함'], [Trash2, '스팸·휴지통']].map(([Icon, label]) => {
             const Component = Icon as typeof Send;
             return <button key={String(label)} disabled className="flex h-[34px] items-center gap-2 px-3 text-body text-sidebar-muted opacity-60"><Component className="size-4" aria-hidden="true" />{String(label)}</button>;
           })}
@@ -216,29 +232,32 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
           <a href="#/report/weekly" className="mt-auto rounded-leaf-sm px-3 py-2 text-body text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring">주간 보고</a>
           <a href="#/settings" className="mt-2 flex items-center gap-2 rounded-leaf-sm px-3 py-2 text-body text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring"><Settings className="size-4" aria-hidden="true" />설정</a>
         </aside>
-        <section className="flex w-[360px] shrink-0 flex-col bg-canvas max-[1280px]:w-[320px]" aria-label="받은 메일 목록">
+        <section className="flex w-[360px] shrink-0 flex-col bg-canvas max-[1280px]:w-[320px]" aria-label={sentBox ? '보낸 메일 목록' : '받은 메일 목록'}>
           <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
-            <h1 className="text-body font-semibold">받은편지함{category && <span className="font-normal text-muted-foreground"> · {CATEGORIES[category].label}</span>}</h1>
+            <h1 className="text-body font-semibold">{sentBox ? '보낸편지함' : '받은편지함'}{category && <span className="font-normal text-muted-foreground"> · {CATEGORIES[category].label}</span>}</h1>
             <span className="text-caption text-muted-foreground">{mails.length ? `${mails.length}건 불러옴` : ''}</span>
             <Button variant="secondary" className="ml-auto px-2" disabled={loading || syncing} onClick={() => void refresh()} aria-label="목록 새로고침"
               title={canSync ? 'Gmail에서 새 메일 가져오기' : '저장된 메일 목록 다시 불러오기'}><RefreshCw className={cn(syncing && 'animate-spin')} aria-hidden="true" /></Button>
           </div>
           <p className="border-b px-4 py-2 text-caption text-muted-foreground">
-            {canSync ? '최신 수신순 · 새로고침하면 Gmail에서 새 메일을 가져옵니다.' : '최신 수신순 · Gmail 가져오기 연결 준비 중이라 저장된 메일만 다시 읽습니다.'}
+            {sentBox ? '최신 발신순 · 보기 전용입니다. 메일 보내기는 아직 지원하지 않아요.'
+              : canSync ? '최신 수신순 · 새로고침하면 Gmail에서 새 메일을 가져옵니다.' : '최신 수신순 · Gmail 가져오기 연결 준비 중이라 저장된 메일만 다시 읽습니다.'}
           </p>
           {syncing && <p role="status" className="border-b bg-muted px-4 py-2 text-caption text-muted-foreground">Gmail에서 새 메일 확인 중…</p>}
           {syncNotice && !syncing && <p role="status" className="border-b px-4 py-2 text-caption text-muted-foreground">{syncNotice}</p>}
           {syncError && <div role="alert" className="border-b px-4 py-3 text-caption text-danger"><p>{syncError.message}</p><Button variant="secondary" className="mt-2" onClick={() => void refresh()}>새 메일 다시 가져오기</Button></div>}
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2.5" aria-busy={loading}>
             {loading && !mails.length && <div role="status" className="space-y-3 p-2"><span className="sr-only">메일 목록 불러오는 중</span>{[1, 2, 3, 4].map(key => <div key={key} className="h-20 animate-pulse rounded-leaf bg-background" />)}</div>}
-            {!loading && !listError && !mails.length && <div className="p-6 text-center"><img src={mark} alt="" className="mx-auto mb-5 size-16" />{category
+            {!loading && !listError && !mails.length && <div className="p-6 text-center"><img src={mark} alt="" className="mx-auto mb-5 size-16" />{sentBox
+              ? <><h2 className="text-title font-semibold">보낸 메일이 없습니다</h2><p className="mt-3 text-body text-muted-foreground">사용 시작 이후 Gmail에서 보낸 메일이 여기에 표시됩니다. 방금 보냈다면 새로고침해 보세요.</p></>
+              : category
               ? <><h2 className="text-title font-semibold">이 분류의 메일이 없습니다</h2><p className="mt-3 text-body text-muted-foreground">분석이 끝나지 않은 메일은 아직 분류되지 않아 여기에 보이지 않습니다. 왼쪽에서 받은편지함을 누르면 전체를 볼 수 있습니다.</p></>
               : <><h2 className="text-title font-semibold">받은편지함이 비어 있습니다</h2><p className="mt-3 text-body text-muted-foreground">사용 시작 이후 수신해 저장한 메일이 여기에 표시됩니다. 이전 메일은 가져오지 않습니다.</p></>}</div>}
             {mails.map(mail => <button key={mail.mail_id} onClick={() => setSelected(mail.mail_id)} aria-pressed={selected === mail.mail_id}
               className={cn('block w-full rounded-leaf bg-background p-4 text-left shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selected === mail.mail_id && 'ring-2 ring-selected-bar')}>
-              <span className="flex items-start gap-2 text-body"><span className={cn('min-w-0 flex-1 truncate', !mail.is_read && 'font-semibold')}>{!mail.is_read && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-primary" aria-label="안 읽음" />}{mail.from_name || mail.from_addr}</span><time className="shrink-0 text-caption text-muted-foreground" dateTime={mail.received_at}>{timestamp(mail.received_at)}</time></span>
+              <span className="flex items-start gap-2 text-body"><span className={cn('min-w-0 flex-1 truncate', !mail.is_read && 'font-semibold')}>{!mail.is_read && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-primary" aria-label="안 읽음" />}{sentBox ? `받는 사람: ${mail.to_label || '(없음)'}` : mail.from_name || mail.from_addr}</span><time className="shrink-0 text-caption text-muted-foreground" dateTime={mail.received_at}>{timestamp(mail.received_at)}</time></span>
               <span className="mt-1 block truncate text-body font-semibold">{subject(mail.subject)}</span>
-              {analysis
+              {analysis && !sentBox
                 ? <MailAnalysisLine view={views[mail.mail_id]} state={analysisState} preview={mail.preview} />
                 : <span className="mt-1 line-clamp-2 text-caption text-muted-foreground">{mail.preview}</span>}
             </button>)}
@@ -250,17 +269,18 @@ export function MailboxPage({ api, session, onDisconnected, initialMailId = null
           {!selected && <p className="flex h-full items-center justify-center text-body text-muted-foreground">메일을 선택하세요</p>}
           {detailLoading && <div role="status" className="space-y-4 p-7"><span className="sr-only">메일 본문 불러오는 중</span><div className="h-7 animate-pulse rounded-md bg-muted" /><div className="h-40 animate-pulse rounded-md bg-muted" /></div>}
           {detailError && <div role="alert" className="p-7 text-body text-danger"><p>{detailError.message}</p><Button variant="secondary" className="mt-3" onClick={() => setDetailRetry(value => value + 1)}>본문 다시 시도</Button></div>}
-          {selected && <div className="sticky top-0 flex h-11 items-center gap-2 rounded-t-leaf-lg border-b bg-background px-5">
+          {selected && detail?.direction !== 'sent' && <div className="sticky top-0 flex h-11 items-center gap-2 rounded-t-leaf-lg border-b bg-background px-5">
             <a href={`#/reply/${encodeURIComponent(selected)}`}
               className="inline-flex h-8 items-center gap-1.5 rounded-leaf-sm bg-ai px-3 text-body font-semibold text-ai-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               답장 초안 만들기</a>
           </div>}
           {detail && (() => {
             // F1 AI 요약 박스: 이 메일(mail_id)의 분석 결과만 붙인다.
-            const aiBox = analysis
+            const sent = detail.direction === 'sent';
+            const aiBox = analysis && !sent
               ? <AiSummaryBox view={views[detail.mail_id]} state={analysisState} onRetry={id => void retryAnalysis(id)} retryNotice={retryNotice} onCategoryChange={changeMailCategory} />
               : null;
-            return suggestions
+            return suggestions && !sent
               // F5: 제안이 있는 메일만 S04(본문 + 제안 패널)로, 없으면 아래 S03 모양 그대로 보여 준다.
               ? <MailSuggestions key={detail.mail_id} mailId={detail.mail_id} body={detail.body_text} client={suggestions}
                 header={<MailHead detail={detail} aiBox={aiBox} />} fallback={<MailArticle detail={detail} aiBox={aiBox} />} />

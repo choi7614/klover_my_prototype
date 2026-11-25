@@ -41,6 +41,7 @@ function summary(value: unknown): MailSummary {
     mail_id: row.mail_id, subject: text(row.subject), from_addr: text(row.from_addr),
     from_name: text(row.from_name), preview: text(row.preview), received_at: date(row.received_at),
     is_read: row.is_read, analysis_status: row.analysis_status as MailSummary['analysis_status'],
+    direction: row.direction === 'sent' ? 'sent' : 'received', to_label: row.to_label === undefined ? '' : text(row.to_label),
   };
 }
 function contacts(value: unknown): MailDetail['to'] {
@@ -103,7 +104,7 @@ export class MailAPIClient implements MailReadBridge {
 
   inbox(query?: InboxQuery): Promise<MailResult<MailPage>> {
     if (!validInboxQuery(query)) return Promise.resolve(mailFailure('invalid_request'));
-    const parameters = new URLSearchParams({ box: 'inbox', limit: String(query?.limit ?? 20) });
+    const parameters = new URLSearchParams({ box: query?.box ?? 'inbox', limit: String(query?.limit ?? 20) });
     if (query?.cursor) parameters.set('cursor', query.cursor);
     if (query?.category) parameters.set('category', query.category);
     return this.request(`/mails?${parameters}`, value => {

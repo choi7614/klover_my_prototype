@@ -21,6 +21,9 @@ class MailSummary(BaseModel):
     received_at: AwareDatetime
     is_read: bool
     analysis_status: Literal["pending", "done", "failed"]
+    # 보낸 메일 목록에서 받는 사람을 보여 주기 위한 값. 받은 메일은 비어 있다.
+    direction: Literal["received", "sent"] = "received"
+    to_label: str = ""
 
 
 class MailDetail(MailSummary):

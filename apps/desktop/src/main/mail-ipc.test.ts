@@ -56,7 +56,7 @@ describe('제한된 메일 IPC', () => {
   it('추가 인수·URL·파일 경로·임의 헤더·범위 밖 페이지 요청을 거부한다', async () => {
     const s = setup();
     expect(await s.handlers.get(mailChannels.session)!(s.event, 'secret-file')).toMatchObject({ ok: false });
-    for (const query of [null, [], { limit: 0 }, { limit: 101 }, { cursor: 42 }, { category: 'unknown' }, { category: 3 }, { url: 'http://outside.invalid' }, { headers: {} }]) {
+    for (const query of [null, [], { limit: 0 }, { limit: 101 }, { cursor: 42 }, { category: 'unknown' }, { category: 3 }, { box: 'trash' }, { box: 'sent', category: 'meeting' }, { url: 'http://outside.invalid' }, { headers: {} }]) {
       expect(await s.handlers.get(mailChannels.inbox)!(s.event, query)).toMatchObject({ ok: false });
     }
     for (const id of ['../token', 'http://outside.invalid', '', 'x'.repeat(129), { path: 'file' }]) {
@@ -70,6 +70,8 @@ describe('제한된 메일 IPC', () => {
     const s = setup();
     await s.handlers.get(mailChannels.inbox)!(s.event, { limit: 20, category: 'meeting' });
     expect(s.client.inbox).toHaveBeenCalledWith({ limit: 20, category: 'meeting' });
+    await s.handlers.get(mailChannels.inbox)!(s.event, { limit: 20, box: 'sent' });
+    expect(s.client.inbox).toHaveBeenLastCalledWith({ limit: 20, box: 'sent' });
     expect(await s.handlers.get(mailCategoryCountsChannel)!(s.event)).toMatchObject({ ok: true });
     expect(await s.handlers.get(mailCategoryCountsChannel)!(s.event, 'extra')).toMatchObject({ ok: false });
     expect(await s.handlers.get(mailCategoryCountsChannel)!({ ...s.event, senderFrame: null } as IpcMainInvokeEvent)).toMatchObject({ ok: false });

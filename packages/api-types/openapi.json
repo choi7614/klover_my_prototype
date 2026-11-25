@@ -1621,6 +1621,15 @@
             "title": "Cc",
             "type": "array"
           },
+          "direction": {
+            "default": "received",
+            "enum": [
+              "received",
+              "sent"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
           "from_addr": {
             "title": "From Addr",
             "type": "string"
@@ -1656,6 +1665,11 @@
             },
             "title": "To",
             "type": "array"
+          },
+          "to_label": {
+            "default": "",
+            "title": "To Label",
+            "type": "string"
           }
         },
         "required": [
@@ -1774,6 +1788,15 @@
             "title": "Analysis Status",
             "type": "string"
           },
+          "direction": {
+            "default": "received",
+            "enum": [
+              "received",
+              "sent"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
           "from_addr": {
             "title": "From Addr",
             "type": "string"
@@ -1801,6 +1824,11 @@
           },
           "subject": {
             "title": "Subject",
+            "type": "string"
+          },
+          "to_label": {
+            "default": "",
+            "title": "To Label",
             "type": "string"
           }
         },
@@ -4777,7 +4805,7 @@
     },
     "/mails": {
       "get": {
-        "description": "받은 메일을 수신 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.\n\ncategory를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다.",
+        "description": "받은/보낸 메일을 시각·ID 내림차순으로 조회한다. 변경·동기화는 수행하지 않는다.\n\ncategory를 주면 그 분류(사용자가 고친 값 우선)의 메일만 돌려준다. 받은편지함에서만 쓴다.",
         "operationId": "list_mails_mails_get",
         "parameters": [
           {
@@ -4785,8 +4813,11 @@
             "name": "box",
             "required": false,
             "schema": {
-              "const": "inbox",
               "default": "inbox",
+              "enum": [
+                "inbox",
+                "sent"
+              ],
               "title": "Box",
               "type": "string"
             }
@@ -5207,7 +5238,7 @@
     },
     "/mails/{mail_id}": {
       "get": {
-        "description": "소유 계정의 일반 텍스트 본문. 다른 계정 ID도 같은 404로 처리한다.",
+        "description": "소유 계정의 받은·보낸 메일 일반 텍스트 본문. 다른 계정 ID도 같은 404로 처리한다.",
         "operationId": "read_mail_mails__mail_id__get",
         "parameters": [
           {
