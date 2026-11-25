@@ -256,7 +256,7 @@ Claude 생성 실패 시 로컬로 1회 전환하고 실제 처리 AI를 표시�
 
 1. Docker Desktop을 켜고 준비 완료를 기다린다.
 2. macOS는 `Klover-Start.command`, Windows는 `Klover-Start.cmd`를 더블클릭한다.
-3. 진행 창을 열어둔다. 도구가 DB·Ollama 모델·계정 인증을 확인하고 서버·앱을 시작한다.
+3. 진행 창을 열어둔다. 도구가 먼저 `main`의 새 버전을 안전하게 받고([자동 업데이트](desktop-launcher.md#자동-업데이트)), DB·Ollama 모델·계정 인증을 확인한 뒤 서버·앱을 시작한다.
 4. 앱을 종료하면 이번 실행 도구가 띄운 앱·서버·Ollama를 정리한다. 기존 DB/Docker와 기존 Ollama는 그대로 둔다.
 5. 중단할 때는 진행 창의 Control+C를 사용한다. 강제 창 닫기는 정리를 보장하지 않는다.
 
@@ -273,6 +273,8 @@ docker compose --env-file .env -f infra/docker-compose.yml stop db
 `down -v`·볼륨 삭제·DB 초기화·downgrade는 실행하지 않는다.
 
 ## 9. 기존 사용자 — 업데이트
+
+> 더블클릭 실행 도구는 시작할 때 `main`을 자동으로 업데이트한다([자동 업데이트](desktop-launcher.md#자동-업데이트)). 아래 수동 절차는 자동 업데이트를 끈 경우, 작업 중인 브랜치를 쓰는 경우, **DB 마이그레이션이 포함된 업데이트**에 사용한다.
 
 앱·서버를 종료하고 10절에 따라 DB와 비밀 파일을 함께 백업한다.
 `git status --short --branch`, `git fetch origin`으로 현재 브랜치·변경을 확인한다.
@@ -362,7 +364,7 @@ AI 설정의 암호문과 키도 함께 보존한다. 코드 버전·DB 연결 �
 | Claude 실패 | 앱 키 등록·모델 ID·동의·API 잔액. 생성 실패 시 로컬 1회 전환. 연결 검사는 대체하지 않음 |
 
 현재 미구현: 앱 안 Google 연결·5단계 완료, 작성·발송·보관·삭제·스팸·읽음 동기화,
-주기 수신, WebSocket·OS 알림·트레이·자동 실행, F2 관련 메일 자동 검색·문체 학습 수집, Word 출력, 배포 설치 파일·자동 업데이트.
+주기 수신, WebSocket·OS 알림·트레이·자동 실행, F2 관련 메일 자동 검색·문체 학습 수집, Word 출력, 배포 설치 파일. 더블클릭 실행 도구의 시작 전 자동 업데이트는 있다.
 후속 개발·장기 목표는 [현황판](progress.md)·[통합 후속 작업](integration-followups.md)을 본다.
 오류 보고는 단계·OS·코드 버전·일반 오류 코드·건수만 공유한다.
 키·토큰·.env·Google 응답·실제 메일·인증 URL·전체 콘솔 로그는 붙여 넣지 않는다.
