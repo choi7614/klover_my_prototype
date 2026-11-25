@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { AIProvider, AIState, AIPurpose } from '../../../shared/ai-bridge';
+import type { AIProvider, AIState, AIPurpose, ClaudeModel } from '../../../shared/ai-bridge';
 
 type Outcome = { status: 'running' | 'ok' | 'fail'; title: string; detail?: string; at?: string };
 const clock = () => new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -37,8 +37,10 @@ export function AISettingsPage() {
   const [message, setMessage] = useState('');
   // 저장한 값(기준). 화면에서 바꾼 값과 달라지면 '저장 안 한 변경'으로 보고, 검사 전에 먼저 저장한다.
   const [saved, setSaved] = useState<{ consent: boolean; model: string } | null>(null);
-  const [outcomes, setOutcomes] = useState<Partial<Record<'save' | AIProvider, Outcome>>>({});
-  const setOutcome = (name: 'save' | AIProvider, outcome: Outcome | undefined) => setOutcomes(previous => ({ ...previous, [name]: outcome }));
+  const [outcomes, setOutcomes] = useState<Partial<Record<'save' | 'models' | AIProvider, Outcome>>>({});
+  const setOutcome = (name: 'save' | 'models' | AIProvider, outcome: Outcome | undefined) => setOutcomes(previous => ({ ...previous, [name]: outcome }));
+  // 이 키로 쓸 수 있는 모델 목록(불러온 뒤에만 보인다).
+  const [models, setModels] = useState<ClaudeModel[]>([]);
   useEffect(() => { let live = true; void window.klover?.ai?.get().then(r => { if (!live) return; if (r.ok) { setState(r.data); setModel(r.data.claude_model); setSaved({ consent: r.data.external_consent, model: r.data.claude_model }); } else setMessage(r.error.message); }).catch(() => { if (live) setMessage('서버 연결을 확인하세요.'); }); return () => { live = false; }; }, []);
   /** 저장하고 성공 여부를 돌려준다. */
   async function save(): Promise<boolean> {
@@ -57,6 +59,25 @@ export function AISettingsPage() {
     } catch { setKey(''); setOutcome('save', { status: 'fail', title: '저장하지 못했어요.', detail: '앱과 서버 연결을 확인하세요.' }); }
     finally { setBusy(false); }
     return false;
+  }
+  /** 저장한 키로 쓸 수 있는 모델을 불러와 고르게 한다. 모델 이름을 모를 때 쓴다. */
+  async function loadModels() {
+    if (!window.klover?.ai) return;
+    if (claudeDirty && !(await save())) return;
+    setBusy(true); setOutcome('models', { status: 'running', title: '쓸 수 있는 모델을 불러오는 중…' });
+    try {
+      const r = await window.klover.ai.models();
+      if (r.ok) {
+        setModels(r.data.models);
+        const current = model.trim();
+        const usable = r.data.models.some(item => item.id === current);
+        setOutcome('models', r.data.models.length === 0
+          ? { status: 'fail', title: '쓸 수 있는 모델이 없어요', detail: '이 키로 조회되는 모델이 없습니다. 키 발급자에게 모델 사용 권한을 확인해 달라고 하세요.', at: clock() }
+          : { status: 'ok', title: `이 키로 쓸 수 있는 모델 ${r.data.models.length}개를 불러왔어요`, at: clock(),
+              detail: usable ? `지금 모델(${current})은 사용할 수 있어요.` : `지금 모델(${current})은 목록에 없어요. 아래에서 다른 모델을 고르세요.` });
+      } else setOutcome('models', { status: 'fail', title: '모델 목록을 불러오지 못했어요', detail: r.error.message, at: clock() });
+    } catch { setOutcome('models', { status: 'fail', title: '모델 목록을 불러오지 못했어요', detail: '앱과 서버 연결을 확인하세요.', at: clock() }); }
+    finally { setBusy(false); }
   }
   async function check(provider: AIProvider) {
     if (!window.klover?.ai) return;
@@ -82,7 +103,12 @@ export function AISettingsPage() {
       <section className="space-y-3 rounded-leaf bg-background p-4 shadow-card"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">Claude 연결</h2><ConnectionBadge outcome={outcomes.claude} keySet={state.claude_key_set} /></div>
         <p>키: {state.claude_key_set ? '등록됨 (값은 표시하지 않음)' : '미등록'} · 모델: {state.claude_model}</p>
         <label className="block">Claude 모델 ID<input aria-label="Claude 모델 ID" value={model} onChange={e => setModel(e.target.value)} disabled={busy} maxLength={200} className="mt-1 block w-full rounded-md border border-input bg-background p-2" /></label>
-        <p className="text-caption text-muted-foreground">Anthropic Console에서 계정에 제공되는 모델 ID를 입력하세요. 바꾸면 세 생성 기능에 공통 적용합니다.</p>
+        <p className="text-caption text-muted-foreground">Anthropic Console에서 계정에 제공되는 모델 ID를 입력하세요. 바꾸면 세 생성 기능에 공통 적용합니다. 모델 이름을 모르면 키를 저장한 뒤 아래 버튼으로 내 키로 쓸 수 있는 모델을 불러와 고르세요.</p>
+        <div className="flex flex-wrap items-center gap-3"><Button variant="secondary" disabled={busy || state.mode === "local_only"} onClick={() => void loadModels()}>{claudeDirty ? '저장하고 ' : ''}쓸 수 있는 모델 불러오기</Button>
+          {models.length > 0 && <select aria-label="쓸 수 있는 Claude 모델" className="max-w-full rounded-md border border-input bg-background p-2" disabled={busy}
+            value={models.some(item => item.id === model.trim()) ? model.trim() : ''} onChange={e => setModel(e.target.value)}>
+            <option value="" disabled>모델 고르기</option>{models.map(item => <option key={item.id} value={item.id}>{item.name} ({item.id})</option>)}</select>}</div>
+        <OutcomeBox outcome={outcomes.models} />
         <label className="block">Claude API 키 등록·교체<input aria-label="Claude API 키 등록·교체" autoComplete="off" spellCheck={false} type="password" maxLength={512} value={key} onChange={e => setKey(e.target.value)} disabled={busy} className="mt-1 block w-full rounded-md border border-input bg-background p-2" /></label>
         <p className="text-caption text-muted-foreground">빈칸으로 저장하면 기존 키를 유지합니다. 키를 채팅에 붙여넣지 마세요.</p>
         <p>Claude를 쓰면 답장은 선택 메일·프로필, 검색은 질문과 필요한 검색 결과, 보고서는 대상 업무 메일·분석·프로필이 Anthropic으로 전송됩니다. Claude 구독과 별도의 API 사용료가 발생합니다.</p>

@@ -236,6 +236,18 @@ def test_connection_probe_is_synthetic_and_requires_saved_consent(tmp_path, monk
             "claude_unreachable",
             "인터넷",
         ),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_credit_low"),
+            "claude_credit_low",
+            "크레딧",
+        ),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_format_unsupported"),
+            "claude_format_unsupported",
+            "JSON",
+        ),
         ("claude", TimeoutError(), "claude_timeout", "늦어요"),
         (
             "claude",
@@ -275,6 +287,75 @@ def test_connection_probe_failure_says_the_cause_in_fixed_words(
     assert error["code"] == code and hint in error["message"]
     # 제공자가 준 상세 문장·키는 응답에 섞이지 않는다.
     assert "private-detail" not in response.text and KEY not in response.text
+
+
+def test_connection_probe_failure_adds_the_providers_reason_without_the_key(tmp_path, monkeypatch):
+    store = settings(tmp_path)
+    update(store)
+
+    async def fail(self, request):
+        raise ProviderCallError(
+            "고정", code="claude_bad_request", detail="model: not available for this workspace"
+        )
+
+    monkeypatch.setattr(SelectedGeneration, "generate", fail)
+    with client(store) as http:
+        response = http.post("/settings/ai/check", json={"provider": "claude"}, headers=AUTH)
+    message = response.json()["error"]["message"]
+    assert "Anthropic 안내: model: not available for this workspace" in message
+    assert KEY not in response.text
+
+
+def test_provider_reason_is_cleaned_of_keys_and_limited():
+    from app.ai.claude import safe_detail
+
+    error = SimpleNamespace(message=f"bad {KEY}\n  and sk-ant-api03-abcdefghijk " + "x" * 500)
+    text = safe_detail(error, (KEY,))
+    assert KEY not in text and "sk-ant" not in text and "\n" not in text and len(text) <= 200
+    assert safe_detail(RuntimeError("no message attr")) == ""
+
+
+def test_claude_models_lists_only_claude_ids_for_the_saved_key(tmp_path, monkeypatch):
+    store = settings(tmp_path)
+    update(store)
+    seen = []
+
+    async def fake_list(key, **kwargs):
+        seen.append(key)
+        return [
+            {"id": "claude-sonnet-5-5", "name": "Claude Sonnet 5.5"},
+            {"id": "not-claude-model", "name": "x"},
+            {"id": "claude-opus-5-5", "name": "Claude Opus 5.5"},
+        ]
+
+    monkeypatch.setattr("app.api.ai_settings.list_models", fake_list)
+    with client(store) as http:
+        assert http.get("/settings/ai/claude-models").status_code == 401
+        response = http.get("/settings/ai/claude-models", headers=AUTH)
+    assert [m["id"] for m in response.json()["models"]] == ["claude-sonnet-5-5", "claude-opus-5-5"]
+    assert seen == [KEY] and KEY not in response.text
+
+
+def test_claude_models_reports_missing_key_local_mode_and_provider_failure(tmp_path, monkeypatch):
+    store = settings(tmp_path)
+    update(store, key=None)
+    with client(store) as http:
+        error = http.get("/settings/ai/claude-models", headers=AUTH).json()["error"]
+        assert error["code"] == "claude_key_missing"
+
+    async def fail(key, **kwargs):
+        raise ProviderCallError("고정", code="claude_auth_failed", detail="invalid x-api-key")
+
+    monkeypatch.setattr("app.api.ai_settings.list_models", fail)
+    update(store)
+    with client(store) as http:
+        error = http.get("/settings/ai/claude-models", headers=AUTH).json()["error"]
+        assert error["code"] == "claude_auth_failed" and "invalid x-api-key" in error["message"]
+    store.update(
+        AIUpdate(mode="local_only", defaults=Defaults(), external_consent=True, api_key=KEY)
+    )
+    with client(store) as http:
+        assert http.get("/settings/ai/claude-models", headers=AUTH).status_code == 503
 
 
 def test_connection_probe_tells_when_claude_key_is_not_registered(tmp_path, monkeypatch):

@@ -1,11 +1,13 @@
 """AI 설정·연결 검사도 기존 로컬 Bearer 인증을 통과해야 한다."""
 
 import asyncio
+import re
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
+from app.ai.claude import list_models
 from app.ai.interfaces import GenerationRequest, ProviderCallError, ProvidersNotConfigured
 from app.ai.selection import AISelectionError, AIState, AIUpdate, SelectedGeneration, selected
 from app.api.errors import error_response
@@ -16,6 +18,18 @@ from app.api.state import StateName, get_state
 class Probe(BaseModel):
     model_config = ConfigDict(extra="forbid")
     provider: Literal["ollama", "claude"]
+
+
+class ClaudeModel(BaseModel):
+    id: str
+    name: str
+
+
+class ClaudeModels(BaseModel):
+    models: list[ClaudeModel]
+
+
+MODEL_ID = re.compile(r"^claude-[A-Za-z0-9._:/-]{1,190}$")
 
 
 class ProbeResult(BaseModel):
@@ -37,7 +51,22 @@ PROBE_FAILURES = {
     ),
     "claude_timeout": "Claude 응답이 늦어요. 잠시 뒤 다시 검사하세요.",
     "claude_unreachable": "Claude API에 연결하지 못했어요. 인터넷 연결을 확인하세요.",
-    "claude_bad_request": "Claude가 요청 형식을 거부했어요. 모델 ID를 확인하세요.",
+    "claude_bad_request": (
+        "Claude가 요청을 거부했어요. 모델 ID가 이 계정에서 쓸 수 있는 최신 모델인지 확인하고, "
+        "계속되면 Anthropic Console에서 계정 상태와 크레딧을 확인하세요."
+    ),
+    "claude_credit_low": (
+        "Anthropic 계정의 크레딧(잔액)이 부족해요. Anthropic Console의 Plans & Billing에서 "
+        "크레딧을 충전한 뒤 다시 검사하세요."
+    ),
+    "claude_effort_unsupported": (
+        "이 Claude 모델은 응답 품질 설정을 지원하지 않아요. "
+        "claude-sonnet-5-5 같은 최신 모델 ID를 쓰세요."
+    ),
+    "claude_format_unsupported": (
+        "이 Claude 모델은 구조화된 JSON 출력을 지원하지 않아요. "
+        "claude-sonnet-5-5 같은 최신 모델 ID를 쓰세요."
+    ),
     "claude_refused": "Claude가 검사 요청에 답하지 않았어요. 잠시 뒤 다시 검사하세요.",
     "claude_truncated": "Claude 응답이 잘려서 확인하지 못했어요. 다시 검사하세요.",
     "claude_invalid_response": "Claude 응답을 읽지 못했어요. 모델 ID를 확인하고 다시 검사하세요.",
@@ -73,6 +102,13 @@ def probe_failure_code(settings, provider, error) -> str:
             return "claude_key_missing"
         return "ai_not_configured"
     return "claude_error" if provider == "claude" else "ollama_error"
+
+
+def failure_message(code: str, error: Exception) -> str:
+    """원인별 고정 안내 뒤에, 제공자가 준 사유(키 제거·길이 제한)가 있으면 덧붙인다."""
+    detail = getattr(error, "detail", "")
+    base = PROBE_FAILURES[code]
+    return f"{base} (Anthropic 안내: {detail})" if detail else base
 
 
 def register_ai_settings(application):
@@ -117,8 +153,26 @@ def register_ai_settings(application):
                 )
         except (ProvidersNotConfigured, ProviderCallError, TimeoutError) as error:
             code = probe_failure_code(settings, body.provider, error)
-            return error_response(503, code, PROBE_FAILURES[code])
+            return error_response(503, code, failure_message(code, error))
         return ProbeResult(provider=body.provider)
+
+    @router.get("/claude-models", response_model=ClaudeModels)
+    async def claude_models(request: Request):
+        """이 키로 쓸 수 있는 Claude 모델 목록. 메일·프로필은 보내지 않는다."""
+        settings = store(request)
+        data = settings.read()
+        if data.get("mode", "hybrid") == "local_only":
+            raise AISelectionError("로컬 전용 모드에서는 Claude를 사용할 수 없어요.")
+        key = data.get("api_key") or settings.values().get("ANTHROPIC_API_KEY")
+        if not key:
+            return error_response(503, "claude_key_missing", PROBE_FAILURES["claude_key_missing"])
+        try:
+            found = await asyncio.wait_for(list_models(key), timeout=30)
+        except (ProvidersNotConfigured, ProviderCallError, TimeoutError) as error:
+            code = probe_failure_code(settings, "claude", error)
+            return error_response(503, code, failure_message(code, error))
+        names = [model for model in found if MODEL_ID.fullmatch(model["id"])]
+        return ClaudeModels(models=[ClaudeModel(**model) for model in names[:100]])
 
     application.include_router(router)
 

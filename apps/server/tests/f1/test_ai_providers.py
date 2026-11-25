@@ -286,6 +286,54 @@ def test_claude_sdk_error_classes_map_to_guidance():
         assert error.value.code == code
 
 
+@pytest.mark.parametrize(
+    ("api_message", "code"),
+    [
+        ("Your credit balance is too low to access the Anthropic API.", "claude_credit_low"),
+        (
+            "output_config.format: this model does not support json_schema",
+            "claude_format_unsupported",
+        ),
+        ("something unexpected", "claude_bad_request"),
+        ("", "claude_bad_request"),
+    ],
+)
+def test_claude_400_reason_is_classified_without_passing_the_api_text_on(api_message, code):
+    anthropic = pytest.importorskip("anthropic", reason="anthropic 의존성 패치 적용 전")
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    response = httpx.Response(400, request=request, json={"error": {}})
+    failure = anthropic.BadRequestError(api_message, response=response, body=None)
+    generation, _ = claude(error=failure)
+    with pytest.raises(ProviderCallError) as error:
+        run(generation.generate(REQUEST))
+    assert error.value.code == code
+    assert api_message not in str(error.value) or api_message == ""
+
+
+def test_claude_retries_once_without_effort_when_the_model_does_not_support_it():
+    anthropic = pytest.importorskip("anthropic", reason="anthropic 의존성 패치 적용 전")
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    response = httpx.Response(400, request=request, json={"error": {}})
+    rejected = anthropic.BadRequestError(
+        "This model does not support the effort parameter", response=response, body=None
+    )
+
+    class Flaky(FakeMessages):
+        async def create(self, **kwargs):
+            self.calls.append(kwargs)
+            if "effort" in kwargs["output_config"]:
+                raise rejected
+            return self.response
+
+    messages = Flaky(message(text('{"ok": true}')))
+    settings = read_ai_settings(CLAUDE_ENV).claude
+    generation = ClaudeGeneration(settings, client=SimpleNamespace(messages=messages))
+    assert run(generation.generate(REQUEST)) == '{"ok": true}'
+    assert len(messages.calls) == 2
+    assert "effort" not in messages.calls[1]["output_config"]
+    assert messages.calls[1]["output_config"]["format"]["type"] == "json_schema"
+
+
 def _status_error(anthropic, status, response):
     kind = {
         401: anthropic.AuthenticationError,
