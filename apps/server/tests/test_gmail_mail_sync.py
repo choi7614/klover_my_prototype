@@ -51,6 +51,8 @@ class GmailResponses:
             None: {"history": [{"messagesAdded": [{"message": {"id": x}} for x in self.messages]}]}
         }
         self.expired_history = False
+        # 보낸 메일(SENT) 목록. 기본은 비어 있어 기존 검사는 받은 메일만 본다.
+        self.sent_ids = []
         self.failed_ids = set()
         self.fail_refresh = False
         self.rotate_refresh = False
@@ -80,8 +82,10 @@ class GmailResponses:
                 return httpx.Response(404)
             return httpx.Response(200, json=self.history[params.get("pageToken")])
         if path.endswith("/messages"):
-            assert params["labelIds"] == "INBOX"
             assert params["q"] == f"after:{int(START.timestamp()) - 1}"
+            if params["labelIds"] == "SENT":
+                return httpx.Response(200, json={"messages": [{"id": x} for x in self.sent_ids]})
+            assert params["labelIds"] == "INBOX"
             return httpx.Response(200, json=self.pages[params.get("pageToken")])
         identifier = path.rsplit("/", 1)[-1]
         if identifier in self.failed_ids:
@@ -199,7 +203,9 @@ def test_history_replay_deduplicates_and_preserves_existing_mail(database):
     result = sync(repository, settings, responses)
     assert result["saved"] == 1 and result["skipped"] == 1 and result["mode"] == "history"
     assert body_requests(responses) == ["m2"]
-    assert not any(r.url.path.endswith("/messages") for r in responses.calls)
+    # 받은 메일은 변경 이력만 읽고 목록을 다시 훑지 않는다(보낸 메일 목록만 따로 읽는다).
+    listed = [r.url.params["labelIds"] for r in responses.calls if r.url.path.endswith("/messages")]
+    assert listed == ["SENT"]
     with Session(engine) as session:
         assert session.scalar(select(func.count()).select_from(Mail)) == 2
         assert session.scalar(select(MailAccount.sync_cursor)) == "300"
@@ -440,3 +446,70 @@ def test_cli_sync_repeat_and_list_against_real_database(database, monkeypatch, c
             "new-access",
         ]:
             assert private not in output
+
+
+def sent_message(identifier="s1", when=START, labels=("SENT",)):
+    value = message(identifier, when)
+    value["labelIds"] = list(labels)
+    headers = value["payload"]["headers"]
+    headers[0]["value"] = f"나 <{EMAIL}>"
+    headers[1]["value"] = "받는이 <to@example.invalid>, other@example.invalid"
+    return value
+
+
+def test_sent_mail_is_stored_as_view_only_sent_mailbox_and_not_counted_as_new(database):
+    engine, settings, repository, _ = connected(database)
+    responses = GmailResponses(
+        {
+            "m1": message(),
+            "s1": sent_message(),
+            "old": sent_message("old", START - timedelta(days=1)),
+        }
+    )
+    responses.pages = {None: {"messages": [{"id": "m1"}]}}
+    responses.sent_ids = ["s1", "old"]
+    result = sync(repository, settings, responses)
+    # '새 메일 N건'은 받은 메일만 센다. 사용 시작 이전의 보낸 메일은 저장하지 않는다.
+    assert result["saved"] == 1
+    with Session(engine) as session:
+        rows = {m.source_message_id: m for m in session.scalars(select(Mail))}
+        assert set(rows) == {"m1", "s1"}
+        sent = rows["s1"]
+        assert (sent.direction, sent.mailbox, sent.is_read) == ("sent", "sent", True)
+        assert sent.analysis_status == "pending"
+        assert [x["addr"] for x in sent.to] == ["to@example.invalid", "other@example.invalid"]
+        assert (rows["m1"].direction, rows["m1"].mailbox) == ("received", "inbox")
+    # 다시 가져와도 보낸 메일 본문을 다시 받거나 중복 저장하지 않는다.
+    responses.calls.clear()
+    sync(repository, settings, responses)
+    assert "s1" not in body_requests(responses)
+    with Session(engine) as session:
+        assert session.scalar(select(func.count()).select_from(Mail)) == 2
+
+
+def test_mail_sent_to_myself_is_kept_once_in_inbox(database):
+    engine, settings, repository, _ = connected(database)
+    both = sent_message("self", labels=("INBOX", "SENT"))
+    responses = GmailResponses({"self": both})
+    responses.sent_ids = ["self"]
+    result = sync(repository, settings, responses)
+    assert result["saved"] == 1
+    with Session(engine) as session:
+        rows = list(session.scalars(select(Mail)))
+        assert [(m.direction, m.mailbox) for m in rows] == [("received", "inbox")]
+
+
+def test_sent_mail_appears_through_read_api_only_in_sent_box(database):
+    from app.db.repositories.mail_query import MailQueryRepository
+
+    engine, settings, repository, _ = connected(database)
+    responses = GmailResponses({"m1": message(), "s1": sent_message()})
+    responses.pages = {None: {"messages": [{"id": "m1"}]}}
+    responses.sent_ids = ["s1"]
+    sync(repository, settings, responses)
+    reader = MailQueryRepository(engine, settings.expected_email)
+    assert [m.subject for m in reader.list(box="inbox").items] == ["합성"]
+    sent = reader.list(box="sent").items
+    assert len(sent) == 1 and sent[0].direction == "sent" and sent[0].to_label == "받는이 외 1명"
+    assert reader.detail(sent[0].mail_id) is None
+    assert reader.detail(sent[0].mail_id, include_sent=True).body_text == "합성 전용 본문"

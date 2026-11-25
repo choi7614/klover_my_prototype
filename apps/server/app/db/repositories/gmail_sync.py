@@ -62,6 +62,22 @@ class SyncBatch:
             is_read=message.is_read,
         )
 
+    def store_sent(self, message) -> None:
+        MailRepository(self.session).store_sent(
+            user_id=self.account.user_id,
+            account_id=self.account.account_id,
+            mail_id=str(uuid4()),
+            source_message_id=message.source_id,
+            received_at=message.received_at,
+            from_addr=message.from_addr,
+            from_name=message.from_name,
+            to=message.to,
+            cc=message.cc,
+            subject=message.subject,
+            body_text=message.body_text,
+            thread_id=message.thread_id,
+        )
+
     def advance(self, cursor: str) -> None:
         self.account.sync_cursor = cursor
 

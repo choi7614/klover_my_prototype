@@ -46,9 +46,9 @@ AI 설정에 mode(local_only/hybrid)를 추가한다. 새 설정은 local_only, 
 | 메서드 | 경로 | 응답 |
 | --- | --- | --- |
 | GET | `/auth/session` | `LocalSession`: 연결된 `user_id`, `account_id`, `email`, `sync_started_at` |
-| GET | `/mails?box=inbox&limit=20&cursor=...&category=meeting` | `MailPage`: `items`와 `next_cursor`(마지막은 null). limit 1~100, 기본 20. `category`(선택, 7개 분류 중 하나)를 주면 그 분류만 보여 준다. 사용자가 고친 분류(`user_label`)가 AI 분류보다 우선한다 |
+| GET | `/mails?box=inbox&limit=20&cursor=...&category=meeting` | `MailPage`: `items`와 `next_cursor`(마지막은 null). limit 1~100, 기본 20. `box`는 `inbox`(기본) 또는 `sent`(보낸편지함, 보기 전용). `category`(선택, 7개 분류 중 하나)를 주면 그 분류만 보여 준다(`inbox`에서만, `sent`와 함께 쓰면 422). 사용자가 고친 분류(`user_label`)가 AI 분류보다 우선한다. 항목의 `direction`·`to_label`(보낸 메일의 받는 사람)로 받은/보낸 메일을 구분한다 |
 | GET | `/mails/category-counts` | `MailCategoryCounts`: `total`(받은편지함 전체)과 `counts`(분류별 건수, 분석 전 메일은 total에만 포함). 왼쪽 분류 목록의 숫자용 |
-| GET | `/mails/{mail_id}` | `MailDetail`: 해당 계정의 받은 메일 일반 텍스트 본문 |
+| GET | `/mails/{mail_id}` | `MailDetail`: 해당 계정의 받은·보낸 메일 일반 텍스트 본문 |
 | POST | `/mails/sync` | `MailSyncResult`: `saved`, `skipped`, `mode`(`initial`/`history`/`rescan`), `token_refreshed`. 앱 새로고침용 Gmail 새 받은 메일 가져오기 |
 
 - `MailSummary`: `mail_id`, `subject`, `from_addr`, `from_name`, `preview`(본문 앞 160자),
@@ -69,6 +69,9 @@ AI 설정에 mode(local_only/hybrid)를 추가한다. 새 설정은 local_only, 
   인증·loopback·Host·Origin 규칙과 `Cache-Control: no-store`는 조회와 같다. 같은 서버에서 이미 가져오는 중이면
   409 `sync_in_progress`, Gmail·토큰 갱신 실패는 502 `gmail_unavailable`(외부 응답 상세 미포함), DB·계정 준비 부족은 503.
   응답에는 건수만 있고 메일 내용·토큰은 없다. 주기적 자동 수신(WebSocket·작업 큐)은 후속이다.
+  같은 호출에서 사용 시작 이후 **보낸 메일(SENT)**도 보낸편지함에 저장한다(2026-11-25, 보기 전용). 응답의 `saved`는
+  새로 받은 메일만 센다. 보낸 메일은 AI 분석·제안·답장 초안 대상이 아니며(분석 상태는 계속 `pending`),
+  보내기·과거 보낸 메일 가져오기는 아직 없다.
 
 ## F3 검색 API (선택 AI·로컬 의미 검색 연결)
 

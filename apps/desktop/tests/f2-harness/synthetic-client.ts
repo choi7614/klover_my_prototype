@@ -16,7 +16,7 @@ export const SYNTHETIC_MAIL: MailDetail = {
   from_addr: 'sender@example.invalid', from_name: '박지훈 과장 (합성)',
   body_text: '이 화면은 합성 응답으로 검사하고 있습니다.\n\n4분기 예산 검토를 위해 3분기 부서별 집행 현황 자료가 필요합니다.\n마케팅비와 출장비를 월별로 나눠 주시면 검토에 도움이 될 것 같습니다.',
   preview: '합성 검사 자료 요청', received_at: '2026-11-18T00:12:00Z', is_read: false,
-  analysis_status: 'pending', to: [], cc: [],
+  analysis_status: 'pending', to: [], cc: [], direction: 'received', to_label: '',
 };
 
 export class SyntheticF2Client implements F2Client {
