@@ -5,6 +5,16 @@ import { trustedMailSender } from './mail-ipc';
 import { readAIState, validProvider, type AIResult } from '../shared/ai-bridge';
 
 const fail = (): AIResult<never> => ({ ok: false, error: { code: 'ai_settings_failed', message: 'AI 설정과 연결 상태를 확인해 주세요.' } });
+function serverFailure(text: string): AIResult<never> {
+  try {
+    const error = (JSON.parse(text) as { error?: { code?: unknown; message?: unknown } }).error;
+    if (error && typeof error.code === 'string' && /^[a-z_]{1,64}$/.test(error.code) &&
+        typeof error.message === 'string' && error.message.length > 0 && error.message.length <= 300) {
+      return { ok: false, error: { code: error.code, message: error.message } };
+    }
+  } catch { /* 형식이 다르면 아래 일반 안내 */ }
+  return fail();
+}
 export function registerAIIPC(ipc: IpcMain, contents: WebContents, rendererURL: string, configuration: LocalAPIConfiguration, fetcher: typeof fetch = fetch) {
   const channels = ['get', 'save', 'check'] as const;
   for (const operation of channels) ipc.handle(`klover:ai:${operation}`, async (event, ...args: unknown[]) => {
@@ -37,7 +47,9 @@ export function registerAIIPC(ipc: IpcMain, contents: WebContents, rendererURL: 
       });
       const response = await fetcher(url, init);
       const text = await response.text();
-      if (text.length > 10000 || !response.ok) return fail();
+      if (text.length > 10000) return fail();
+      // 서버가 보낸 고정 오류 안내(원인별 문장)는 그대로 화면에 전달한다. 형식이 다르면 일반 안내로 바꾼다.
+      if (!response.ok) return serverFailure(text);
       const result: unknown = JSON.parse(text);
       if (operation !== 'check') return { ok: true, data: readAIState(result) };
       const probe = result as { status?: unknown; provider?: unknown };
