@@ -209,6 +209,91 @@ def test_connection_probe_is_synthetic_and_requires_saved_consent(tmp_path, monk
     assert json.loads(captured[0].user_prompt) == {"test": "connection-only; no mail data"}
 
 
+@pytest.mark.parametrize(
+    "provider,failure,code,hint",
+    [
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_auth_failed"),
+            "claude_auth_failed",
+            "키가 올바르지",
+        ),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_model_not_found"),
+            "claude_model_not_found",
+            "모델 ID",
+        ),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_rate_limited"),
+            "claude_rate_limited",
+            "잔액",
+        ),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="claude_unreachable"),
+            "claude_unreachable",
+            "인터넷",
+        ),
+        ("claude", TimeoutError(), "claude_timeout", "늦어요"),
+        (
+            "claude",
+            ProviderCallError("private-detail", code="unknown-code"),
+            "claude_error",
+            "실패",
+        ),
+        (
+            "ollama",
+            ProviderCallError("private-detail", code="ollama_unreachable"),
+            "ollama_unreachable",
+            "Ollama",
+        ),
+        (
+            "ollama",
+            ProviderCallError("private-detail", code="ollama_model_not_found"),
+            "ollama_model_not_found",
+            "ollama pull",
+        ),
+        ("ollama", TimeoutError(), "ollama_timeout", "늦어요"),
+    ],
+)
+def test_connection_probe_failure_says_the_cause_in_fixed_words(
+    tmp_path, monkeypatch, provider, failure, code, hint
+):
+    store = settings(tmp_path)
+    update(store)
+
+    async def fail(self, request):
+        raise failure
+
+    monkeypatch.setattr(SelectedGeneration, "generate", fail)
+    with client(store) as http:
+        response = http.post("/settings/ai/check", json={"provider": provider}, headers=AUTH)
+    assert response.status_code == 503
+    error = response.json()["error"]
+    assert error["code"] == code and hint in error["message"]
+    # 제공자가 준 상세 문장·키는 응답에 섞이지 않는다.
+    assert "private-detail" not in response.text and KEY not in response.text
+
+
+def test_connection_probe_tells_when_claude_key_is_not_registered(tmp_path, monkeypatch):
+    from app.ai.interfaces import ProvidersNotConfigured
+
+    store = settings(tmp_path)
+    update(store, key=None)
+
+    async def fail(self, request):
+        raise ProvidersNotConfigured("private-detail")
+
+    monkeypatch.setattr(SelectedGeneration, "generate", fail)
+    with client(store) as http:
+        error = http.post("/settings/ai/check", json={"provider": "claude"}, headers=AUTH).json()[
+            "error"
+        ]
+    assert error["code"] == "claude_key_missing" and "키가 등록되지 않았어요" in error["message"]
+
+
 def test_model_setting_is_saved_and_used_only_for_selected_claude_calls(tmp_path):
     store = settings(tmp_path, CLAUDE_MODEL_DRAFT="old-synthetic-model")
     store.update(

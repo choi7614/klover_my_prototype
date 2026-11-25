@@ -16,6 +16,15 @@ function setup() {
   return { event, handlers, fetcher, dispose };
 }
 describe('AI 설정 통로', () => {
+  it('서버가 보낸 원인별 실패 안내는 그대로 화면에 전달하고, 형식이 다르면 일반 안내로 바꾼다', async () => {
+    const s = setup();
+    s.fetcher.mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: 'claude_auth_failed', message: 'Claude API 키가 올바르지 않거나 사용 권한이 없어요.' } }), { status: 503 }));
+    expect(await s.handlers.get('klover:ai:check')!(s.event, 'claude')).toEqual({ ok: false, error: { code: 'claude_auth_failed', message: 'Claude API 키가 올바르지 않거나 사용 권한이 없어요.' } });
+    for (const body of ['not json', JSON.stringify({ error: { code: 'BAD CODE', message: 'x' } }), JSON.stringify({ error: { code: 'ok_code', message: 'x'.repeat(301) } }), JSON.stringify({})]) {
+      s.fetcher.mockResolvedValueOnce(new Response(body, { status: 503 }));
+      expect(await s.handlers.get('klover:ai:check')!(s.event, 'claude')).toEqual({ ok: false, error: { code: 'ai_settings_failed', message: 'AI 설정과 연결 상태를 확인해 주세요.' } });
+    }
+  });
   it('신뢰한 화면과 고정 동작만 허용하고 비밀 필드를 응답에서 제거한다', async () => {
     const s = setup();
     expect(await s.handlers.get('klover:ai:get')!(s.event)).toEqual({ ok: true, data: state });
