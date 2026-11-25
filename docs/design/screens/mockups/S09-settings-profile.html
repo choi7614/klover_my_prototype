@@ -2,15 +2,17 @@
 <html lang="ko"><head><meta charset="utf-8"><title>S09 설정 · 내 프로필·문체 — Klover</title>
 <link rel="stylesheet" href="assets/mockup.css">
 <style>
-.snav{width:220px;border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.snav{width:220px;background:var(--sage-700);color:#D3E0D8;padding:16px 10px;display:flex;flex-direction:column;gap:2px;flex-shrink:0}
 .sbody{flex:1;display:flex;flex-direction:column;min-width:0}
+.win .sbody{background:var(--canvas);border-radius:0;margin:0}
+.win .sfoot{background:var(--canvas);border-top:0}
 .grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 24px;align-content:start}
-.pn{border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.pn{background:#fff;border:0;box-shadow:var(--shadow-card);border-radius:var(--leaf);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .pn .field{gap:4px}
 .pn .ph{font-size:15px;font-weight:700;display:flex;align-items:center}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.tg{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;background:var(--g100);font-size:12px;color:var(--g700)}
-.phr{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;background:#fff;border:1px solid var(--ai-border);font-size:12px;color:var(--ai-text)}
+.tg{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--leaf-sm);background:var(--g100);font-size:12px;color:var(--g700)}
+.phr{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--leaf-sm);background:#fff;border:1px solid var(--ai-border);font-size:12px;color:var(--ai-text)}
 .secs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sec-row{display:flex;align-items:center;gap:8px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px}
 .prev{background:var(--g25);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;line-height:22px;color:var(--g800)}
@@ -18,8 +20,8 @@
 </style></head>
 <body><div class="canvas" style="position:relative">
 <div class="win" data-nav="settings" data-nosidebar="1">
-  <nav class="snav" style="background:var(--muted)">
-    <div class="btn btn-ghost btn-sm" style="justify-content:flex-start;margin-bottom:8px">‹ 받은편지함</div>
+  <nav class="snav">
+    <div class="btn btn-sm" style="justify-content:flex-start;margin-bottom:8px;background:#fff;color:var(--g800);font-weight:500">‹ 받은편지함</div>
     <div class="navlabel" style="padding-top:4px">설정</div>
     <div class="nav on"><i data-i="user"></i>내 프로필·문체</div>
     <div class="nav"><i data-i="report"></i>주간 보고</div>
@@ -43,7 +45,7 @@
         <div class="field"><span class="label">서명</span><div class="textarea" style="font-size:13px;line-height:20px">홍길동 과장 | 경영지원본부 재무팀<br>02-1234-5678 | hong.gildong@company.com</div></div>
       </div>
       <div class="pn" style="grid-column:1 / span 2;border-color:var(--ai-border);background:linear-gradient(0deg,#fff,#fff)">
-        <div class="ph"><span style="color:var(--ai)">◆</span>&nbsp;보낸 메일에서 내 문체 학습<span class="grow"></span><span class="caption" style="font-weight:400;margin-right:10px">사용 시작 후 보낸 메일 38건 분석</span><span class="toggle on"></span></div>
+        <div class="ph">보낸 메일에서 내 문체 학습<span class="grow"></span><span class="caption" style="font-weight:400;margin-right:10px">사용 시작 후 보낸 메일 38건 분석</span><span class="toggle on"></span></div>
         <div class="row gap6" style="flex-wrap:wrap"><span class="caption" style="margin-right:4px">자주 쓰는 표현 (눌러서 제외)</span><span class="phr">확인 부탁드립니다 ×</span><span class="phr">검토 후 회신드리겠습니다 ×</span><span class="phr">참고 부탁드립니다 ×</span><span class="phr">말씀하신 자료 송부드립니다 ×</span></div>
         <div class="caption" style="color:var(--g700)">문장 특징: 결론을 먼저 쓰고, 날짜는 '10/16(금)' 형식, 번호 목록 자주 사용</div>
       </div>
