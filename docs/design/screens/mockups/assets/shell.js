@@ -15,7 +15,7 @@
   const topbar = win.dataset.notop === "1" ? "" : `
   <div class="topbar">
     <div class="brand"><img src="../../brand/klover-logo.svg" alt="Klover"></div>
-    <div class="search ${searchText ? "focus" : ""}"><span class="dia">◆</span><span>${searchText || "무엇이든 물어보세요. 예: 지난주 영업기획팀이 보낸 예산 관련 메일"}</span><kbd>Ctrl K</kbd></div>
+    <div class="search ${searchText ? "focus" : ""}"><i data-i="search"></i><span>${searchText || "무엇이든 물어보세요. 예: 지난주 영업기획팀이 보낸 예산 관련 메일"}</span><kbd>Ctrl K</kbd></div>
     <div class="right">
       <span class="iconbtn"><i data-i="bell"></i>${empty ? "" : `<span class="badge">3</span>`}</span>
       <span>hong.gildong@gmail.com</span><span class="avatar">홍</span>

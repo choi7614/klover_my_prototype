@@ -8,7 +8,7 @@ body{background:#fff}
 h2{font-size:20px;font-weight:700;margin:44px 0 6px}
 .sub{color:var(--g500);margin-bottom:18px}
 .grid{display:grid;gap:16px}
-.sw{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sw{border:1px solid var(--border);border-radius:var(--leaf-sm);overflow:hidden}
 .sw .c{height:72px}
 .sw .t{padding:8px 10px;font-size:12px;line-height:17px}
 .sw .t b{display:block;font-size:13px}
@@ -24,10 +24,10 @@ h2{font-size:20px;font-weight:700;margin:44px 0 6px}
 <body><div class="page">
   <div class="hero">
     <img src="brand/klover-logo.svg" style="height:64px" alt="Klover">
-    <div><div class="h-display">디자인 시스템 v1.0</div><div class="muted" style="font-size:15px">받은 메일을 AI가 바로 읽고 분류·요약·제안하는 Windows 메일 앱 · 2026-10-20</div></div>
+    <div><div class="h-display">디자인 시스템 v1.1</div><div class="muted" style="font-size:15px">받은 메일을 AI가 바로 읽고 분류·요약·제안하는 Windows 메일 앱 · 2026-11-25</div></div>
   </div>
 
-  <h2>1. 로고</h2><div class="sub">네 잎 클로버 = 네 가지 도움(분류·검색·답장·보고), 가운데 ◆ = AI. 행운(클로버)과 Koscom의 K.</div>
+  <h2>1. 로고</h2><div class="sub">네 잎 클로버 = 네 가지 도움(분류·검색·답장·보고). 가운데 마름모는 브랜드 자산이라 그대로 둡니다. 행운(클로버)과 Koscom의 K.</div>
   <div class="logos">
     <div class="lgbox"><img src="brand/klover-logo.svg" style="height:56px"></div>
     <div class="lgbox" style="background:#14171C"><img src="brand/klover-logo-white.svg" style="height:56px"></div>
@@ -35,30 +35,30 @@ h2{font-size:20px;font-weight:700;margin:44px 0 6px}
     <div class="lgbox" style="gap:18px;align-items:flex-end;padding-bottom:30px"><img src="brand/klover-app-icon.svg" width="96"><img src="brand/klover-app-icon.svg" width="48"><img src="brand/klover-app-icon.svg" width="32"><img src="brand/klover-app-icon.svg" width="16"></div>
   </div>
 
-  <h2>2. 색 — 역할</h2><div class="sub">초록 = Klover와 사용자의 실행 버튼, 보라 = AI가 만든 것. 이 두 색 외에는 상태·카테고리에만 색을 씁니다.</div>
+  <h2>2. 색 — 역할</h2><div class="sub">세이지 녹색 하나가 Klover의 버튼·사이드바·선택 표시입니다. AI가 만든 것은 색이 아니라 "AI 요약" 같은 글자 라벨로 구분합니다. 그 외에는 상태·카테고리에만 색을 씁니다. (v1.1)</div>
   <div class="grid" style="grid-template-columns:repeat(6,1fr)">
-    <div class="sw"><div class="c" style="background:#158446"></div><div class="t"><b>primary</b>#158446 · 주요 버튼</div></div>
-    <div class="sw"><div class="c" style="background:#1F9D55"></div><div class="t"><b>clover-500</b>#1F9D55 · 로고, 선택 막대</div></div>
-    <div class="sw"><div class="c" style="background:#ECF8F1"></div><div class="t"><b>selected</b>#ECF8F1 · 선택된 행·메뉴</div></div>
-    <div class="sw"><div class="c" style="background:#5B4FE0"></div><div class="t"><b>ai</b>#5B4FE0 · ◆, AI 버튼</div></div>
-    <div class="sw"><div class="c" style="background:#F1F0FD"></div><div class="t"><b>ai-subtle</b>#F1F0FD · AI 요약 배경</div></div>
-    <div class="sw"><div class="c" style="background:#E9E6FD;border-bottom:3px solid #5B4FE0"></div><div class="t"><b>ai-highlight</b>#E9E6FD · 근거 문장</div></div>
+    <div class="sw"><div class="c" style="background:#3A7D5D"></div><div class="t"><b>primary</b>#3A7D5D · 주요 버튼</div></div>
+    <div class="sw"><div class="c" style="background:#2F5645"></div><div class="t"><b>sidebar · ai</b>#2F5645 · 사이드바, AI 버튼</div></div>
+    <div class="sw"><div class="c" style="background:#E4EEE7;border-bottom:3px solid #5FA383"></div><div class="t"><b>selected</b>#E4EEE7 · 선택 테두리 #5FA383</div></div>
+    <div class="sw"><div class="c" style="background:#F5F7F4;border-bottom:3px solid #E0E7E1"></div><div class="t"><b>canvas</b>#F5F7F4 · 메일함 바탕</div></div>
+    <div class="sw"><div class="c" style="background:#EDF3EE"></div><div class="t"><b>ai-subtle</b>#EDF3EE · AI 요약 면</div></div>
+    <div class="sw"><div class="c" style="background:#E4EEE7;border-bottom:3px solid #2F5645"></div><div class="t"><b>ai-highlight</b>#E4EEE7 · 근거 문장</div></div>
     <div class="sw"><div class="c" style="background:#14171C"></div><div class="t"><b>foreground</b>#14171C · 본문</div></div>
-    <div class="sw"><div class="c" style="background:#646B77"></div><div class="t"><b>muted-foreground</b>#646B77 · 보조 글자</div></div>
-    <div class="sw"><div class="c" style="background:#E1E4E8"></div><div class="t"><b>border</b>#E1E4E8 · 선</div></div>
-    <div class="sw"><div class="c" style="background:#F5F6F8"></div><div class="t"><b>muted</b>#F5F6F8 · 사이드바·패널</div></div>
+    <div class="sw"><div class="c" style="background:#5E6C63"></div><div class="t"><b>muted-foreground</b>#5E6C63 · 보조 글자</div></div>
+    <div class="sw"><div class="c" style="background:#E0E7E1"></div><div class="t"><b>border</b>#E0E7E1 · 선</div></div>
+    <div class="sw"><div class="c" style="background:#F1F4F1"></div><div class="t"><b>muted</b>#F1F4F1 · 패널·정보 줄</div></div>
     <div class="sw"><div class="c" style="background:#FFF7EB;border-bottom:3px solid #B45309"></div><div class="t"><b>warning</b>#B45309 · 겹침·마감</div></div>
     <div class="sw"><div class="c" style="background:#FEF2F2;border-bottom:3px solid #B91C1C"></div><div class="t"><b>danger</b>#B91C1C · 회신 필요·삭제</div></div>
   </div>
   <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:16px">
     <div><div class="lbl">Clover (브랜드)</div><div class="ramp"><div style="background:#ECF8F1">50</div><div style="background:#D2EFDE">100</div><div style="background:#A6DEBD">200</div><div style="background:#6FC795">300</div><div style="background:#3DAE6F;color:#fff">400</div><div style="background:#1F9D55;color:#fff">500</div><div style="background:#158446;color:#fff">600</div><div style="background:#116B39;color:#fff">700</div><div style="background:#0E552E;color:#fff">800</div><div style="background:#0B4426;color:#fff">900</div></div></div>
-    <div><div class="lbl">Violet (AI)</div><div class="ramp"><div style="background:#F1F0FD">50</div><div style="background:#E3E1FB">100</div><div style="background:#C8C3F7">200</div><div style="background:#A39BF0">300</div><div style="background:#7E74E8;color:#fff">400</div><div style="background:#5B4FE0;color:#fff">500</div><div style="background:#4B3FCC;color:#fff">600</div><div style="background:#3D33A8;color:#fff">700</div></div></div>
+    <div><div class="lbl">Sage (버튼·사이드바·AI)</div><div class="ramp"><div style="background:#F5F7F4">50</div><div style="background:#E4EEE7">100</div><div style="background:#C9DBCF">200</div><div style="background:#9CC8AE">300</div><div style="background:#5FA383;color:#fff">400</div><div style="background:#3A7D5D;color:#fff">600</div><div style="background:#2F5645;color:#fff">700</div><div style="background:#254536;color:#fff">800</div></div></div>
   </div>
 
   <h2>3. 카테고리 · 상태 태그</h2><div class="sub">연한 배경 + 진한 글자. 모든 조합이 WCAG AA(4.5:1) 이상입니다.</div>
   <div class="box row gap8" style="flex-wrap:wrap">
     <span class="tag c-work">업무 요청</span><span class="tag c-meeting">회의·일정</span><span class="tag c-approval">결재·승인</span><span class="tag c-report">보고·공유</span><span class="tag c-notice">공지</span><span class="tag c-external">외부·고객</span><span class="tag c-news">뉴스레터·광고</span>
-    <span style="width:24px"></span><span class="tag s-reply">회신 필요</span><span class="tag s-due">마감 10/16</span><span class="tag s-reply">미회신 35일</span><span class="tag s-ai">◆ 일정 제안</span>
+    <span style="width:24px"></span><span class="tag s-reply">회신 필요</span><span class="tag s-due">마감 10/16</span><span class="tag s-reply">미회신 35일</span><span class="tag s-ai">일정 제안</span>
     <span style="width:24px"></span><span class="row gap6 caption"><span class="dot d-work"></span>업무 요청</span><span class="row gap6 caption"><span class="dot d-meeting"></span>회의·일정</span><span class="row gap6 caption"><span class="dot d-approval"></span>결재·승인</span><span class="caption">(사이드바 점)</span>
   </div>
 
@@ -71,13 +71,13 @@ h2{font-size:20px;font-weight:700;margin:44px 0 6px}
     <div style="border:0"><span class="k">caption · 12 / 400</span><span class="caption">10월 14일 (화) 09:12 · 받는 사람: 나 · 참조: 이수진 팀장</span></div>
   </div>
 
-  <h2>5. 버튼</h2><div class="sub">한 화면에 Primary(초록)는 1개. AI 동작은 보라 버튼.</div>
+  <h2>5. 버튼</h2><div class="sub">한 화면에 Primary(세이지)는 1개. AI 동작은 진한 세이지 버튼. 버튼은 잎 모서리.</div>
   <div class="box row gap12" style="flex-wrap:wrap">
     <span class="btn btn-primary"><i data-i="send"></i>보내기</span>
     <span class="btn btn-secondary">임시 저장</span>
     <span class="btn btn-ghost"><i data-i="archive"></i>보관</span>
-    <span class="btn btn-ai">◆ 답장 초안 만들기</span>
-    <span class="btn btn-ai-outline">◆ 회신 초안</span>
+    <span class="btn btn-ai">답장 초안 만들기</span>
+    <span class="btn btn-ai-outline">회신 초안</span>
     <span class="btn btn-danger"><i data-i="trash"></i>삭제</span>
     <span class="btn btn-primary btn-sm">sm 28</span><span class="btn btn-primary">md 36</span><span class="btn btn-primary btn-lg">lg 44</span>
     <span class="btn btn-primary" style="opacity:.4">비활성</span>
@@ -91,11 +91,11 @@ h2{font-size:20px;font-weight:700;margin:44px 0 6px}
     <div class="row gap16"><span class="toggle on"></span><span class="toggle"></span><span class="check on"></span><span class="check"></span></div>
   </div>
 
-  <h2>7. AI 컴포넌트</h2><div class="sub">AI가 만든 결과는 항상 ◆ + 보라색. 근거(출처)를 함께 보여 줍니다.</div>
+  <h2>7. AI 컴포넌트</h2><div class="sub">AI가 만든 결과는 "AI 요약" 같은 글자 라벨과 연한 세이지 면으로 구분하고, 근거(출처)를 함께 보여 줍니다.</div>
   <div class="grid" style="grid-template-columns:1.3fr 1fr">
     <div class="box" style="display:flex;flex-direction:column;gap:14px">
       <div class="lbl" style="margin:0">AiSummaryBox</div>
-      <div class="ai-box"><div class="hd">◆ AI 요약</div>영업기획팀이 <b>3분기 부서별 예산 집행 현황(엑셀)</b>을 요청했습니다.<div class="todo"><span>내가 할 일 <b>집행 현황 자료 송부</b></span><span>마감 <b>10/16(금)</b></span></div></div>
+      <div class="ai-box"><div class="hd">AI 요약</div>영업기획팀이 <b>3분기 부서별 예산 집행 현황(엑셀)</b>을 요청했습니다.<div class="todo"><span>내가 할 일 <b>집행 현황 자료 송부</b></span><span>마감 <b>10/16(금)</b></span></div></div>
       <div class="lbl" style="margin:0">AiChip · 근거 번호 · 근거 강조</div>
       <div class="row gap8"><span class="chip"><span class="k">기간</span>2026년 9월<span class="x">×</span></span><span class="chip on">기한 내 송부 약속</span><span class="chip">기한 조정 요청</span><span class="chip add">+ 조건 추가</span></div>
       <div>35일째 답이 없습니다<span class="cite">3</span> · 본문 속 <span class="hl">이번 주 금요일까지 엑셀로 공유</span> · 프로필 반영 <span class="ul">확인 부탁드립니다</span></div>
@@ -113,15 +113,15 @@ h2{font-size:20px;font-weight:700;margin:44px 0 6px}
 
   <h2>8. 메일 목록 한 줄 (MailListItem)</h2>
   <div class="grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="box" style="padding:0;overflow:hidden"><div class="lbl" style="padding:10px 14px 0">안 읽음</div><div class="mi unread" style="border-bottom:0"><div class="r1"><span class="from">이수진 팀장</span><span class="t">08:47</span></div><div class="subj">[안내] 3분기 결산 리뷰 회의</div><div class="sum">◆ 10/16(금) 14:00 대회의실</div><div class="tags"><span class="tag c-meeting">회의·일정</span><span class="tag s-ai">◆ 일정 제안</span></div></div></div>
-    <div class="box" style="padding:0;overflow:hidden"><div class="lbl" style="padding:10px 14px 0">선택됨</div><div class="mi sel" style="border-bottom:0"><div class="r1"><span class="from">박지훈 (영업기획팀)</span><span class="t">09:12</span></div><div class="subj">3분기 예산 집행 현황 자료 요청드립니다</div><div class="sum">◆ 부서별 집행 현황 엑셀을 금요일까지 요청</div><div class="tags"><span class="tag c-work">업무 요청</span><span class="tag s-reply">회신 필요</span></div></div></div>
-    <div class="box" style="padding:0;overflow:hidden"><div class="lbl" style="padding:10px 14px 0">읽음 · 분석 중</div><div class="mi read" style="border-bottom:0"><div class="r1"><span class="from">인사팀</span><span class="t">어제</span></div><div class="subj">하반기 정보보안 교육 이수 안내</div><div class="sum" style="color:var(--g400)">◆ AI가 분석하고 있어요…</div><div class="tags"><span class="tag" style="background:var(--g100);width:56px"></span></div></div></div>
+    <div class="box" style="padding:0;overflow:hidden"><div class="lbl" style="padding:10px 14px 0">안 읽음</div><div class="mi unread" style="border-bottom:0"><div class="r1"><span class="from">이수진 팀장</span><span class="t">08:47</span></div><div class="subj">[안내] 3분기 결산 리뷰 회의</div><div class="sum">10/16(금) 14:00 대회의실</div><div class="tags"><span class="tag c-meeting">회의·일정</span><span class="tag s-ai">일정 제안</span></div></div></div>
+    <div class="box" style="padding:0;overflow:hidden"><div class="lbl" style="padding:10px 14px 0">선택됨</div><div class="mi sel" style="border-bottom:0"><div class="r1"><span class="from">박지훈 (영업기획팀)</span><span class="t">09:12</span></div><div class="subj">3분기 예산 집행 현황 자료 요청드립니다</div><div class="sum">부서별 집행 현황 엑셀을 금요일까지 요청</div><div class="tags"><span class="tag c-work">업무 요청</span><span class="tag s-reply">회신 필요</span></div></div></div>
+    <div class="box" style="padding:0;overflow:hidden"><div class="lbl" style="padding:10px 14px 0">읽음 · 분석 중</div><div class="mi read" style="border-bottom:0"><div class="r1"><span class="from">인사팀</span><span class="t">어제</span></div><div class="subj">하반기 정보보안 교육 이수 안내</div><div class="sum" style="color:var(--g400)">AI가 분석하고 있어요…</div><div class="tags"><span class="tag" style="background:var(--g100);width:56px"></span></div></div></div>
   </div>
 
   <h2>9. 간격 · 모서리 · 그림자</h2>
   <div class="box row gap24">
     <div class="row gap8" style="align-items:flex-end"><span style="width:4px;height:4px;background:var(--clover-400)"></span><span style="width:8px;height:8px;background:var(--clover-400)"></span><span style="width:12px;height:12px;background:var(--clover-400)"></span><span style="width:16px;height:16px;background:var(--clover-400)"></span><span style="width:24px;height:24px;background:var(--clover-400)"></span><span style="width:32px;height:32px;background:var(--clover-400)"></span><span class="caption">4 · 8 · 12 · 16 · 24 · 32</span></div>
-    <div class="row gap8"><span style="width:48px;height:32px;border:1.5px solid var(--g400);border-radius:6px"></span><span style="width:48px;height:32px;border:1.5px solid var(--g400);border-radius:8px"></span><span style="width:48px;height:32px;border:1.5px solid var(--g400);border-radius:12px"></span><span class="caption">6 태그 · 8 버튼·카드 · 12 대화상자</span></div>
+    <div class="row gap8"><span style="width:56px;height:32px;border:1.5px solid var(--g400);border-radius:var(--leaf-sm)"></span><span style="width:56px;height:32px;border:1.5px solid var(--g400);border-radius:var(--leaf)"></span><span style="width:56px;height:32px;border:1.5px solid var(--g400);border-radius:var(--leaf-lg)"></span><span class="caption">잎 모서리 · 12/3 버튼·태그 · 18/6 카드 · 24/8 패널</span></div>
     <div class="row gap8"><span style="width:64px;height:40px;border-radius:8px;background:#fff;box-shadow:0 8px 24px rgb(20 23 28 / .12),0 2px 6px rgb(20 23 28 / .08)"></span><span class="caption">그림자는 팝오버·알림에만</span></div>
   </div>
 </div>

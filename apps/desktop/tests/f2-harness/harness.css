@@ -1,3 +1,4 @@
 @import "../../src/renderer/styles/globals.css";
 @source "../../src/renderer/features/profile-draft";
+@source "../../src/renderer/features/ai-settings";
 @source "./";
