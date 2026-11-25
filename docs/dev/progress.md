@@ -1,6 +1,6 @@
 # 개발 현황판
 
-2026-11-25 · 준비 기준 **develop `f3c09f7` (PR #49 병합)** · main 반영은 승인 대기.
+2026-11-25 · 동료용 첫 공유 버전 **main `6c43e30` (#51)** · 개발 통합은 develop.
 
 | 기능 | 구현·연결 | 남은 범위 | 상세 |
 | --- | --- | --- | --- |
@@ -11,15 +11,11 @@
 | F4 | 첫 주 보고·근거·편집/저장/복사·이동 보존 | Word·예약·발송·실제 품질/속도 | [status](F4-weekly-report-status.md) |
 | F5 | 제안/할 일·Calendar 추가 동의/승인 등록 | 회신 실행·앱/OS 알림·트레이/시작·리마인더 | [status](F5-ai-scan-status.md) |
 
-## 이번 작업
+## 공유 버전과 저장소 정리
 
-- `integrate/main-sharing` · Codex · 동료용 main 안내·구성도·공유 전 점검.
-- 준비 기준은 develop `f3c09f7`(#49), 현재 원격 main은 초기 `9575f47`이다.
-- README/설치는 main 반영 후 사용할 안내로 준비했다. 실제 main 반영은 별도 승인 전까지 하지 않는다.
-- 문서 커밋·Push·develop/main 대상 PR 생성과 검사 통과 시 develop 병합을 승인받았다. main 병합은 별도 승인 대기.
-- 계획: 문서 준비 PR → 승인 후 develop → develop 전체를 main 대상으로 PR → 별도 main 승인.
-- 기존 작업 폴더·브랜치·미커밋 실행 도구 원본과 사용자 DB·계정·키는 보존한다.
-- [공유 준비 점검](main-sharing-verification.md) / [기존 실행 도구 검사](colleague-setup-verification.md).
+- 동료용 안내는 #50으로 develop에 반영했고 앱·서버·DB 설정·실행 파일과 함께 #51로 main에 반영했다.
+- 저장소 정리 작업은 `docs/repository-tidy`에서 진행한다. 초기 디자인 이미지를 문서 아래 보관하고, 패치·통합 자료에는 폴더 안내를 추가한다.
+- [공유 버전 점검](main-sharing-verification.md) / [실행 도구 검사](colleague-setup-verification.md).
 
 ## 반영 이력과 확인 수준
 
